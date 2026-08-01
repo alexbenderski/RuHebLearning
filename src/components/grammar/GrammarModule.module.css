@@ -269,6 +269,7 @@
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid #eaeaea;
+  color: #000000;
 }
 
 .miniTtsBtn {
@@ -331,6 +332,7 @@
   font-weight: bold;
   font-family: 'Times New Roman', Times, serif;
   margin-bottom: 12px;
+  color: #000000;
 }
 
 .genderTranslit {
@@ -438,7 +440,7 @@
   font-size: 4rem;
   font-weight: bold;
   font-family: 'Times New Roman', Times, serif;
-  color: #1e1b4b;
+  color: #000000;
   margin-bottom: 20px;
 }
 
@@ -633,7 +635,7 @@
   font-weight: bold;
   font-family: 'Times New Roman', Times, serif;
   margin-bottom: 6px;
-  color: #14532d;
+  color: #000000;
 }
 
 .nodeTranslit {
