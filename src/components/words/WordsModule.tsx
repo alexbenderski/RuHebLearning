@@ -12,6 +12,7 @@ import styles from './WordsModule.module.css';
 
 type Mode = 'categories' | 'cards' | 'practice' | 'memory' | 'drag';
 
+
 interface WordsModuleProps {
   userId?: string;
 }
@@ -22,12 +23,19 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
   const [category, setCategory] = useState<VocabCategory | null>(null);
   const [difficulty, setDifficulty] = useState<WordDifficulty>('easy');
   const [cardIdx, setCardIdx] = useState(0);
+  const [practiceCount, setPracticeCount] = useState(10);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [trackedIds, setTrackedIds] = useState<Set<string>>(new Set());
   const [chooserWord, setChooserWord] = useState<VocabWord | null>(null);
   const { trackStep } = useProgressTracker(userId);
 
-  const activeWords = category ? category.words.filter(w => w.difficulty === difficulty) : [];
+  const allDiffWords = category ? category.words.filter(w => w.difficulty === difficulty) : [];
+  // Stable shuffle reset when category/difficulty/count changes
+  const activeWords = React.useMemo(
+    () => [...allDiffWords].sort(() => Math.random() - 0.5).slice(0, Math.min(practiceCount, allDiffWords.length)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [category?.id, difficulty, practiceCount],
+  );
 
   React.useEffect(() => {
     if (!userId) return;
@@ -99,7 +107,7 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
         <div>
           <h1 className={styles.title}>💬 Слова</h1>
           <p className={styles.subtitle}>
-            {category ? `${category.icon} ${category.name}` : 'Выбери категорию для изучения'}
+            {mode === 'drag' && !category ? '🧩 Квиз из всех слов' : category ? `${category.icon} ${category.name}` : 'Выбери категорию для изучения'}
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -122,6 +130,11 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
               <span className={styles.catCount}>{cat.words.length} слов</span>
             </button>
           ))}
+          <button className={`${styles.catCard} ${styles.catCardDrag}`} onClick={() => setMode('drag')}>
+            <span className={styles.catIcon}>🧩</span>
+            <span className={styles.catName}>Drag Words</span>
+            <span className={styles.catCount}>Квиз из всех слов</span>
+          </button>
         </div>
       )}
 
@@ -146,6 +159,21 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
               </button>
             ))}
           </div>
+
+          {mode !== 'drag' && (
+            <div className={styles.countRow}>
+              <span className={styles.countLabel}>
+                Слов за сеанс: <strong>{Math.min(practiceCount, allDiffWords.length)}</strong>
+                {allDiffWords.length > 0 && ` / ${allDiffWords.length}`}
+              </span>
+              <input
+                type="range" min={3} max={Math.max(3, allDiffWords.length)} step={1}
+                value={Math.min(practiceCount, Math.max(3, allDiffWords.length))}
+                onChange={(e) => { setPracticeCount(Number(e.target.value)); setCardIdx(0); }}
+                className={styles.countSlider}
+              />
+            </div>
+          )}
 
           <div className={styles.modeRow}>
             <button className={`${styles.modePill} ${mode === 'cards' ? styles.modePillActive : ''}`} onClick={() => setMode('cards')}>🃏 Карточки</button>
@@ -205,14 +233,13 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
         />
       )}
 
-      {mode === 'drag' && activeWords.length > 0 && (
+      {mode === 'drag' && (
         <WordsDragBuilderGame
-          words={activeWords}
-          trackedIds={trackedIds}
-          onDropCheck={(correct, wordId) => {
+          sourceWords={category ? category.words : undefined}
+          onAnswer={(correct, wordId) => {
             trackStep({
               moduleId: 'words',
-              stepId: `drag:${category?.id}:${difficulty}:${wordId}`,
+              stepId: `drag:${category?.id ?? 'all'}:${difficulty}:${wordId}`,
               isCorrect: correct,
             }).catch((err) => console.error('[progress words drag]', err));
           }}

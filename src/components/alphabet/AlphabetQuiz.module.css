@@ -1,3 +1,252 @@
+/* ── SELECT phase ─────────────────────────────────────────────────────── */
+.selectWrap {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 8px;
+}
+
+.selectHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.selectDesc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.selectActions {
+  display: flex;
+  gap: 8px;
+}
+
+.selCtrlBtn {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.selCtrlBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.selectSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.selectSectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.selectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+}
+
+.selCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.selCard:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.selCardOn {
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.18) !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.selHebrew {
+  font-size: 32px;
+  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  line-height: 1.1;
+}
+
+.selName {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+}
+
+.selTranslit {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.startRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0 4px;
+}
+
+.selCount {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.startBtn {
+  padding: 10px 26px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.startBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.startBtn:not(:disabled):hover {
+  opacity: 0.88;
+}
+
+/* ── RESULTS phase ────────────────────────────────────────────────────── */
+.resultsWrap {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.resultsTitle {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+}
+
+.resultsSummary {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.resStat {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.resultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.resultOk {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.resultFail {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.07);
+}
+
+.resHebrew {
+  font-size: 28px;
+  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  min-width: 36px;
+  text-align: center;
+}
+
+.resInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.resName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.resTranslit {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.resStats {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.restartBtn {
+  align-self: center;
+  padding: 10px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.restartBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── QUIZ phase ───────────────────────────────────────────────────────── */
 .quiz {
   display: flex;
   flex-direction: column;
@@ -8,33 +257,53 @@
   padding-top: 12px;
 }
 
-/* Stats */
-.stats {
+.quizProgress {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
-.stat {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-size: 14px;
-  font-weight: 600;
+.progressText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
 }
 
-.streak {
-  border-color: rgba(255, 120, 40, 0.5);
-  color: #ffb347;
-  animation: pop 0.3s ease;
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-@keyframes pop {
-  0%   { transform: scale(0.85); }
-  60%  { transform: scale(1.12); }
-  100% { transform: scale(1); }
+.progressFill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 3px;
+  transition: width 0.35s ease;
+}
+
+.timerText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.abortBtn {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.abortBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Question box */
@@ -115,3 +384,10 @@
   border-color: #ef4444 !important;
   color: #fca5a5 !important;
 }
+
+@keyframes pop {
+  0%   { transform: scale(0.85); }
+  60%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+

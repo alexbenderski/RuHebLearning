@@ -61,6 +61,7 @@ export interface VocabWord {
   mnemonic: string; // Russian memory trick
   category: string;
   difficulty: WordDifficulty;
+  sentenceRu?: string; // template with [target word] marked, e.g. "Скажи [привет] другу"
 }
 
 export type WordDifficulty = 'easy' | 'medium' | 'hard';

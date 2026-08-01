@@ -3,6 +3,7 @@ import type { VocabWord } from '../../types';
 import type { WordDifficulty } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import styles from './WordsQuiz.module.css';
 
 interface WordsQuizProps {
@@ -29,8 +30,10 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [totalTime, setTotalTime] = useState(0);
   const { playAudio, isLoading } = useCloudTTS();
   const { trackStep } = useProgressTracker(userId);
+  const { seconds, formattedTime } = useGameTimer(!done);
 
   const current = shuffled[idx];
 
@@ -47,6 +50,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
     }).catch((err) => console.error('[progress words quiz]', err));
     setTimeout(() => {
       if (idx + 1 >= shuffled.length) {
+        setTotalTime(seconds);
         setDone(true);
       } else {
         const next = shuffled[idx + 1];
@@ -64,6 +68,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
       <div className={styles.result}>
         <div className={styles.resultEmoji}>{perfect ? '🏆' : good ? '⭐' : '💪'}</div>
         <h2 className={styles.resultScore}>{score} / {shuffled.length}</h2>
+        <div className={styles.resultTime}>Время: {totalTime}s</div>
         <p className={styles.resultMsg}>
           {perfect ? 'Отлично! Все слова знаешь!' : good ? 'Хорошо! Продолжай учиться!' : 'Нужна практика. Ещё раз?'}
         </p>
@@ -79,6 +84,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
       {/* Progress */}
       <div className={styles.statsRow}>
         <span>Вопрос {idx + 1} / {shuffled.length}</span>
+        <span className={styles.timerText}>⏱ {formattedTime}</span>
         <span>✅ {score}</span>
       </div>
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { SavedWord, WordDifficulty } from '../types';
 import { getSavedWords, removeWordFromList, updateSavedWordDifficulty } from '../firebase/userService';
 import { useProgressTracker } from '../hooks/useProgressTracker';
+import useCloudTTS from '../hooks/useCloudTTS';
 import WordsMemoryGame from '../components/words/WordsMemoryGame';
 import WordsDragBuilderGame from '../components/words/WordsDragBuilderGame';
 import styles from './MyWordsPage.module.css';
@@ -19,6 +20,7 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
   const [mode, setMode] = React.useState<'list' | 'memory' | 'drag'>('list');
   const navigate = useNavigate();
   const { trackStep } = useProgressTracker(userId);
+  const { playAudio } = useCloudTTS();
 
   const loadWords = React.useCallback(async () => {
     const words = await getSavedWords(userId);
@@ -82,11 +84,18 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
           {filtered.length === 0 && <p className={styles.empty}>Нет слов в этом уровне. Добавь из модуля Слова.</p>}
           {filtered.map((w) => (
             <div key={w.id} className={styles.wordCard}>
-              <div>
+              <div className={styles.wordMain}>
                 <div className={styles.he}>{w.hebrew}</div>
                 <div className={styles.ru}>{w.translation}</div>
                 <div className={styles.tr}>{w.transliteration}</div>
               </div>
+              <button
+                className={styles.speakBtn}
+                onClick={() => playAudio(w.hebrew)}
+                title="Прослушать"
+              >
+                🔊
+              </button>
               <button
                 className={styles.removeBtn}
                 onClick={async () => {
@@ -126,9 +135,8 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
 
       {mode === 'drag' && filtered.length > 0 && (
         <WordsDragBuilderGame
-          words={filtered}
-          trackedIds={new Set(filtered.map((w) => w.id))}
-          onDropCheck={(correct, wordId) => {
+          sourceWords={filtered}
+          onAnswer={(correct, wordId) => {
             trackStep({ moduleId: 'my-words', stepId: `drag:${difficulty}:${wordId}`, isCorrect: correct }).catch((err) => console.error('[my words progress]', err));
           }}
         />

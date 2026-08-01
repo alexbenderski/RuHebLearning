@@ -27,11 +27,11 @@ export const HEBREW_LETTERS: HebrewLetter[] = [
 
 // Appear only at end of a word
 export const FINAL_LETTERS: HebrewLetter[] = [
-  { letter: 'ך', name: 'Каф-Софит',   transliteration: 'К / Х',  isFinal: true, finalOf: 'כ' },
-  { letter: 'ם', name: 'Мем-Софит',   transliteration: 'М',      isFinal: true, finalOf: 'מ' },
-  { letter: 'ן', name: 'Нун-Софит',   transliteration: 'Н',      isFinal: true, finalOf: 'נ' },
-  { letter: 'ף', name: 'Пе-Софит',    transliteration: 'П / Ф',  isFinal: true, finalOf: 'פ' },
-  { letter: 'ץ', name: 'Цади-Софит',  transliteration: 'Ц',      isFinal: true, finalOf: 'צ' },
+  { letter: 'ך', name: 'Каф Софит',   transliteration: 'К / Х',  isFinal: true, finalOf: 'כ' },
+  { letter: 'ם', name: 'Мем Софит',   transliteration: 'М',      isFinal: true, finalOf: 'מ' },
+  { letter: 'ן', name: 'Нун Софит',   transliteration: 'Н',      isFinal: true, finalOf: 'נ' },
+  { letter: 'ף', name: 'Пе Софит',    transliteration: 'П / Ф',  isFinal: true, finalOf: 'פ' },
+  { letter: 'ץ', name: 'Цади Софит',  transliteration: 'Ц',      isFinal: true, finalOf: 'צ' },
 ];
 
 export const ALL_LETTERS = [...HEBREW_LETTERS, ...FINAL_LETTERS];

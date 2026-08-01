@@ -71,6 +71,12 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.05);
   padding: 12px;
+  flex-wrap: wrap;
+}
+
+.wordMain {
+  flex: 1;
+  min-width: 0;
 }
 
 .he {
@@ -96,6 +102,23 @@
   padding: 8px 10px;
   cursor: pointer;
   font-weight: 700;
+}
+
+.speakBtn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 17px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.speakBtn:hover {
+  background: rgba(59, 130, 246, 0.25);
 }
 
 .wordDiffRow {

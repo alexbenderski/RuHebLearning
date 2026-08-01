@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import type { HebrewLetter } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import styles from './AlphabetQuiz.module.css';
 
 interface AlphabetQuizProps {
@@ -10,73 +11,201 @@ interface AlphabetQuizProps {
   onAnswer?: (letterChar: string, correct: boolean) => void;
 }
 
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+type QuizPhase = 'select' | 'quiz' | 'results';
+type LetterAttempt = { correct: number; wrong: number };
 
-function buildOptions(correct: HebrewLetter, all: HebrewLetter[]): HebrewLetter[] {
-  const pool = all.filter(l => l.letter !== correct.letter);
-  const wrong = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+function buildOptions(correct: HebrewLetter, pool: HebrewLetter[]): HebrewLetter[] {
+  const others = pool.filter((l) => l.letter !== correct.letter);
+  const wrong = [...others].sort(() => Math.random() - 0.5).slice(0, 3);
   return [...wrong, correct].sort(() => Math.random() - 0.5);
 }
 
-// Single state object guarantees current and options always correspond to the same letter
-type Question = { current: HebrewLetter; options: HebrewLetter[] };
-
-function makeQuestion(letters: HebrewLetter[]): Question {
-  const current = pickRandom(letters);
-  return { current, options: buildOptions(current, letters) };
-}
-
 const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer }) => {
-  const [question, setQuestion] = useState<Question>(() => makeQuestion(letters));
-  const [selected, setSelected] = useState<string | null>(null);
-  const [score, setScore] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [streak, setStreak] = useState(0);
+  const [phase, setPhase] = useState<QuizPhase>('select');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Quiz state
+  const [queue, setQueue] = useState<HebrewLetter[]>([]);
+  const [options, setOptions] = useState<HebrewLetter[]>([]);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState<Record<string, LetterAttempt>>({});
+  const [totalTime, setTotalTime] = useState(0);
+
   const { playAudio } = useCloudTTS();
   const { trackStep } = useProgressTracker(userId);
+  const { seconds, formattedTime, resetTimer } = useGameTimer(phase === 'quiz');
 
-  const { current, options } = question;
-
-  const nextQuestion = useCallback(() => {
-    setQuestion(makeQuestion(letters));
-    setSelected(null);
-  }, [letters]);
-
-  const handleAnswer = (letter: HebrewLetter) => {
-    if (selected !== null) return;
-    setSelected(letter.letter);
-    setTotal(t => t + 1);
-    const isCorrect = letter.letter === current.letter;
-    if (isCorrect) {
-      setScore(s => s + 1);
-      setStreak(s => s + 1);
-      playAudio(current.letter);
-    } else {
-      setStreak(0);
-    }
-    trackStep({
-      moduleId: 'alphabet',
-      stepId: `quiz:${current.letter}`,
-      isCorrect,
-      payload: { selected: letter.letter },
-    }).catch((err) => console.error('[progress alphabet]', err));
-    onAnswer?.(current.letter, isCorrect);
-    setTimeout(nextQuestion, 1300);
+  const toggleLetter = (char: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(char)) next.delete(char);
+      else next.add(char);
+      return next;
+    });
   };
 
-  const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+  const startQuiz = useCallback(() => {
+    const chosen = letters.filter((l) => selected.has(l.letter));
+    if (chosen.length < 2) return;
+    const q = [...chosen].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setOptions(buildOptions(q[0], letters));
+    setPicked(null);
+    setAttempts({});
+    resetTimer();
+    setPhase('quiz');
+  }, [letters, selected, resetTimer]);
+
+  const handleAnswer = useCallback(
+    (opt: HebrewLetter) => {
+      if (picked !== null) return;
+      const current = queue[0];
+      if (!current) return;
+      setPicked(opt.letter);
+      const isCorrect = opt.letter === current.letter;
+
+      setAttempts((prev) => ({
+        ...prev,
+        [current.letter]: {
+          correct: (prev[current.letter]?.correct ?? 0) + (isCorrect ? 1 : 0),
+          wrong: (prev[current.letter]?.wrong ?? 0) + (isCorrect ? 0 : 1),
+        },
+      }));
+
+      if (isCorrect) playAudio(current.letter);
+      trackStep({ moduleId: 'alphabet', stepId: `quiz:${current.letter}`, isCorrect, payload: { selected: opt.letter } }).catch(console.error);
+      onAnswer?.(current.letter, isCorrect);
+
+      setTimeout(() => {
+        setPicked(null);
+        if (isCorrect) {
+          const next = queue.slice(1);
+          if (next.length === 0) {
+            setTotalTime(seconds);
+            setPhase('results');
+          } else {
+            setQueue(next);
+            setOptions(buildOptions(next[0], letters));
+          }
+        } else {
+          // Re-ask same letter with freshly shuffled options
+          setOptions(buildOptions(current, letters));
+        }
+      }, 1200);
+    },
+    [picked, queue, letters, playAudio, trackStep, onAnswer, seconds],
+  );
+
+  // ── SELECT phase ─────────────────────────────────────────────────────────
+  if (phase === 'select') {
+    const mainLetters = letters.filter((l) => !l.isFinal);
+    const finalLetters = letters.filter((l) => l.isFinal);
+    return (
+      <div className={styles.selectWrap}>
+        <div className={styles.selectHeader}>
+          <p className={styles.selectDesc}>Выбери буквы для квиза — нажми на карточку чтобы выделить</p>
+          <div className={styles.selectActions}>
+            <button className={styles.selCtrlBtn} onClick={() => setSelected(new Set(letters.map((l) => l.letter)))}>Все</button>
+            <button className={styles.selCtrlBtn} onClick={() => setSelected(new Set())}>Сбросить</button>
+          </div>
+        </div>
+
+        <div className={styles.selectSection}>
+          <div className={styles.selectSectionTitle}>Основные буквы</div>
+          <div className={styles.selectGrid}>
+            {mainLetters.map((l) => (
+              <button
+                key={l.letter}
+                className={`${styles.selCard} ${selected.has(l.letter) ? styles.selCardOn : ''}`}
+                onClick={() => toggleLetter(l.letter)}
+              >
+                <span className={styles.selHebrew}>{l.letter}</span>
+                <span className={styles.selName}>{l.name}</span>
+                <span className={styles.selTranslit}>{l.transliteration}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.selectSection}>
+          <div className={styles.selectSectionTitle}>Конечные буквы</div>
+          <div className={styles.selectGrid}>
+            {finalLetters.map((l) => (
+              <button
+                key={l.letter}
+                className={`${styles.selCard} ${selected.has(l.letter) ? styles.selCardOn : ''}`}
+                onClick={() => toggleLetter(l.letter)}
+              >
+                <span className={styles.selHebrew}>{l.letter}</span>
+                <span className={styles.selName}>{l.name}</span>
+                <span className={styles.selTranslit}>{l.transliteration}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.startRow}>
+          <span className={styles.selCount}>{selected.size} букв{selected.size === 1 ? 'а' : selected.size < 5 ? 'ы' : ''} выбрано</span>
+          <button className={styles.startBtn} disabled={selected.size < 2} onClick={startQuiz}>
+            Начать квиз →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── RESULTS phase ─────────────────────────────────────────────────────────
+  if (phase === 'results') {
+    const selectedLetters = letters.filter((l) => selected.has(l.letter));
+    const totalCorrect = Object.values(attempts).reduce((s, a) => s + a.correct, 0);
+    const totalWrong = Object.values(attempts).reduce((s, a) => s + a.wrong, 0);
+    const accuracy = totalCorrect + totalWrong > 0 ? Math.round((totalCorrect / (totalCorrect + totalWrong)) * 100) : 0;
+    return (
+      <div className={styles.resultsWrap}>
+        <h3 className={styles.resultsTitle}>🎉 Результаты квиза</h3>
+        <div className={styles.resultsSummary}>
+          <span className={styles.resStat}>✅ {totalCorrect}</span>
+          <span className={styles.resStat}>❌ {totalWrong}</span>
+          <span className={styles.resStat}>🎯 {accuracy}%</span>
+          <span className={styles.resStat}>⏱ {totalTime}s</span>
+        </div>
+        <div className={styles.resultsList}>
+          {selectedLetters.map((l) => {
+            const att = attempts[l.letter] ?? { correct: 0, wrong: 0 };
+            const perfect = att.correct > 0 && att.wrong === 0;
+            return (
+              <div key={l.letter} className={`${styles.resultRow} ${perfect ? styles.resultOk : att.wrong > 0 ? styles.resultFail : ''}`}>
+                <span className={styles.resHebrew}>{l.letter}</span>
+                <div className={styles.resInfo}>
+                  <span className={styles.resName}>{l.name}</span>
+                  <span className={styles.resTranslit}>{l.transliteration}</span>
+                </div>
+                <span className={styles.resStats}>✅{att.correct} ❌{att.wrong}</span>
+              </div>
+            );
+          })}
+        </div>
+        <button className={styles.restartBtn} onClick={() => setPhase('select')}>← Выбрать снова</button>
+      </div>
+    );
+  }
+
+  // ── QUIZ phase ────────────────────────────────────────────────────────────
+  const current = queue[0];
+  if (!current) return null;
+  const totalSelected = selected.size;
+  const done = totalSelected - queue.length;
 
   return (
     <div className={styles.quiz}>
-      {/* Stats bar */}
-      <div className={styles.stats}>
-        <span className={styles.stat}>✅ {score} / {total}</span>
-        <span className={styles.stat}>🎯 {accuracy}%</span>
-        {streak >= 3 && (
-          <span className={`${styles.stat} ${styles.streak}`}>🔥 Серия: {streak}!</span>
-        )}
+      {/* Progress */}
+      <div className={styles.quizProgress}>
+        <span className={styles.progressText}>{done} / {totalSelected}</span>
+        <div className={styles.progressBar}>
+          <div className={styles.progressFill} style={{ width: `${(done / totalSelected) * 100}%` }} />
+        </div>
+        <span className={styles.timerText}>⏱ {formattedTime}</span>
+        <button className={styles.abortBtn} onClick={() => setPhase('select')}>← Назад</button>
       </div>
 
       {/* Question */}
@@ -92,12 +221,11 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer }
       <div className={styles.options}>
         {options.map((opt) => {
           let cls = styles.option;
-          if (selected !== null) {
-            if (opt.letter === current.letter) cls = `${styles.option} ${styles.correct}`;
-            else if (opt.letter === selected) cls = `${styles.option} ${styles.wrong}`;
+          if (picked !== null && opt.letter === picked) {
+            cls = `${styles.option} ${picked === current.letter ? styles.correct : styles.wrong}`;
           }
           return (
-            <button key={opt.letter} className={cls} onClick={() => handleAnswer(opt)}>
+            <button key={opt.letter} className={cls} disabled={picked !== null} onClick={() => handleAnswer(opt)}>
               {opt.name}
             </button>
           );
@@ -108,3 +236,4 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer }
 };
 
 export default AlphabetQuiz;
+

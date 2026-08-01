@@ -8,58 +8,211 @@
   padding: 16px;
 }
 
+/* ── SETUP ── */
+.setupTitle {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.pairOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.pairBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 76px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pairBtn:hover {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.pairBtnActive {
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.2) !important;
+}
+
+.pairBtnNum {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.pairBtnSub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+
+.startBtn {
+  display: block;
+  margin: 0 auto;
+  padding: 11px 32px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.startBtn:hover {
+  opacity: 0.88;
+}
+
+/* ── TIMER ── */
+.countdown {
+  font-size: 14px;
+  color: #f59e0b;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.25); }
+}
+
+/* ── GAME ── */
 .topRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 12px;
   color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
   font-weight: 700;
 }
 
+.timerRow {
+  display: flex;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.statsRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gameTimer {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.flashText {
+  color: #10b981;
+  font-weight: 900;
+  font-size: 16px;
+  animation: pulse 1s ease infinite;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   gap: 10px;
 }
 
 .card {
-  min-height: 70px;
+  min-height: 72px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.06);
   color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   font-family: inherit;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.12s ease, background 0.12s ease;
+  word-break: break-word;
+  padding: 6px;
 }
 
 .card:hover {
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .open {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.22);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.hebrewCard {
+  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  font-size: 24px;
+  direction: rtl;
+}
+
+/* Cards that matched and fully animated away — keep space in grid */
+.cardGone {
+  min-height: 72px;
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Burst / explode animation for matched pairs */
+@keyframes burst {
+  0%   { transform: scale(1) rotate(0deg);   opacity: 1; filter: brightness(1.2) saturate(1.5); }
+  28%  { transform: scale(1.4) rotate(-6deg); opacity: 1; filter: brightness(2.2) saturate(2);   }
+  65%  { transform: scale(0.6) rotate(12deg); opacity: 0.55; }
+  100% { transform: scale(0)   rotate(22deg); opacity: 0;    }
+}
+
+.exploding {
+  animation: burst 0.58s ease-out forwards;
+  pointer-events: none;
+  border-color: rgba(255, 215, 0, 0.85) !important;
+  background: rgba(255, 180, 0, 0.35) !important;
 }
 
 .matched {
-  background: rgba(16, 185, 129, 0.26);
-  border-color: rgba(16, 185, 129, 0.6);
+  /* fallback — normally cards disappear via cardGone */
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.55);
 }
 
 .done {
-  margin-top: 14px;
+  margin-top: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 12px 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  font-weight: 700;
 }
 
 .restart {
   border: none;
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 8px 16px;
   font-weight: 700;
   cursor: pointer;
+  background: rgba(16, 185, 129, 0.3);
+  color: #fff;
 }
+
+.restart:hover {
+  background: rgba(16, 185, 129, 0.5);
+}
+

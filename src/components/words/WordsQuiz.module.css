@@ -16,6 +16,11 @@
   color: rgba(255, 255, 255, 0.65);
 }
 
+.timerText {
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
 .questionBox {
   display: flex;
   flex-direction: column;
@@ -122,6 +127,13 @@
   background: linear-gradient(135deg, #ffd700, #ffa500);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.resultTime {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: -8px;
+  margin-bottom: 8px;
 }
 
 .resultMsg {

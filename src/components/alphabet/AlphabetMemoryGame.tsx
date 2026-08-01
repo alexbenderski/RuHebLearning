@@ -1,11 +1,13 @@
 import React from 'react';
 import type { HebrewLetter } from '../../types';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import styles from './AlphabetMemoryGame.module.css';
 
 type LetterCard = {
   id: string;
   pairId: string;
   label: string;
+  isHebrew: boolean;
   matched: boolean;
 };
 
@@ -13,12 +15,12 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function buildDeck(letters: HebrewLetter[]): LetterCard[] {
-  const base = shuffle(letters).slice(0, Math.min(8, letters.length));
+function buildDeck(letters: HebrewLetter[], pairCount: number): LetterCard[] {
+  const base = shuffle(letters).slice(0, Math.min(pairCount, letters.length));
   const cards: LetterCard[] = [];
   base.forEach((l) => {
-    cards.push({ id: `${l.letter}-char`, pairId: l.letter, label: l.letter, matched: false });
-    cards.push({ id: `${l.letter}-name`, pairId: l.letter, label: l.name, matched: false });
+    cards.push({ id: `${l.letter}-char`, pairId: l.letter, label: l.letter, isHebrew: true, matched: false });
+    cards.push({ id: `${l.letter}-name`, pairId: l.letter, label: l.name, isHebrew: false, matched: false });
   });
   return shuffle(cards);
 }
@@ -28,14 +30,51 @@ interface AlphabetMemoryGameProps {
   onEvent?: (isMatch: boolean) => void;
 }
 
+type Phase = 'setup' | 'play' | 'flash' | 'done';
+const PAIR_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 10, 12];
+
 const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEvent }) => {
-  const [deck, setDeck] = React.useState<LetterCard[]>(() => buildDeck(letters));
+  const maxPairs = Math.min(12, letters.length);
+  const [phase, setPhase] = React.useState<Phase>('setup');
+  const [pairCount, setPairCount] = React.useState(Math.min(6, maxPairs));
+  const [deck, setDeck] = React.useState<LetterCard[]>([]);
   const [open, setOpen] = React.useState<number[]>([]);
   const [moves, setMoves] = React.useState(0);
+  const [countdown, setCountdown] = React.useState(4);
+  const [exploding, setExploding] = React.useState<Set<string>>(new Set());  const [totalTime, setTotalTime] = React.useState(0);
 
-  const allMatched = deck.length > 0 && deck.every((c) => c.matched);
+  const { seconds, formattedTime, resetTimer } = useGameTimer(phase === 'play' || phase === 'flash');
+  const startGame = () => {
+    setDeck(buildDeck(letters, pairCount));
+    setOpen([]);
+    setMoves(0);
+    setCountdown(4);
+    setExploding(new Set());    resetTimer();    setPhase('play');
+  };
+
+  // 5s play -> 1s flash loop
+  React.useEffect(() => {
+    if (phase === 'play') {
+      if (countdown <= 0) {
+        setPhase('flash');
+        setCountdown(2);
+        return;
+      }
+      const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+      return () => clearTimeout(t);
+    } else if (phase === 'flash') {
+      if (countdown <= 0) {
+        setPhase('play');
+        setCountdown(4);
+        return;
+      }
+      const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+      return () => clearTimeout(t);
+    }
+  }, [phase, countdown]);
 
   const onPick = (idx: number) => {
+    if (phase !== 'play') return;
     if (open.length === 2) return;
     if (deck[idx].matched || open.includes(idx)) return;
 
@@ -47,43 +86,91 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEven
       const [a, b] = next;
       const isMatch = deck[a].pairId === deck[b].pairId;
       onEvent?.(isMatch);
+      
       if (isMatch) {
+        const ids = new Set([deck[a].id, deck[b].id]);
+        setExploding(ids);
         setDeck((prev) => prev.map((c, i) => (i === a || i === b ? { ...c, matched: true } : c)));
         setOpen([]);
+        setTimeout(() => {
+          setExploding(new Set());
+          setDeck((prev) => {
+            if (prev.every((c) => c.matched)) {
+              setTotalTime(seconds);
+              setPhase('done');
+            }
+            return prev;
+          });
+        }, 580);
       } else {
-        setTimeout(() => setOpen([]), 700);
+        setTimeout(() => setOpen([]), 750);
       }
     }
   };
+
+  if (phase === 'setup') {
+    const opts = PAIR_OPTIONS.filter((n) => n <= maxPairs);
+    return (
+      <div className={styles.wrap}>
+        <h3 className={styles.setupTitle}>🧠 Memory — выбери количество пар</h3>
+        <div className={styles.pairOptions}>
+          {opts.map((n) => (
+            <button
+              key={n}
+              className={`${styles.pairBtn} ${pairCount === n ? styles.pairBtnActive : ''}`}
+              onClick={() => setPairCount(n)}
+            >
+              <span className={styles.pairBtnNum}>{n}</span>
+              <span className={styles.pairBtnSub}>{n * 2} карт</span>
+            </button>
+          ))}
+        </div>
+        <button className={styles.startBtn} onClick={startGame}>Начать →</button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrap}>
       <div className={styles.topRow}>
         <span>🧠 Memory</span>
-        <span>Ходы: {moves}</span>
+        <div className={styles.timerRow}>
+          {phase === 'flash' ? (
+            <span className={styles.flashText}>Смотри!</span>
+          ) : (
+            <span className={styles.countdown}>Подсказка через: {countdown}</span>
+          )}
+        </div>
+        <div className={styles.statsRight}>
+          <span className={styles.gameTimer}>⏱ {phase === 'done' ? totalTime + 's' : formattedTime}</span>
+          <span>Ходы: {moves}</span>
+        </div>
       </div>
 
       <div className={styles.grid}>
         {deck.map((card, idx) => {
-          const isOpen = open.includes(idx);
+          const isForceOpen = phase === 'flash';
+          const isOpen = isForceOpen || open.includes(idx);
+          const isBursting = exploding.has(card.id);
+          if (card.matched && !isBursting) {
+            return <div key={card.id} className={styles.cardGone} />;
+          }
           return (
             <button
               key={card.id}
-              className={`${styles.card} ${card.matched ? styles.matched : ''} ${isOpen ? styles.open : ''}`}
+              className={`${styles.card} ${isOpen ? styles.open : ''} ${isBursting ? styles.exploding : ''} ${card.isHebrew && isOpen ? styles.hebrewCard : ''}`}
               onClick={() => onPick(idx)}
             >
-              {card.matched || isOpen ? card.label : '❓'}
+              {isOpen || isBursting ? card.label : '❓'}
             </button>
           );
         })}
       </div>
 
-      {allMatched && (
+      {phase === 'done' && (
         <div className={styles.done}>
-          <p>🎉 Отлично! Ты запомнил буквы.</p>
-          <button className={styles.restart} onClick={() => { setDeck(buildDeck(letters)); setOpen([]); setMoves(0); }}>
-            Играть ещё
-          </button>
+          <p>🎉 Все пары за {moves} ходов!</p>
+          <button className={styles.restart} onClick={() => setPhase('setup')}>Ещё раз</button>
         </div>
       )}
     </div>
