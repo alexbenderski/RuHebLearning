@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { VOCAB_CATEGORIES } from '../../data/vocabulary';
+import { VOCAB_CATEGORIES } from '../../data/vocabulary.ts';
 import type { VocabCategory, VocabWord, WordDifficulty } from '../../types';
 import FlashCard from './FlashCard';
 import WordsQuiz from './WordsQuiz';

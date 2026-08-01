@@ -1,6 +1,7 @@
 import React from 'react';
 import type { VocabWord } from '../../types';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { useSoundEffects } from '../../hooks/useSoundEffects';
 import styles from './WordsMemoryGame.module.css';
 
 type MemoryCard = {
@@ -34,6 +35,7 @@ const PAIR_OPTIONS = [2, 3, 4, 5, 6, 7, 8];
 
 const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => {
   const maxPairs = Math.min(8, words.length);
+  const { playClick, playMatch } = useSoundEffects();
   const [phase, setPhase] = React.useState<'setup' | 'play' | 'flash' | 'done'>('setup');
   const [pairCount, setPairCount] = React.useState(Math.min(6, maxPairs));
   const [deck, setDeck] = React.useState<MemoryCard[]>([]);
@@ -81,6 +83,8 @@ const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => 
     if (open.length === 2) return;
     if (deck[idx].matched || open.includes(idx)) return;
 
+    playClick();
+
     const nextOpen = [...open, idx];
     setOpen(nextOpen);
 
@@ -91,6 +95,7 @@ const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => 
       onEvent?.(isMatch);
 
       if (isMatch) {
+        playMatch();
         const ids = new Set([deck[a].id, deck[b].id]);
         setExploding(ids);
         setDeck((prev) => prev.map((c, i) => (i === a || i === b ? { ...c, matched: true } : c)));

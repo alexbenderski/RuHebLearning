@@ -1,6 +1,7 @@
 import React from 'react';
 import type { HebrewLetter } from '../../types';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { useSoundEffects } from '../../hooks/useSoundEffects';
 import styles from './AlphabetMemoryGame.module.css';
 
 type LetterCard = {
@@ -35,6 +36,7 @@ const PAIR_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 10, 12];
 
 const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEvent }) => {
   const maxPairs = Math.min(12, letters.length);
+  const { playClick, playMatch } = useSoundEffects();
   const [phase, setPhase] = React.useState<Phase>('setup');
   const [pairCount, setPairCount] = React.useState(Math.min(6, maxPairs));
   const [deck, setDeck] = React.useState<LetterCard[]>([]);
@@ -78,6 +80,8 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEven
     if (open.length === 2) return;
     if (deck[idx].matched || open.includes(idx)) return;
 
+    playClick();
+
     const next = [...open, idx];
     setOpen(next);
 
@@ -88,6 +92,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEven
       onEvent?.(isMatch);
       
       if (isMatch) {
+        playMatch();
         const ids = new Set([deck[a].id, deck[b].id]);
         setExploding(ids);
         setDeck((prev) => prev.map((c, i) => (i === a || i === b ? { ...c, matched: true } : c)));

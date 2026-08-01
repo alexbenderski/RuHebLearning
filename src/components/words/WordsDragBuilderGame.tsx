@@ -31,8 +31,7 @@ const DIFF_LABELS: Record<WordDifficulty, string> = {
 const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords, onAnswer }) => {
   const { playAudio } = useCloudTTS();
   const allWords = React.useMemo(
-    () => (sourceWords ?? VOCAB_CATEGORIES.flatMap((c) => c.words)).filter((w) => !!w.sentenceRu),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => sourceWords ?? VOCAB_CATEGORIES.flatMap((c) => c.words),
     [sourceWords],
   );
 
@@ -45,6 +44,16 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
   const [answers, setAnswers] = React.useState<Record<string, Answer>>({});
   
   const { formattedTime, resetTimer } = useGameTimer(phase === 'game');
+
+  // Automatically update difficulties based on what is actually available in the word pool
+  React.useEffect(() => {
+    if (allWords.length > 0) {
+      const availableDiffs = new Set(allWords.map((w) => w.difficulty));
+      if (availableDiffs.size > 0) {
+        setDifficulties(availableDiffs);
+      }
+    }
+  }, [allWords]);
 
   const toggleDifficulty = (d: WordDifficulty) => {
     setDifficulties((prev) => {
@@ -176,6 +185,25 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
   const isAnswered = !!currentAnswer; // locked after any placement
   const isLast = currentIdx === gameWords.length - 1;
 
+  if (phase === 'game' && !currentWord) {
+    return (
+      <div className={styles.wrap}>
+        <div className={styles.setup}>
+          <p>Нет доступных слов для игры.</p>
+          <button className={styles.startBtn} onClick={() => setPhase('setup')}>Назад</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Click handler to allow easy mobile tapping alternative to dragging
+  const handleTileClick = (word: VocabWord) => {
+    playAudio(word.hebrew);
+    if (!isAnswered && currentWord) {
+      handleDrop(currentWord.id, word.id);
+    }
+  };
+
   return (
     <div className={styles.wrap}>
       {/* Header */}
@@ -210,12 +238,23 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
                 {parsedCurrent.before}
                 {currentAnswer
                   ? <span className={styles.dropZonePlaced}>{gameWords.find(w => w.id === currentAnswer.givenId)?.hebrew ?? '?'}</span>
-                  : <span className={styles.dropZone}>Перетащи сюда</span>}
+                  : <span className={styles.dropZone}>Перетащи сюда (или нажми на слово ниже)</span>}
                 {parsedCurrent.after}
               </div>
             </>
           ) : (
-            <div className={styles.sentenceRu}>{currentWord.translation}</div>
+            <>
+              <div className={styles.sentenceRu}>{currentWord.translation}</div>
+              <div
+                className={`${styles.sentenceHeb} ${!isAnswered ? styles.dropTarget : ''}`}
+                onDragOver={(e) => !isAnswered && e.preventDefault()}
+                onDrop={(e) => { if (!isAnswered) handleDrop(currentWord.id, e.dataTransfer.getData('text/plain')); }}
+              >
+                {currentAnswer
+                  ? <span className={styles.dropZonePlaced}>{gameWords.find(w => w.id === currentAnswer.givenId)?.hebrew ?? '?'}</span>
+                  : <span className={styles.dropZone}>Перетащи перевод сюда (или нажми на слово ниже)</span>}
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -242,7 +281,7 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
       </div>
 
       {/* Word bank — always shows all words, placed ones are dimmed */}
-      <div className={styles.bankLabel}>Перетащи слово в предложение:</div>
+      <div className={styles.bankLabel}>Перетащи слово в предложение или просто нажми на него:</div>
       <div className={styles.bank}>
         {gameWords.map((w) => {
           const placed = !!answers[w.id]; // dim tile after any placement
@@ -252,8 +291,8 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
               draggable={!placed}
               onDragStart={(e) => { if (!placed) e.dataTransfer.setData('text/plain', w.id); }}
               className={`${styles.tile} ${placed ? styles.tilePlaced : ''}`}
-              onClick={() => playAudio(w.hebrew)}
-              title="Нажми чтобы слушать"
+              onClick={() => handleTileClick(w)}
+              title="Нажми чтобы выбрать и озвучить"
             >
               <span className={styles.tileHebrew}>{w.hebrew}</span>
               <span className={styles.tileTranslit}>{w.transliteration}</span>
