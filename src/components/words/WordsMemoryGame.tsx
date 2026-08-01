@@ -30,8 +30,6 @@ interface WordsMemoryGameProps {
   onEvent?: (isMatch: boolean) => void;
 }
 
-type Phase = 'setup' | 'play' | 'flash' | 'done';
-
 const PAIR_OPTIONS = [2, 3, 4, 5, 6, 7, 8];
 
 const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => {

@@ -7,7 +7,7 @@ import WordsQuiz from './WordsQuiz';
 import WordsMemoryGame from './WordsMemoryGame';
 import WordsDragBuilderGame from './WordsDragBuilderGame';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
-import { getSavedWords, getTrackedWordIds, removeWordFromList, saveWordToList } from '../../firebase/userService';
+import { getSavedWords, removeWordFromList, saveWordToList } from '../../firebase/userService';
 import styles from './WordsModule.module.css';
 
 type Mode = 'categories' | 'cards' | 'practice' | 'memory' | 'drag';
@@ -25,7 +25,6 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
   const [cardIdx, setCardIdx] = useState(0);
   const [practiceCount, setPracticeCount] = useState(10);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [trackedIds, setTrackedIds] = useState<Set<string>>(new Set());
   const [chooserWord, setChooserWord] = useState<VocabWord | null>(null);
   const { trackStep } = useProgressTracker(userId);
 
@@ -39,10 +38,9 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
 
   React.useEffect(() => {
     if (!userId) return;
-    Promise.all([getSavedWords(userId), getTrackedWordIds(userId)])
-      .then(([words, tracked]) => {
+    getSavedWords(userId)
+      .then((words) => {
         setSavedIds(new Set(words.map((w) => w.id)));
-        setTrackedIds(tracked);
       })
       .catch((err) => console.error('[saved words load]', err));
   }, [userId]);
@@ -73,7 +71,6 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
     const payload = { ...chooserWord, difficulty: picked };
     await saveWordToList(userId, payload);
     setSavedIds((prev) => new Set(prev).add(chooserWord.id));
-    setTrackedIds((prev) => new Set(prev).add(chooserWord.id));
     trackStep({
       moduleId: 'words',
       stepId: `save:${chooserWord.id}`,
