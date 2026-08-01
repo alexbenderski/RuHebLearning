@@ -10,7 +10,7 @@ const MODULES = [
   { icon: '💬', title: 'Слова',   desc: 'Базовая лексика', ready: true, path: '/words'    },
   { icon: '🗂️', title: 'My words list', desc: 'Личные слова и тренировка', ready: true, path: '/my-words' },
   { icon: '🗣️', title: 'Фразы',   desc: 'Разговорная речь', ready: false },
-  { icon: '📝', title: 'Грамматика', desc: 'Структура языка', ready: false },
+  { icon: '📝', title: 'Грамматика', desc: 'Структура языка', ready: true, path: '/grammar' },
 ];
 
 interface HomeProps {

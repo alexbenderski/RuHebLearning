@@ -55,6 +55,10 @@ RuHebStudy/ (Root)
     │   │   ├── AlphabetWordBuilderGame.tsx / .module.css
     │   │   └── LetterCard.tsx / .module.css
     │   │
+    │   ├── grammar/               # Grammar Games & Interactive Lessons
+    │   │   ├── GrammarModule.tsx                         # Core Grammar component with 4 interactive games
+    │   │   └── GrammarModule.module.css
+    │   │
     │   ├── layout/                # General Layout & Navigation
     │   │   ├── Layout.tsx / .module.css
     │   │   └── Navbar.tsx / .module.css
@@ -110,6 +114,7 @@ Whenever you have a user request, match the request category below to find exact
 | **Modify text-to-speech audio pronunciation** | `src/hooks/useCloudTTS.ts`<br>`server/src/routes/tts.ts` | Frontend calls `useCloudTTS.ts` which performs a fetch POST request to the server API endpoint `/api/tts/synthesize`. |
 | **Create or change an Alphabet practice game** | `src/components/alphabet/` | Contains the games: `AlphabetMemoryGame.tsx` (card flipping matching game), `AlphabetQuiz.tsx` (multiple choice), `AlphabetWordBuilderGame.tsx` (combining letters to form words), and `AlphabetModule.tsx` (main tab selector). |
 | **Create or change a Vocabulary practice game** | `src/components/words/` | Contains games: `WordsMemoryGame.tsx` (cards matching Hebrew with Russian translation), `WordsQuiz.tsx` (multiple choice), `WordsDragBuilderGame.tsx` (reordering letters to translate a card), `FlashCard.tsx` (vocabulary cards with mnemonic guides), and `WordsModule.tsx` (tab manager). |
+| **Practice Grammar (Nikud, Gender, Prefix, Roots)** | `src/components/grammar/GrammarModule.tsx`<br>`src/components/grammar/GrammarModule.module.css` | Handles vowels matching, gender sorting game, prefix simulator, and root letter scanners. |
 | **Update look, layout, colors, or animations** | Nearby `*.module.css` file matching the `.tsx` component | This project strictly utilizes CSS Modules to isolate class scopes. **Do not write global rules in component styles; always modify the corresponding `.module.css`.** |
 
 ---

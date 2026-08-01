@@ -93,3 +93,9 @@ export interface VocabCategory {
 export interface SavedWord extends VocabWord {
   savedAt: Timestamp;
 }
+
+export interface GrammarItem {
+  hebrew: string;
+  transliteration: string;
+  translation: string;
+}
