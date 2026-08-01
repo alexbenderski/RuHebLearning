@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { GoogleAuth } from 'google-auth-library';
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getStorage } from 'firebase-admin/storage';
 
 // Vercel Request/Response types (compatible with req.body / res.json)
 type VercelRequest = any;
@@ -9,22 +10,22 @@ type VercelResponse = any;
 const BUCKET = 'supplysupport-233fe.firebasestorage.app';
 
 function initAdmin() {
-  if (admin.apps.length) return;
+  if (getApps().length > 0) return;
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var is missing');
   const parsed = JSON.parse(raw);
   if (parsed.private_key) {
     parsed.private_key = (parsed.private_key as string).replace(/\\n/g, '\n');
   }
-  admin.initializeApp({
-    credential: admin.credential.cert(parsed),
+  initializeApp({
+    credential: cert(parsed),
     storageBucket: BUCKET,
   });
 }
 
 function getBucket() {
   initAdmin();
-  return admin.storage().bucket(BUCKET);
+  return getStorage().bucket(BUCKET);
 }
 
 const TTS_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
