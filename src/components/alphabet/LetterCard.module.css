@@ -1,0 +1,131 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  cursor: default;
+  transition: transform 0.18s, background 0.18s, box-shadow 0.18s;
+  min-height: 130px;
+}
+
+.card:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+.final {
+  background: rgba(255, 215, 0, 0.05);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+.final:hover {
+  background: rgba(255, 165, 0, 0.12);
+  border-color: rgba(255, 165, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(255, 165, 0, 0.2);
+}
+
+.index {
+  position: absolute;
+  top: 6px;
+  left: 9px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+.finalBadge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10px;
+  color: #ffd700;
+  opacity: 0.7;
+}
+
+.hebrew {
+  font-size: 44px;
+  line-height: 1;
+  color: #fff;
+  direction: rtl;
+  /* Hebrew font stack */
+  font-family: 'David', 'Frank Rühl Libre', 'Arial Hebrew', serif;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+}
+
+.translit {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.audioBtn {
+  margin-top: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.5;
+  transition: opacity 0.15s, transform 0.15s;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.audioBtn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.audioBtnLoading {
+  cursor: wait;
+  animation: blink 0.7s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+/* Per-letter quiz stats */
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.statsBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.statsFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
+.statsText {
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: right;
+  line-height: 1;
+}

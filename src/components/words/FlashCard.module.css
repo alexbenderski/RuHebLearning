@@ -1,0 +1,234 @@
+/* ── Container ── */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 540px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Progress ── */
+.progressRow {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progressLabel {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.progressTrack {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ── 3-D flip wrapper ── */
+.cardWrapper {
+  width: 100%;
+  min-height: 320px;
+  perspective: 1400px;
+  cursor: pointer;
+}
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flipped .cardInner {
+  transform: rotateY(180deg);
+}
+
+/* Shared face styles */
+.front,
+.back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.front {
+  background: linear-gradient(145deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08));
+  border-top: 3px solid #8b5cf6;
+}
+
+.back {
+  background: linear-gradient(145deg, rgba(16,185,129,0.1), rgba(59,130,246,0.08));
+  border-top: 3px solid #10b981;
+  transform: rotateY(180deg);
+}
+
+.faceHint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.22);
+  letter-spacing: 0.5px;
+}
+
+/* Front content */
+.hebrewWord {
+  font-size: 64px;
+  font-family: 'David', 'Frank Rühl Libre', 'Arial Hebrew', serif;
+  color: #fff;
+  direction: rtl;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.translit {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Back content */
+.hebrewWordSmall {
+  font-size: 32px;
+  font-family: 'David', 'Frank Rühl Libre', 'Arial Hebrew', serif;
+  color: rgba(255, 255, 255, 0.6);
+  direction: rtl;
+  line-height: 1;
+}
+
+.translation {
+  font-size: 30px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+}
+
+.translitBack {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.mnemonic {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  text-align: left;
+  max-width: 100%;
+}
+
+.mnemonicIcon { flex-shrink: 0; font-size: 16px; }
+
+/* Audio button */
+.audioBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+
+.audioBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.audioBtnLoading {
+  cursor: wait;
+  animation: blink 0.7s ease-in-out infinite;
+}
+
+.saveBtn {
+  margin-top: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.saveBtnActive {
+  background: rgba(16, 185, 129, 0.24);
+  border-color: rgba(16, 185, 129, 0.7);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+/* ── Navigation ── */
+.nav {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.navBtn {
+  padding: 13px 28px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.75);
+  transition: all 0.18s;
+}
+
+.navBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+}
+
+.navBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.navBtnPrimary {
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+.navBtnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.45);
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6) !important;
+  color: #fff !important;
+}

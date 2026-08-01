@@ -1,0 +1,170 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  padding: 40px 0;
+}
+
+.hero {
+  text-align: center;
+}
+
+.heroTitle {
+  font-size: 40px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+
+.heroSub {
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 840px;
+}
+
+.card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 36px 20px 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.card:hover:not(.locked) {
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+}
+
+.unlocked {
+  cursor: pointer;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.unlocked:hover {
+  border-color: rgba(139, 92, 246, 0.6) !important;
+  box-shadow: 0 12px 36px rgba(139, 92, 246, 0.25) !important;
+}
+
+.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cardIcon {
+  display: block;
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.cardDesc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.lockBadge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.goBtn {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c4b5fd;
+  letter-spacing: 0.5px;
+}
+
+.progressPanel {
+  width: 100%;
+  max-width: 840px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 22px;
+}
+
+.progressTitle {
+  font-size: 24px;
+  margin-bottom: 14px;
+}
+
+.progressGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.progressCard {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px;
+}
+
+.progressCard h3 {
+  margin-bottom: 8px;
+}
+
+.progressCard p {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 4px 0;
+}
+
+.timelineTitle {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.timeline {
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+.timeline li {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.timelineModule {
+  display: inline-block;
+  min-width: 66px;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+
+.timelineGood {
+  color: #6ee7b7;
+}
+
+.timelineBad {
+  color: #fca5a5;
+}
