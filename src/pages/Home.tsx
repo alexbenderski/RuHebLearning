@@ -9,8 +9,8 @@ const MODULES = [
   { icon: '🔤', title: 'Алфавит', desc: 'Буквы и звуки', ready: true,  path: '/alphabet' },
   { icon: '💬', title: 'Слова',   desc: 'Базовая лексика', ready: true, path: '/words'    },
   { icon: '🗂️', title: 'My words list', desc: 'Личные слова и тренировка', ready: true, path: '/my-words' },
+  { icon: '�', title: 'Грамматика', desc: 'Никуд, алфавит, род, формы', ready: true, path: '/grammar' },
   { icon: '🗣️', title: 'Фразы',   desc: 'Разговорная речь', ready: false },
-  { icon: '📝', title: 'Грамматика', desc: 'Структура языка', ready: false },
 ];
 
 interface HomeProps {

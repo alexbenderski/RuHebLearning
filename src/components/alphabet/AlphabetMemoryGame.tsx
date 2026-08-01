@@ -1,6 +1,7 @@
 import React from 'react';
 import type { HebrewLetter } from '../../types';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { playClick, playMatch, playWrong } from '../../hooks/useSoundEffects';
 import styles from './AlphabetMemoryGame.module.css';
 
 type LetterCard = {
@@ -78,6 +79,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEven
     if (open.length === 2) return;
     if (deck[idx].matched || open.includes(idx)) return;
 
+    playClick();
     const next = [...open, idx];
     setOpen(next);
 
@@ -88,6 +90,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEven
       onEvent?.(isMatch);
       
       if (isMatch) {
+        playMatch();
         const ids = new Set([deck[a].id, deck[b].id]);
         setExploding(ids);
         setDeck((prev) => prev.map((c, i) => (i === a || i === b ? { ...c, matched: true } : c)));
@@ -103,6 +106,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, onEven
           });
         }, 580);
       } else {
+        playWrong();
         setTimeout(() => setOpen([]), 750);
       }
     }

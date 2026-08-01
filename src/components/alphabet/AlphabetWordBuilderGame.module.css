@@ -90,6 +90,27 @@
   font-size: 30px;
   cursor: grab;
   font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  transition: transform 0.1s, background 0.15s, border-color 0.15s;
+}
+
+.letterSelected {
+  border-color: rgba(251, 191, 36, 0.9);
+  background: rgba(251, 191, 36, 0.3);
+  transform: scale(1.12);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+}
+
+.selectedHint {
+  text-align: center;
+  font-size: 13px;
+  color: #fbbf24;
+  margin-bottom: 8px;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .hint {

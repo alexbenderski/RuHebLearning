@@ -3,6 +3,7 @@ import type { VocabWord } from '../../types';
 import { ALL_LETTERS } from '../../data/alphabet';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { playClick } from '../../hooks/useSoundEffects';
 import styles from './AlphabetWordBuilderGame.module.css';
 
 interface AlphabetWordBuilderGameProps {
@@ -28,6 +29,7 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
   const [word, setWord] = React.useState<VocabWord | null>(null);
   const [slots, setSlots] = React.useState<string[]>([]);
   const [letters, setLetters] = React.useState<string[]>([]);
+  const [selectedLetter, setSelectedLetter] = React.useState<string | null>(null);
   const [buildPhase, setBuildPhase] = React.useState<'building' | 'checked'>('building');
   const [checkResult, setCheckResult] = React.useState<boolean[]>([]);
   const [totalTime, setTotalTime] = React.useState(0);
@@ -50,6 +52,7 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
     setLetters(shuffle([...chars, ...distractors]));
     setBuildPhase('building');
     setCheckResult([]);
+    setSelectedLetter(null);
     resetTimer();
   }, [learnedWords, resetTimer]);
 
@@ -68,16 +71,40 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
   const onDrop = (slotIndex: number, letter: string) => {
     if (buildPhase === 'checked') return;
     const nextSlots = [...slots];
-    const displaced = nextSlots[slotIndex]; // letter currently in slot, if any
+    const displaced = nextSlots[slotIndex];
     nextSlots[slotIndex] = letter;
     setSlots(nextSlots);
     setLetters((prev) => {
       const copy = [...prev];
       const i = copy.indexOf(letter);
-      if (i >= 0) copy.splice(i, 1); // remove from bank
-      if (displaced) copy.push(displaced); // return displaced letter to bank
+      if (i >= 0) copy.splice(i, 1);
+      if (displaced) copy.push(displaced);
       return copy;
     });
+    setSelectedLetter(null);
+  };
+
+  /** Tap-to-select letter, then tap slot to place (mobile friendly). */
+  const handleLetterTap = (letter: string) => {
+    playClick();
+    if (selectedLetter === letter) {
+      setSelectedLetter(null);
+    } else {
+      setSelectedLetter(letter);
+      playAudio(letter);
+    }
+  };
+
+  const handleSlotTap = (slotIndex: number) => {
+    if (buildPhase === 'checked') return;
+    if (selectedLetter) {
+      playClick();
+      onDrop(slotIndex, selectedLetter);
+    } else if (slots[slotIndex]) {
+      playClick();
+      setLetters((prev) => [...prev, slots[slotIndex]]);
+      setSlots((prev) => prev.map((s, i) => (i === slotIndex ? '' : s)));
+    }
   };
 
   const handleCheck = () => {
@@ -119,6 +146,7 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
                   if (buildPhase === 'checked') return;
                   onDrop(idx, e.dataTransfer.getData('text/plain'));
                 }}
+                onClick={() => handleSlotTap(idx)}
               >
                 {value || ''}
               </div>
@@ -129,15 +157,20 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
 
       {buildPhase === 'building' && (
         <>
+          {selectedLetter && (
+            <div className={styles.selectedHint}>
+              Выбрана буква <strong>{selectedLetter}</strong> — нажми на слот чтобы поставить
+            </div>
+          )}
           <div className={styles.letters}>
             {letters.map((letter, idx) => (
               <button
                 key={`${letter}-${idx}`}
                 draggable
                 onDragStart={(e) => e.dataTransfer.setData('text/plain', letter)}
-                className={styles.letter}
-                onClick={() => playAudio(letter)}
-                title="Нажми чтобы слушать, перетащи в слот"
+                className={`${styles.letter} ${selectedLetter === letter ? styles.letterSelected : ''}`}
+                onClick={() => handleLetterTap(letter)}
+                title="Нажми чтобы выбрать, перетащи в слот"
               >
                 {letter}
               </button>

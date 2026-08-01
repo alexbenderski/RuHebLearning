@@ -1,6 +1,9 @@
 import React from 'react';
 import type { VocabWord } from '../../types';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { useNikud } from '../../context/NikudContext';
+import { getHebrew } from '../../data/nikudMap';
+import { playClick, playMatch, playWrong } from '../../hooks/useSoundEffects';
 import styles from './WordsMemoryGame.module.css';
 
 type MemoryCard = {
@@ -33,6 +36,7 @@ interface WordsMemoryGameProps {
 const PAIR_OPTIONS = [2, 3, 4, 5, 6, 7, 8];
 
 const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => {
+  const { nikudOn } = useNikud();
   const maxPairs = Math.min(8, words.length);
   const [phase, setPhase] = React.useState<'setup' | 'play' | 'flash' | 'done'>('setup');
   const [pairCount, setPairCount] = React.useState(Math.min(6, maxPairs));
@@ -81,6 +85,7 @@ const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => 
     if (open.length === 2) return;
     if (deck[idx].matched || open.includes(idx)) return;
 
+    playClick();
     const nextOpen = [...open, idx];
     setOpen(nextOpen);
 
@@ -91,13 +96,13 @@ const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => 
       onEvent?.(isMatch);
 
       if (isMatch) {
+        playMatch();
         const ids = new Set([deck[a].id, deck[b].id]);
         setExploding(ids);
         setDeck((prev) => prev.map((c, i) => (i === a || i === b ? { ...c, matched: true } : c)));
         setOpen([]);
         setTimeout(() => {
           setExploding(new Set());
-          // Check win after animation
           setDeck((prev) => {
             if (prev.every((c) => c.matched)) {
               setTotalTime(seconds);
@@ -107,6 +112,7 @@ const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => 
           });
         }, 580);
       } else {
+        playWrong();
         setTimeout(() => setOpen([]), 750);
       }
     }
@@ -167,7 +173,7 @@ const WordsMemoryGame: React.FC<WordsMemoryGameProps> = ({ words, onEvent }) => 
               className={`${styles.card} ${isOpen ? styles.open : ''} ${isBursting ? styles.exploding : ''} ${card.isHebrew && isOpen ? styles.hebrewCard : ''}`}
               onClick={() => clickCard(idx)}
             >
-              {isOpen || isBursting ? card.value : '❓'}
+              {isOpen || isBursting ? (card.isHebrew ? getHebrew(card.pairId, card.value, nikudOn) : card.value) : '❓'}
             </button>
           );
         })}

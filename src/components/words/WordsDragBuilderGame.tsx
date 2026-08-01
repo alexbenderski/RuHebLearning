@@ -1,12 +1,25 @@
 ﻿import React from 'react';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { VOCAB_CATEGORIES } from '../../data/vocabulary';
 import type { VocabWord, WordDifficulty } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { useNikud } from '../../context/NikudContext';
+import { getHebrew } from '../../data/nikudMap';
 import styles from './WordsDragBuilderGame.module.css';
 
 interface WordsDragBuilderGameProps {
-  sourceWords?: VocabWord[]; // when set, limits the pool to these words
+  sourceWords?: VocabWord[];
   onAnswer?: (correct: boolean, wordId: string) => void;
 }
 
@@ -28,8 +41,62 @@ const DIFF_LABELS: Record<WordDifficulty, string> = {
   hard: 'Сложные',
 };
 
+// ── Draggable tile ────────────────────────────────────────────────────────────
+interface TileProps {
+  word: VocabWord;
+  placed: boolean;
+  onAudio: (text: string) => void;
+  displayHebrew: string;
+}
+
+const DraggableTile: React.FC<TileProps> = ({ word, placed, onAudio, displayHebrew }) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: word.id,
+    disabled: placed,
+  });
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`${styles.tile} ${placed ? styles.tilePlaced : ''} ${isDragging ? styles.tileDragging : ''}`}
+      onClick={() => onAudio(word.hebrew)}
+      title="Нажми чтобы слушать, перетащи в предложение"
+      style={{ touchAction: 'none' }}
+    >
+      <span className={styles.tileHebrew}>{displayHebrew}</span>
+      <span className={styles.tileTranslit}>{word.transliteration}</span>
+    </button>
+  );
+};
+
+// ── Droppable zone ────────────────────────────────────────────────────────────
+interface ZoneProps {
+  wordId: string;
+  isAnswered: boolean;
+  currentAnswer?: Answer;
+  gameWords: VocabWord[];
+  nikudOn: boolean;
+}
+
+const DroppableZone: React.FC<ZoneProps> = ({ wordId, isAnswered, currentAnswer, gameWords, nikudOn }) => {
+  const { setNodeRef, isOver } = useDroppable({ id: wordId });
+  const placed = currentAnswer ? gameWords.find((w) => w.id === currentAnswer.givenId) : null;
+  return (
+    <span
+      ref={setNodeRef}
+      className={`${isAnswered ? styles.dropZonePlaced : styles.dropZone} ${isOver && !isAnswered ? styles.dropZoneOver : ''}`}
+      dir="rtl"
+    >
+      {placed ? getHebrew(placed.id, placed.hebrew, nikudOn) : 'גרור לכאן'}
+    </span>
+  );
+};
+
+// ── Main component ────────────────────────────────────────────────────────────
 const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords, onAnswer }) => {
   const { playAudio } = useCloudTTS();
+  const { nikudOn } = useNikud();
   const allWords = React.useMemo(
     () => (sourceWords ?? VOCAB_CATEGORIES.flatMap((c) => c.words)).filter((w) => !!w.sentenceRu),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,12 +106,17 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
   const [phase, setPhase] = React.useState<'setup' | 'game' | 'results'>('setup');
   const [difficulties, setDifficulties] = React.useState<Set<WordDifficulty>>(new Set(['easy']));
   const [wordCount, setWordCount] = React.useState(10);
-
   const [gameWords, setGameWords] = React.useState<VocabWord[]>([]);
   const [currentIdx, setCurrentIdx] = React.useState(0);
   const [answers, setAnswers] = React.useState<Record<string, Answer>>({});
-  
+  const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
+
   const { formattedTime, resetTimer } = useGameTimer(phase === 'game');
+
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
+  );
 
   const toggleDifficulty = (d: WordDifficulty) => {
     setDifficulties((prev) => {
@@ -68,10 +140,15 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
   };
 
   const handleDrop = (targetWordId: string, draggedWordId: string) => {
-    if (answers[targetWordId]) return; // lock after any placement
+    if (answers[targetWordId]) return;
     const isCorrect = targetWordId === draggedWordId;
     onAnswer?.(isCorrect, draggedWordId);
     setAnswers((prev) => ({ ...prev, [targetWordId]: { givenId: draggedWordId, correct: isCorrect } }));
+  };
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (over) handleDrop(over.id as string, active.id as string);
+    setActiveDragId(null);
   };
 
   const correctCount = Object.values(answers).filter((a) => a.correct).length;
@@ -144,13 +221,13 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
                 <div className={styles.resultMark}>{ok ? '✅' : '❌'}</div>
                 <div className={styles.resultBody}>
                   <div className={styles.resultWordRow}>
-                    <span className={styles.hebrewWord}>{word.hebrew}</span>
+                    <span className={styles.hebrewWord}>{getHebrew(word.id, word.hebrew, nikudOn)}</span>
                     <span className={styles.resultTranslit}>{word.transliteration}</span>
                     <span className={styles.resultTranslation}>{word.translation}</span>
                   </div>
                   {parsed && (
                     <div className={styles.resultSentence}>
-                      {parsed.before}<strong className={styles.hebrewWord}>{word.hebrew}</strong>{parsed.after}
+                      {parsed.before}<strong className={styles.hebrewWord}>{getHebrew(word.id, word.hebrew, nikudOn)}</strong>{parsed.after}
                     </div>
                   )}
                   {!ok && ans && (
@@ -169,99 +246,103 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
     );
   }
 
-  // ── GAME — one question per page ─────────────────────────────────────────
+  // ── GAME ─────────────────────────────────────────────────────────────────
   const currentWord = gameWords[currentIdx];
   const parsedCurrent = parseSentence(currentWord?.sentenceRu ?? '');
   const currentAnswer = answers[currentWord?.id];
-  const isAnswered = !!currentAnswer; // locked after any placement
+  const isAnswered = !!currentAnswer;
   const isLast = currentIdx === gameWords.length - 1;
+  const activeDragWord = activeDragId ? gameWords.find((w) => w.id === activeDragId) : null;
 
   return (
-    <div className={styles.wrap}>
-      {/* Header */}
-      <div className={styles.head}>
-        <button className={styles.resetBtn} onClick={() => setPhase('setup')} title="Настройки">↩</button>
-        <div className={styles.progress}>
-          <span className={styles.progressText}>Вопрос {currentIdx + 1} / {gameWords.length}</span>
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${((currentIdx + 1) / gameWords.length) * 100}%` }} />
+    <DndContext
+      sensors={sensors}
+      onDragStart={({ active }) => setActiveDragId(active.id as string)}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveDragId(null)}
+    >
+      <div className={styles.wrap}>
+        {/* Header */}
+        <div className={styles.head}>
+          <button className={styles.resetBtn} onClick={() => setPhase('setup')} title="Настройки">↩</button>
+          <div className={styles.progress}>
+            <span className={styles.progressText}>Вопрос {currentIdx + 1} / {gameWords.length}</span>
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill} style={{ width: `${((currentIdx + 1) / gameWords.length) * 100}%` }} />
+            </div>
+          </div>
+          <div className={styles.stats}>
+            <span className={styles.timer}>⏱ {formattedTime}</span>
+            <span className={styles.score}>{correctCount}/{gameWords.length}</span>
           </div>
         </div>
-        <div className={styles.stats}>
-          <span className={styles.timer}>⏱ {formattedTime}</span>
-          <span className={styles.score}>{correctCount}/{gameWords.length}</span>
+
+        {/* Question card */}
+        <div className={`${styles.card} ${isAnswered ? styles.cardDone : ''}`}>
+          <button className={styles.speakBtn} onClick={() => playAudio(currentWord.hebrew)}>🔊</button>
+          <div className={styles.cardContent}>
+            {parsedCurrent ? (
+              <>
+                <div className={styles.sentenceRu}>
+                  {parsedCurrent.before}<span className={styles.highlight}>{parsedCurrent.word}</span>{parsedCurrent.after}
+                </div>
+                <div className={`${styles.sentenceHeb} ${!isAnswered ? styles.dropTarget : ''}`}>
+                  {parsedCurrent.before}
+                  <DroppableZone
+                    wordId={currentWord.id}
+                    isAnswered={isAnswered}
+                    currentAnswer={currentAnswer}
+                    gameWords={gameWords}
+                    nikudOn={nikudOn}
+                  />
+                  {parsedCurrent.after}
+                </div>
+              </>
+            ) : (
+              <div className={styles.sentenceRu}>{currentWord.translation}</div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Question card */}
-      <div className={`${styles.card} ${isAnswered ? styles.cardDone : ''}`}>
-        <button className={styles.speakBtn} onClick={() => playAudio(currentWord.hebrew)}>🔊</button>
-        <div className={styles.cardContent}>
-          {parsedCurrent ? (
-            <>
-              <div className={styles.sentenceRu}>
-                {parsedCurrent.before}<span className={styles.highlight}>{parsedCurrent.word}</span>{parsedCurrent.after}
-              </div>
-              <div
-                className={`${styles.sentenceHeb} ${!isAnswered ? styles.dropTarget : ''}`}
-                onDragOver={(e) => !isAnswered && e.preventDefault()}
-                onDrop={(e) => { if (!isAnswered) handleDrop(currentWord.id, e.dataTransfer.getData('text/plain')); }}
-              >
-                {parsedCurrent.before}
-                {currentAnswer
-                  ? <span className={styles.dropZonePlaced}>{gameWords.find(w => w.id === currentAnswer.givenId)?.hebrew ?? '?'}</span>
-                  : <span className={styles.dropZone}>Перетащи сюда</span>}
-                {parsedCurrent.after}
-              </div>
-            </>
-          ) : (
-            <div className={styles.sentenceRu}>{currentWord.translation}</div>
-          )}
-        </div>
-      </div>
-
-      {/* error shown only on results page — no live feedback during game */}
-
-      {/* Navigation */}
-      <div className={styles.nav}>
-        <button
-          className={styles.navBtn}
-          disabled={currentIdx === 0}
-          onClick={() => setCurrentIdx((i) => i - 1)}
-        >← Назад</button>
-        {isLast ? (
-          <button className={`${styles.navBtn} ${styles.submitBtn}`} onClick={() => setPhase('results')}>
+        {/* Navigation */}
+        <div className={styles.nav}>
+          <button className={styles.navBtn} disabled={currentIdx === 0} onClick={() => setCurrentIdx((i) => i - 1)}>
+            ← Назад
+          </button>
+          {isLast ? (
+            <button className={`${styles.navBtn} ${styles.submitBtn}`} onClick={() => setPhase('results')}>
             Завершить тест ✓
           </button>
         ) : (
-          <button
-            className={styles.navBtn}
-            onClick={() => setCurrentIdx((i) => i + 1)}
-          >Далее →</button>
+          <button className={styles.navBtn} onClick={() => setCurrentIdx((i) => i + 1)}>Далее →</button>
         )}
       </div>
 
-      {/* Word bank — always shows all words, placed ones are dimmed */}
+      {/* Word bank */}
       <div className={styles.bankLabel}>Перетащи слово в предложение:</div>
       <div className={styles.bank}>
-        {gameWords.map((w) => {
-          const placed = !!answers[w.id]; // dim tile after any placement
-          return (
-            <button
-              key={w.id}
-              draggable={!placed}
-              onDragStart={(e) => { if (!placed) e.dataTransfer.setData('text/plain', w.id); }}
-              className={`${styles.tile} ${placed ? styles.tilePlaced : ''}`}
-              onClick={() => playAudio(w.hebrew)}
-              title="Нажми чтобы слушать"
-            >
-              <span className={styles.tileHebrew}>{w.hebrew}</span>
-              <span className={styles.tileTranslit}>{w.transliteration}</span>
-            </button>
-          );
-        })}
+        {gameWords.map((w) => (
+          <DraggableTile
+            key={w.id}
+            word={w}
+            placed={!!answers[w.id]}
+            onAudio={playAudio}
+            displayHebrew={getHebrew(w.id, w.hebrew, nikudOn)}
+          />
+        ))}
       </div>
     </div>
+
+    {/* Floating drag preview */}
+    <DragOverlay dropAnimation={null}>
+      {activeDragWord && (
+        <div className={styles.tileOverlay}>
+          <span className={styles.tileHebrew}>{getHebrew(activeDragWord.id, activeDragWord.hebrew, nikudOn)}</span>
+          <span className={styles.tileTranslit}>{activeDragWord.transliteration}</span>
+        </div>
+      )}
+    </DragOverlay>
+  </DndContext>
   );
 };
 

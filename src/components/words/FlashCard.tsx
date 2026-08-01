@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { VocabWord } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
+import { useNikud } from '../../context/NikudContext';
+import { getHebrew } from '../../data/nikudMap';
+import { playClick } from '../../hooks/useSoundEffects';
 import styles from './FlashCard.module.css';
 
 interface FlashCardProps {
@@ -19,6 +22,8 @@ const FlashCard: React.FC<FlashCardProps> = ({ userId, word, isSaved, onToggleSa
   const [flipped, setFlipped] = useState(false);
   const { playAudio, isLoading, isPlaying } = useCloudTTS();
   const { trackStep } = useProgressTracker(userId);
+  const { nikudOn } = useNikud();
+  const displayHebrew = getHebrew(word.id, word.hebrew, nikudOn);
 
   // reset flip when card changes
   useEffect(() => { setFlipped(false); }, [word.id]);
@@ -47,7 +52,7 @@ const FlashCard: React.FC<FlashCardProps> = ({ userId, word, isSaved, onToggleSa
       {/* Flip card */}
       <div
         className={`${styles.cardWrapper} ${flipped ? styles.flipped : ''}`}
-        onClick={() => setFlipped(f => !f)}
+        onClick={() => { playClick(); setFlipped(f => !f); }}
         role="button"
         aria-label={flipped ? 'Показать лицевую сторону' : 'Показать перевод'}
       >
@@ -56,7 +61,7 @@ const FlashCard: React.FC<FlashCardProps> = ({ userId, word, isSaved, onToggleSa
           {/* ── Front ── */}
           <div className={styles.front}>
             <span className={styles.faceHint}>нажми чтобы перевернуть ↩</span>
-            <div className={styles.hebrewWord}>{word.hebrew}</div>
+            <div className={styles.hebrewWord}>{displayHebrew}</div>
             <div className={styles.translit}>{word.transliteration}</div>
             <button
               className={`${styles.audioBtn} ${isLoading ? styles.audioBtnLoading : ''}`}

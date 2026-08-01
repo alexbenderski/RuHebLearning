@@ -4,6 +4,9 @@ import type { WordDifficulty } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { useNikud } from '../../context/NikudContext';
+import { getHebrew } from '../../data/nikudMap';
+import { playClick, playMatch, playWrong } from '../../hooks/useSoundEffects';
 import styles from './WordsQuiz.module.css';
 
 interface WordsQuizProps {
@@ -34,14 +37,21 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
   const { playAudio, isLoading } = useCloudTTS();
   const { trackStep } = useProgressTracker(userId);
   const { seconds, formattedTime } = useGameTimer(!done);
+  const { nikudOn } = useNikud();
 
   const current = shuffled[idx];
 
   const handleAnswer = (w: VocabWord) => {
     if (selected !== null) return;
+    playClick();
     setSelected(w.id);
     const isCorrect = w.id === current.id;
-    if (w.id === current.id) setScore(s => s + 1);
+    if (isCorrect) {
+      setScore(s => s + 1);
+      playMatch();
+    } else {
+      playWrong();
+    }
     trackStep({
       moduleId: 'words',
       stepId: `quiz:${categoryId}:${difficulty}:${current.id}`,
@@ -93,7 +103,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
         <p className={styles.prompt}>Переведи слово на русский:</p>
         <button className={`${styles.hebrewWord} ${isLoading ? styles.loading : ''}`}
           onClick={() => playAudio(current.hebrew)} title={isLoading ? 'Загрузка...' : 'Прослушать'}>
-          {current.hebrew}
+          {getHebrew(current.id, current.hebrew, nikudOn)}
         </button>
         <div className={styles.translit}>{current.transliteration}</div>
       </div>

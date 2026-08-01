@@ -1,6 +1,7 @@
 import React from 'react';
 import type { UserProfile } from '../../types';
 import { signOutUser } from '../../firebase/authService';
+import { useNikud } from '../../context/NikudContext';
 import styles from './Navbar.module.css';
 
 interface NavbarProps {
@@ -10,6 +11,7 @@ interface NavbarProps {
 const xpRequiredForLevel = (level: number) => level * 100;
 
 const Navbar: React.FC<NavbarProps> = ({ userProfile }) => {
+  const { nikudOn, toggleNikud } = useNikud();
   const level = userProfile?.currentLevel ?? 1;
   const points = userProfile?.totalPoints ?? 0;
   const xpRequired = xpRequiredForLevel(level);
@@ -53,6 +55,16 @@ const Navbar: React.FC<NavbarProps> = ({ userProfile }) => {
           </div>
         </div>
       </div>
+
+      {/* Nikud toggle */}
+      <button
+        className={`${styles.nikudBtn} ${nikudOn ? styles.nikudBtnOn : ''}`}
+        onClick={toggleNikud}
+        title={nikudOn ? 'Никуд включён — нажми чтобы выключить' : 'Включить никуд (знаки гласных)'}
+      >
+        <span className={styles.nikudBtnText}>ניקוד</span>
+        <span className={styles.nikudBtnState}>{nikudOn ? 'ON' : 'OFF'}</span>
+      </button>
 
       {/* Avatar */}
       <div className={styles.avatar}>
