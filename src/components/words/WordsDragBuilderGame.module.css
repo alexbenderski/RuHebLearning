@@ -3,87 +3,232 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 18px;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .head {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  align-items: center;
   font-weight: 700;
+}
+
+.skipBtn {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.skipBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .instructions {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.72);
-  margin-bottom: 12px;
 }
 
-.slots {
-  display: grid;
-  gap: 10px;
+/* ── Sentence area ───────────────────────────────── */
+.sentenceWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 64px;
 }
 
-.slot {
+/* Non-blank (filler) word */
+.fixedWord {
+  font-size: 28px;
+  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Blank drop-target */
+.blank {
+  min-width: 90px;
+  min-height: 52px;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-radius: 12px;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
-  padding: 10px;
-  min-height: 56px;
-}
-
-.slotLocked {
-  opacity: 0.8;
-  border-style: solid;
-}
-
-.speakBtn {
-  border: none;
-  border-radius: 8px;
-  padding: 6px 8px;
+  justify-content: center;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.target {
-  font-size: 26px;
+.blank:hover {
+  border-color: rgba(59, 130, 246, 0.7);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.blankFilled {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.blankCorrect {
+  border-color: #6ee7b7;
+  background: rgba(110, 231, 183, 0.12);
+}
+
+.blankWrong {
+  border-color: #fca5a5;
+  background: rgba(252, 165, 165, 0.12);
+}
+
+.blankPlaceholder {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.placedWord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.placedHebrew {
+  font-size: 24px;
   font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  line-height: 1.1;
 }
 
-.russian {
-  font-family: inherit;
+.placedTranslit {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.02em;
+}
+
+/* ── Translation hint ───────────────────────────── */
+.translationHint {
+  font-size: 14px;
+  color: #93c5fd;
+}
+
+.translationHidden {
+  color: rgba(255, 255, 255, 0.4);
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.72);
+}
+
+/* ── Word bank ──────────────────────────────────── */
+.bankSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bankLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .bank {
-  margin-top: 12px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
 .tile {
-  border: 1px solid rgba(59, 130, 246, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.55);
   background: rgba(59, 130, 246, 0.2);
   color: #fff;
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 8px 14px;
   cursor: grab;
-  font-size: 24px;
-  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: background 0.15s;
 }
 
-.error {
-  margin-top: 12px;
-  color: #fecaca;
-  font-size: 13px;
+.tile:hover {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.tile:active {
+  cursor: grabbing;
+}
+
+.tileHebrew {
+  font-size: 22px;
+  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  line-height: 1.1;
+}
+
+.tileTranslit {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.02em;
+}
+
+/* ── Check button ───────────────────────────────── */
+.checkBtn {
+  align-self: flex-start;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  background: rgba(34, 197, 94, 0.3);
+  border: 1px solid rgba(34, 197, 94, 0.6);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.checkBtn:hover {
+  background: rgba(34, 197, 94, 0.45);
+}
+
+/* ── Feedback ───────────────────────────────────── */
+.feedback {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .success {
-  margin-top: 12px;
   color: #6ee7b7;
-  font-size: 14px;
   font-weight: 700;
+  font-size: 15px;
 }
+
+.partial {
+  color: #fde68a;
+  font-size: 14px;
+}
+
+.nextBtn {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.nextBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+

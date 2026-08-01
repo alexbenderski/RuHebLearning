@@ -12,8 +12,13 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+/** Strip Hebrew niqqud (vowel points U+05B0–U+05C7) so each slot is a base consonant. */
+function stripNiqqud(word: string): string {
+  return word.replace(/[\u05B0-\u05C7]/g, '');
+}
+
 function splitChars(word: string): string[] {
-  return [...word.replace(/\s+/g, '')];
+  return [...stripNiqqud(word).replace(/\s+/g, '')];
 }
 
 const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learnedWords, onStep }) => {
@@ -83,7 +88,7 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
 
       <p className={styles.prompt}>Собери слово по переводу: <b>{word.translation}</b></p>
 
-      <div className={styles.slots}>
+      <div className={styles.slots} dir="rtl">
         {slots.map((value, idx) => (
           <div
             key={idx}
