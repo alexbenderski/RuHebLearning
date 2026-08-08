@@ -239,8 +239,8 @@
   min-width: 28px;
   min-height: 28px;
   border-radius: 8px;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed rgba(250, 204, 21, 0.3);
+  background: rgba(250, 204, 21, 0.05);
   transition: all 0.2s;
   cursor: pointer;
   position: relative;
@@ -268,20 +268,20 @@
 }
 
 .slotTarget {
-  border-color: rgba(59, 130, 246, 0.6);
-  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(250, 204, 21, 0.7);
+  background: rgba(250, 204, 21, 0.15);
   animation: pulse 1s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3); }
-  50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0); }
 }
 
 .slotFilled {
   border-style: solid;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(250, 204, 21, 0.5);
+  background: rgba(250, 204, 21, 0.12);
 }
 
 .slotCorrect {
@@ -303,19 +303,19 @@
 
 .slotPlaceholder {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(250, 204, 21, 0.3);
 }
 
 .markChar {
   font-size: 1.1rem;
-  color: #fff;
+  color: #facc15;
   line-height: 1;
 }
 
 /* Marks tray */
 .marksTray {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(250, 204, 21, 0.04);
+  border: 1px solid rgba(250, 204, 21, 0.12);
   border-radius: 16px;
   padding: 16px 20px;
   margin-bottom: 20px;
@@ -323,7 +323,7 @@
 
 .trayLabel {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(250, 204, 21, 0.6);
   margin-bottom: 12px;
   text-align: center;
 }
@@ -340,8 +340,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(250, 204, 21, 0.1);
+  border: 2px solid rgba(250, 204, 21, 0.25);
   border-radius: 12px;
   cursor: grab;
   transition: all 0.2s;
@@ -349,8 +349,8 @@
 }
 
 .markChip:hover:not(.markUsed) {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(250, 204, 21, 0.2);
+  border-color: rgba(250, 204, 21, 0.5);
   transform: translateY(-2px);
 }
 
@@ -367,24 +367,24 @@
 .markDragging {
   opacity: 0.5;
   transform: scale(0.95);
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(250, 204, 21, 0.7);
 }
 
 .markChipChar {
   font-size: 1.3rem;
-  color: #fff;
+  color: #facc15;
   line-height: 1;
 }
 
 .markChipName {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #fde68a;
   font-weight: 600;
 }
 
 .markChipSound {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(250, 204, 21, 0.5);
 }
 
 /* Feedback panels */
