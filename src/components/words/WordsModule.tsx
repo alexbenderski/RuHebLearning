@@ -6,11 +6,12 @@ import FlashCard from './FlashCard';
 import WordsQuiz from './WordsQuiz';
 import WordsMemoryGame from './WordsMemoryGame';
 import WordsDragBuilderGame from './WordsDragBuilderGame';
+import WordsNikudGame from './WordsNikudGame';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { getSavedWords, removeWordFromList, saveWordToList } from '../../firebase/userService';
 import styles from './WordsModule.module.css';
 
-type Mode = 'categories' | 'cards' | 'practice' | 'memory' | 'drag';
+type Mode = 'categories' | 'cards' | 'practice' | 'memory' | 'drag' | 'nikud';
 
 
 interface WordsModuleProps {
@@ -132,6 +133,11 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
             <span className={styles.catName}>Drag Words</span>
             <span className={styles.catCount}>Квиз из всех слов</span>
           </button>
+          <button className={`${styles.catCard} ${styles.catCardNikud}`} onClick={() => setMode('nikud')}>
+            <span className={styles.catIcon}>🔤</span>
+            <span className={styles.catName}>Никуд</span>
+            <span className={styles.catCount}>Расставь огласовки</span>
+          </button>
         </div>
       )}
 
@@ -177,6 +183,7 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
             <button className={`${styles.modePill} ${mode === 'practice' ? styles.modePillActive : ''}`} onClick={() => setMode('practice')}>🎯 Квиз</button>
             <button className={`${styles.modePill} ${mode === 'memory' ? styles.modePillActive : ''}`} onClick={() => setMode('memory')}>🧠 Memory</button>
             <button className={`${styles.modePill} ${mode === 'drag' ? styles.modePillActive : ''}`} onClick={() => setMode('drag')}>🧩 Drag words</button>
+            <button className={`${styles.modePill} ${mode === 'nikud' ? styles.modePillActive : ''}`} onClick={() => setMode('nikud')}>🔤 Никуд</button>
           </div>
         </>
       )}
@@ -239,6 +246,18 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
               stepId: `drag:${category?.id ?? 'all'}:${difficulty}:${wordId}`,
               isCorrect: correct,
             }).catch((err) => console.error('[progress words drag]', err));
+          }}
+        />
+      )}
+
+      {mode === 'nikud' && (
+        <WordsNikudGame
+          onAnswer={(correct, wordId) => {
+            trackStep({
+              moduleId: 'words',
+              stepId: `nikud:${wordId}`,
+              isCorrect: correct,
+            }).catch((err) => console.error('[progress words nikud]', err));
           }}
         />
       )}

@@ -1,0 +1,354 @@
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 2rem;
+  color: #1a1a2e;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #5d5d7a;
+  margin: 0;
+}
+
+.backBtn {
+  background-color: #f0f0f5;
+  color: #33334d;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.backBtn:hover {
+  background-color: #e2e2ec;
+}
+
+/* ── Search Bar ── */
+.searchWrap {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #e0e0e8;
+  border-radius: 12px;
+  padding: 0 16px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s;
+}
+
+.searchWrap:focus-within {
+  border-color: #6c63ff;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+}
+
+.searchIcon {
+  font-size: 1.2rem;
+  margin-right: 10px;
+  opacity: 0.6;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 14px 0;
+  font-size: 1rem;
+  color: #1a1a2e;
+  background: transparent;
+}
+
+.searchInput::placeholder {
+  color: #aaa;
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #999;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.clearBtn:hover {
+  background-color: #f0f0f5;
+  color: #333;
+}
+
+/* ── Category Filter Tabs ── */
+.categoriesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.catBtn {
+  background-color: #f0f0f5;
+  color: #555;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.catBtn:hover {
+  background-color: #e2e2ec;
+  color: #333;
+}
+
+.catBtnActive {
+  background-color: #6c63ff;
+  color: #fff;
+  border-color: #6c63ff;
+}
+
+.catBtnActive:hover {
+  background-color: #5a52e0;
+  color: #fff;
+}
+
+/* ── Results Info ── */
+.resultsInfo {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.filterBadge {
+  color: #6c63ff;
+  font-weight: 500;
+}
+
+/* ── Table ── */
+.tableWrap {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e8e8f0;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.dictTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.dictTable thead {
+  background: #f8f8fc;
+  border-bottom: 2px solid #e0e0e8;
+}
+
+.dictTable th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #444;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.dictTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f5;
+  vertical-align: middle;
+}
+
+.wordRow {
+  transition: background-color 0.15s;
+}
+
+.wordRow:hover {
+  background-color: #fafaff;
+}
+
+.wordRow:last-child td {
+  border-bottom: none;
+}
+
+.colIndex {
+  width: 40px;
+  text-align: center;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.colRu {
+  min-width: 160px;
+}
+
+.ruWord {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.mnemonic {
+  margin-left: 6px;
+  cursor: help;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.mnemonic:hover {
+  opacity: 1;
+}
+
+.colHe {
+  min-width: 100px;
+}
+
+.heWord {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2d2d5e;
+  display: inline-block;
+}
+
+.colTranslit {
+  min-width: 140px;
+}
+
+.translitWord {
+  color: #6c63ff;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.colCat {
+  min-width: 120px;
+}
+
+.catBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0f0f5;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  color: #555;
+  white-space: nowrap;
+}
+
+.colAudio {
+  width: 60px;
+  text-align: center;
+}
+
+.audioBtn {
+  background: #f0f0f5;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+}
+
+.audioBtn:hover {
+  background: #e2e2ec;
+  transform: scale(1.1);
+}
+
+.audioBtn:active {
+  transform: scale(0.95);
+}
+
+/* ── Empty State ── */
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.emptyState h3 {
+  font-size: 1.3rem;
+  color: #555;
+  margin: 0 0 8px 0;
+}
+
+.emptyState p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ── Footer ── */
+.footer {
+  margin-top: 24px;
+  text-align: center;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.footer strong {
+  color: #666;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dictTable th,
+  .dictTable td {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+
+  .heWord {
+    font-size: 1.1rem;
+  }
+
+  .categoriesRow {
+    gap: 6px;
+  }
+
+  .catBtn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}

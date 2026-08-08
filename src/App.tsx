@@ -6,6 +6,7 @@ import AlphabetModule from './components/alphabet/AlphabetModule';
 import WordsModule from './components/words/WordsModule';
 import MyWordsPage from './pages/MyWordsPage';
 import GrammarModule from './components/grammar/GrammarModule';
+import DictionaryModule from './components/dictionary/DictionaryModule';
 import { useUser } from './hooks/useUser';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
           <Route path="/words" element={<WordsModule userId={firebaseUser.uid} />} />
           <Route path="/my-words" element={<MyWordsPage userId={firebaseUser.uid} />} />
           <Route path="/grammar" element={<GrammarModule userId={firebaseUser.uid} />} />
+          <Route path="/dictionary" element={<DictionaryModule userId={firebaseUser.uid} />} />
         </Routes>
       </Layout>
     </BrowserRouter>

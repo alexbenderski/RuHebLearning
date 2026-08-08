@@ -11,6 +11,7 @@ const MODULES = [
   { icon: '🗂️', title: 'My words list', desc: 'Личные слова и тренировка', ready: true, path: '/my-words' },
   { icon: '🗣️', title: 'Фразы',   desc: 'Разговорная речь', ready: false },
   { icon: '📝', title: 'Грамматика', desc: 'Структура языка', ready: true, path: '/grammar' },
+  { icon: '📖', title: 'Словарь', desc: 'Русско-ивритский словарь', ready: true, path: '/dictionary' },
 ];
 
 interface HomeProps {
