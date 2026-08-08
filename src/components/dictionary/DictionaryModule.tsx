@@ -10,7 +10,7 @@ interface DictionaryModuleProps {
   userId?: string;
 }
 
-const DictionaryModule: React.FC<DictionaryModuleProps> = ({ userId }) => {
+const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
   const navigate = useNavigate();
   const { playAudio } = useCloudTTS();
   const { playClick } = useSoundEffects();

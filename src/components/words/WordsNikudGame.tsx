@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NIKUD_WORDS, NIKUD_MARKS, getMarksForWord } from '../../data/nikudWords';
 import type { NikudWordData, NikudSlot, NikudMarkDef } from '../../data/nikudWords';
 import useCloudTTS from '../../hooks/useCloudTTS';
