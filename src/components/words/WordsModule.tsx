@@ -7,11 +7,12 @@ import WordsQuiz from './WordsQuiz';
 import WordsMemoryGame from './WordsMemoryGame';
 import WordsDragBuilderGame from './WordsDragBuilderGame';
 import WordsNikudGame from './WordsNikudGame';
+import WordsAllQuiz from './WordsAllQuiz';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { getSavedWords, removeWordFromList, saveWordToList } from '../../firebase/userService';
 import styles from './WordsModule.module.css';
 
-type Mode = 'categories' | 'cards' | 'practice' | 'memory' | 'drag' | 'nikud';
+type Mode = 'categories' | 'cards' | 'practice' | 'memory' | 'drag' | 'nikud' | 'allquiz';
 
 
 interface WordsModuleProps {
@@ -138,6 +139,11 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
             <span className={styles.catName}>Никуд</span>
             <span className={styles.catCount}>Расставь огласовки</span>
           </button>
+          <button className={styles.catCard} onClick={() => setMode('allquiz')}>
+            <span className={styles.catIcon}>🎯</span>
+            <span className={styles.catName}>Квиз все</span>
+            <span className={styles.catCount}>Все слова курса</span>
+          </button>
         </div>
       )}
 
@@ -259,6 +265,13 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
               isCorrect: correct,
             }).catch((err) => console.error('[progress words nikud]', err));
           }}
+        />
+      )}
+
+      {mode === 'allquiz' && (
+        <WordsAllQuiz
+          userId={userId}
+          onBack={backToCategories}
         />
       )}
 

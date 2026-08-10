@@ -499,7 +499,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
                 <span>Буква {m.slot.letterIndex + 1} ({currentWord.letters[m.slot.letterIndex]}): </span>
                 <span>нужно <strong>{m.correct.name}</strong> ({m.correct.char} — звук "{m.correct.sound}")</span>
                 {m.placed && (
-                  <span> — ты поставил <span className={styles.wrongMark}>{m.placed.name}</span> ({m.placed.char})</span>
+                  <span> — ты поставил <span className={styles.wrongMark}>{m.placed.name}</span> (   {m.placed.char}   )</span>
                 )}
               </div>
               {m.isSameSound && m.placed && (

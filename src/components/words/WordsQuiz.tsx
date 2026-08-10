@@ -12,6 +12,7 @@ interface WordsQuizProps {
   difficulty: WordDifficulty;
   words: VocabWord[];
   onFinish: () => void;
+  optionPool?: VocabWord[]; // optional larger pool for wrong-answer options
 }
 
 function buildOptions(correct: VocabWord, all: VocabWord[]): VocabWord[] {
@@ -20,13 +21,14 @@ function buildOptions(correct: VocabWord, all: VocabWord[]): VocabWord[] {
   return [...wrong, correct].sort(() => Math.random() - 0.5);
 }
 
-const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, words, onFinish }) => {
+const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, words, onFinish, optionPool }) => {
   const shuffled = React.useMemo(
     () => [...words].sort(() => Math.random() - 0.5),
     [words],
   );
+  const pool = optionPool ?? words;
   const [idx, setIdx] = useState(0);
-  const [options, setOptions] = useState(() => buildOptions(shuffled[0], words));
+  const [options, setOptions] = useState(() => buildOptions(shuffled[0], pool));
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -55,7 +57,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
       } else {
         const next = shuffled[idx + 1];
         setIdx(i => i + 1);
-        setOptions(buildOptions(next, words));
+        setOptions(buildOptions(next, pool));
         setSelected(null);
       }
     }, 1200);
