@@ -7,24 +7,86 @@ export interface NikudMarkDef {
   name: string;       // Russian name
   sound: string;      // Sound it represents
   position: 'under' | 'inside' | 'above'; // Where it appears relative to the letter
+  explanation: string; // Friendly grammar rule explanation
+  sameSoundGroup: string; // Group ID for marks that sound the same (e.g. "a", "e", "o", "u")
 }
 
 export const NIKUD_MARKS: NikudMarkDef[] = [
-  { id: 'kamatz',     char: 'ָ', name: 'Камац',       sound: 'а',  position: 'under' },
-  { id: 'patach',     char: 'ַ', name: 'Патах',       sound: 'а',  position: 'under' },
-  { id: 'segol',      char: 'ֶ', name: 'Сегол',       sound: 'э',  position: 'under' },
-  { id: 'tsere',      char: 'ֵ', name: 'Цере',        sound: 'э',  position: 'under' },
-  { id: 'chirik',     char: 'ִ', name: 'Хирик',       sound: 'и',  position: 'under' },
-  { id: 'cholam',     char: 'ֹ', name: 'Холам',       sound: 'о',  position: 'inside' },
-  { id: 'shuruk',     char: 'ּ', name: 'Шурук',       sound: 'у',  position: 'inside' },
-  { id: 'kubutz',     char: 'ֻ', name: 'Кубуц',       sound: 'у',  position: 'under' },
-  { id: 'shva',       char: 'ְ', name: 'Шва',         sound: '(пауза)', position: 'under' },
-  { id: 'chatafPatach', char: 'ֲ', name: 'Хатаф-Патах', sound: 'а', position: 'under' },
-  { id: 'chatafSegol',  char: 'ֱ', name: 'Хатаф-Сегол', sound: 'э', position: 'under' },
-  { id: 'chatafKamatz', char: 'ֳ', name: 'Хатаф-Камац', sound: 'о', position: 'under' },
-  { id: 'shinDot',    char: 'ׁ', name: 'Шин (прав.)', sound: 'ш',  position: 'above' },
-  { id: 'sinDot',     char: 'ׂ', name: 'Син (лев.)',  sound: 'с',  position: 'above' },
-  { id: 'dagesh',     char: 'ּ', name: 'Дагеш',       sound: '(удвоение)', position: 'inside' },
+  {
+    id: 'kamatz', char: 'ָ', name: 'Камац', sound: 'а', position: 'under',
+    sameSoundGroup: 'a',
+    explanation: 'Камац — это маленькая буква "Т" под буквой. Даёт звук "а". Самый частый знак для звука "а" в иврите.',
+  },
+  {
+    id: 'patach', char: 'ַ', name: 'Патах', sound: 'а', position: 'under',
+    sameSoundGroup: 'a',
+    explanation: 'Патах — это горизонтальная чёрточка под буквой. Тоже даёт звук "а", но встречается реже, чем Камац. Часто используется в коротких словах и в конце слова.',
+  },
+  {
+    id: 'segol', char: 'ֶ', name: 'Сегол', sound: 'э', position: 'under',
+    sameSoundGroup: 'e',
+    explanation: 'Сегол — три точки треугольником под буквой. Даёт звук "э". Самый распространённый знак для звука "э".',
+  },
+  {
+    id: 'tsere', char: 'ֵ', name: 'Цере', sound: 'э', position: 'under',
+    sameSoundGroup: 'e',
+    explanation: 'Цере — две горизонтальные точки под буквой. Тоже даёт звук "э", но чаще используется в ударных слогах и в середине слова.',
+  },
+  {
+    id: 'chirik', char: 'ִ', name: 'Хирик', sound: 'и', position: 'under',
+    sameSoundGroup: 'i',
+    explanation: 'Хирик — одна точка под буквой. Даёт звук "и". Единственный основной знак для звука "и".',
+  },
+  {
+    id: 'cholam', char: 'ֹ', name: 'Холам', sound: 'о', position: 'inside',
+    sameSoundGroup: 'o',
+    explanation: 'Холам — точка слева-сверху от буквы (над буквой "ו" или слева от неё). Даёт звук "о". Самый частый знак для звука "о".',
+  },
+  {
+    id: 'shuruk', char: 'ּ', name: 'Шурук', sound: 'у', position: 'inside',
+    sameSoundGroup: 'u',
+    explanation: 'Шурук — точка в середине буквы "ו" (вав). Даёт звук "у". Используется, когда "ו" работает как гласная "у".',
+  },
+  {
+    id: 'kubutz', char: 'ֻ', name: 'Кубуц', sound: 'у', position: 'under',
+    sameSoundGroup: 'u',
+    explanation: 'Кубуц — три точки под буквой, расположенные наискосок. Тоже даёт звук "у", но встречается реже, чем Шурук.',
+  },
+  {
+    id: 'shva', char: 'ְ', name: 'Шва', sound: '(пауза)', position: 'under',
+    sameSoundGroup: 'pause',
+    explanation: 'Шва — двоеточие под буквой. Может означать короткую паузу (шва нах — "тихий шва") или краткий звук "э" (шва на — "подвижный шва"). Обычно ставится в начале слова или между согласными.',
+  },
+  {
+    id: 'chatafPatach', char: 'ֲ', name: 'Хатаф-Патах', sound: 'а', position: 'under',
+    sameSoundGroup: 'a',
+    explanation: 'Хатаф-Патах — Патах + Шва вместе. Даёт очень краткий звук "а". Используется в основном с гортанными буквами (א, ה, ח, ע).',
+  },
+  {
+    id: 'chatafSegol', char: 'ֱ', name: 'Хатаф-Сегол', sound: 'э', position: 'under',
+    sameSoundGroup: 'e',
+    explanation: 'Хатаф-Сегол — Сегол + Шва вместе. Даёт очень краткий звук "э". Используется с гортанными буквами.',
+  },
+  {
+    id: 'chatafKamatz', char: 'ֳ', name: 'Хатаф-Камац', sound: 'о', position: 'under',
+    sameSoundGroup: 'o',
+    explanation: 'Хатаф-Камац — Камац + Шва вместе. Даёт очень краткий звук "о". Используется с гортанными буквами.',
+  },
+  {
+    id: 'shinDot', char: 'ׁ', name: 'Шин (прав.)', sound: 'ш', position: 'above',
+    sameSoundGroup: 'sh',
+    explanation: 'Точка над правой частью буквы "ש" (шин). Делает звук "ш". Если точка справа — это "Ш", если слева — "С". Запомни: שִׁ — точка справа = Ш, שֵׂ — точка слева = С.',
+  },
+  {
+    id: 'sinDot', char: 'ׂ', name: 'Син (лев.)', sound: 'с', position: 'above',
+    sameSoundGroup: 's',
+    explanation: 'Точка над левой частью буквы "ש" (син). Делает звук "с". Та же буква "ש", но точка слева меняет звук с "ш" на "с".',
+  },
+  {
+    id: 'dagesh', char: 'ּ', name: 'Дагеш', sound: '(удвоение)', position: 'inside',
+    sameSoundGroup: 'dagesh',
+    explanation: 'Дагеш — точка внутри буквы. Может означать удвоение согласной (дагеш хазак — "сильный дагеш") или что буква читается твёрдо, а не как гласная (дагеш каль — "лёгкий дагеш").',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -253,10 +315,15 @@ export const NIKUD_WORDS: NikudWordData[] = [
   },
 ];
 
-// Helper: get all unique mark IDs needed for a word's slots
+// Helper: get marks needed for a word's slots WITH CORRECT MULTIPLICITY
+// (e.g. if a word needs 2 segols, the result will contain 2 segol entries)
 export function getMarksForWord(word: NikudWordData): NikudMarkDef[] {
-  const markIds = new Set(word.slots.map((s) => s.correctMarkId));
-  return Array.from(markIds)
-    .map((id) => NIKUD_MARKS.find((m) => m.id === id))
+  return word.slots
+    .map((s) => NIKUD_MARKS.find((m) => m.id === s.correctMarkId))
     .filter((m): m is NikudMarkDef => m !== undefined);
+}
+
+// Helper: get all unique mark IDs needed for a word (for decoy generation)
+export function getUniqueMarkIdsForWord(word: NikudWordData): Set<string> {
+  return new Set(word.slots.map((s) => s.correctMarkId));
 }

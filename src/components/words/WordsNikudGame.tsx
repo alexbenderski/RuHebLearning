@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { NIKUD_WORDS, NIKUD_MARKS, getMarksForWord } from '../../data/nikudWords';
+import { NIKUD_WORDS, NIKUD_MARKS, getMarksForWord, getUniqueMarkIdsForWord } from '../../data/nikudWords';
 import type { NikudWordData, NikudSlot, NikudMarkDef } from '../../data/nikudWords';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
@@ -17,11 +17,18 @@ interface SlotAssignment {
   markId: string;
 }
 
+interface MistakeDetail {
+  slot: NikudSlot;
+  placed: NikudMarkDef | null;
+  correct: NikudMarkDef;
+  isSameSound: boolean; // true if the placed mark sounds the same as the correct one
+}
+
 interface WordResult {
   word: NikudWordData;
   assignments: SlotAssignment[];
   allCorrect: boolean;
-  mistakes: { slot: NikudSlot; placed: NikudMarkDef | null; correct: NikudMarkDef }[];
+  mistakes: MistakeDetail[];
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -36,6 +43,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
   const [phase, setPhase] = useState<GamePhase>('setup');
   const [wordCount, setWordCount] = useState(5);
   const [difficulty, setDifficulty] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
+  const [showTranslit, setShowTranslit] = useState(false);
 
   const [gameWords, setGameWords] = useState<NikudWordData[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -45,7 +53,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
   const [slotAssignments, setSlotAssignments] = useState<Record<string, string>>({});
   const [draggedMarkId, setDraggedMarkId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
-  const [currentMistakes, setCurrentMistakes] = useState<WordResult['mistakes']>([]);
+  const [currentMistakes, setCurrentMistakes] = useState<MistakeDetail[]>([]);
 
   const availableWords = useMemo(() => {
     if (difficulty === 'all') return NIKUD_WORDS;
@@ -70,14 +78,15 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
   const currentWord = gameWords[currentIdx];
   const isLast = currentIdx === gameWords.length - 1;
 
-  // Shuffled available marks for the current word
+  // Shuffled available marks for the current word (WITH CORRECT MULTIPLICITY)
   const availableMarks = useMemo(() => {
     if (!currentWord) return [];
-    const marks = getMarksForWord(currentWord);
+    const marks = getMarksForWord(currentWord); // now returns duplicates correctly
     // Add some extra decoy marks for harder difficulty
     if (currentWord.difficulty !== 'easy') {
+      const uniqueCorrectIds = getUniqueMarkIdsForWord(currentWord);
       const decoys = NIKUD_MARKS.filter(
-        (m) => !marks.find((cm) => cm.id === m.id)
+        (m) => !uniqueCorrectIds.has(m.id)
       ).slice(0, currentWord.difficulty === 'hard' ? 4 : 2);
       return shuffle([...marks, ...decoys]);
     }
@@ -107,12 +116,10 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
 
   const handleSlotClick = (slotId: string) => {
     if (checked) return;
-    // If a mark is being dragged, drop it
     if (draggedMarkId) {
       handleSlotDrop(slotId);
       return;
     }
-    // If slot already has a mark, remove it (click to clear)
     if (slotAssignments[slotId]) {
       setSlotAssignments((prev) => {
         const next = { ...prev };
@@ -125,7 +132,6 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
   const handleMarkClick = (markId: string) => {
     if (checked) return;
     playClick();
-    // If already dragging this mark, cancel drag
     if (draggedMarkId === markId) {
       setDraggedMarkId(null);
       return;
@@ -141,7 +147,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
   const handleCheck = () => {
     if (!currentWord || !allSlotsFilled) return;
 
-    const mistakes: WordResult['mistakes'] = [];
+    const mistakes: MistakeDetail[] = [];
     let allCorrect = true;
 
     for (const slot of currentWord.slots) {
@@ -151,10 +157,14 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
 
       if (placedMarkId !== slot.correctMarkId) {
         allCorrect = false;
+        const isSameSound = placedMark
+          ? placedMark.sameSoundGroup === correctMark!.sameSoundGroup && correctMark!.sameSoundGroup !== 'dagesh' && correctMark!.sameSoundGroup !== 'pause'
+          : false;
         mistakes.push({
           slot,
           placed: placedMark || null,
           correct: correctMark!,
+          isSameSound,
         });
       }
     }
@@ -275,10 +285,22 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
                   <div className={styles.mistakesList}>
                     {r.mistakes.map((m, mi) => (
                       <div key={mi} className={styles.mistakeItem}>
-                        Буква {m.slot.letterIndex + 1}: нужно{' '}
-                        <strong>{m.correct.name}</strong> ({m.correct.char} — {m.correct.sound})
-                        {m.placed && (
-                          <>, а поставлено <span className={styles.wrongMark}>{m.placed.name}</span> ({m.placed.char})</>
+                        <div className={styles.mistakeHeader}>
+                          Буква {m.slot.letterIndex + 1} ({r.word.letters[m.slot.letterIndex]}): нужно{' '}
+                          <strong>{m.correct.name}</strong> ({m.correct.char} — звук "{m.correct.sound}")
+                          {m.placed && (
+                            <>, а поставлено <span className={styles.wrongMark}>{m.placed.name}</span> ({m.placed.char})</>
+                          )}
+                        </div>
+                        {m.isSameSound && m.placed && (
+                          <div className={styles.sameSoundNote}>
+                            💡 {m.placed.name} и {m.correct.name} звучат одинаково (оба дают звук "{m.correct.sound}"), но здесь нужен именно {m.correct.name}. {m.correct.explanation}
+                          </div>
+                        )}
+                        {!m.isSameSound && (
+                          <div className={styles.explanationNote}>
+                            📖 {m.correct.explanation}
+                          </div>
                         )}
                       </div>
                     ))}
@@ -326,10 +348,23 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
         <div className={styles.wordHint}>
           <span className={styles.hintLabel}>Значение:</span>
           <span className={styles.hintValue}>{currentWord.translation}</span>
+          <button
+            className={`${styles.translitToggle} ${showTranslit ? styles.translitToggleOn : ''}`}
+            onClick={() => setShowTranslit((v) => !v)}
+            title="Показать/скрыть транскрипцию"
+          >
+            {showTranslit ? '🔤 Транскрипция ON' : '🔤 Транскрипция OFF'}
+          </button>
           <button className={styles.speakBtn} onClick={() => playAudio(currentWord.wordWithNikud)} title="Прослушать">
             🔊
           </button>
         </div>
+
+        {showTranslit && (
+          <div className={styles.translitLine}>
+            [{currentWord.transliteration}]
+          </div>
+        )}
 
         <div className={styles.lettersRow}>
           {[...currentWord.letters].reverse().map((letter, reversedIdx) => {
@@ -422,12 +457,12 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
           {draggedMarkId ? 'Отпусти знак на нужное место →' : 'Перетащи знак никуда на слово ↑'}
         </div>
         <div className={styles.marksRow}>
-          {availableMarks.map((mark) => {
+          {availableMarks.map((mark, idx) => {
             const isUsed = Object.values(slotAssignments).includes(mark.id);
             const isDragging = draggedMarkId === mark.id;
             return (
               <div
-                key={mark.id}
+                key={`${mark.id}-${idx}`}
                 className={`${styles.markChip} ${isUsed ? styles.markUsed : ''} ${isDragging ? styles.markDragging : ''}`}
                 draggable={!checked && !isUsed}
                 onClick={() => handleMarkClick(mark.id)}
@@ -449,10 +484,22 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
           <h4>❌ Ошибки:</h4>
           {currentMistakes.map((m, mi) => (
             <div key={mi} className={styles.feedbackItem}>
-              <span>Буква {m.slot.letterIndex + 1} ({currentWord.letters[m.slot.letterIndex]}): </span>
-              <span>нужно <strong>{m.correct.name}</strong> ({m.correct.char} — звук "{m.correct.sound}")</span>
-              {m.placed && (
-                <span> — ты поставил <span className={styles.wrongMark}>{m.placed.name}</span> ({m.placed.char})</span>
+              <div className={styles.feedbackHeader}>
+                <span>Буква {m.slot.letterIndex + 1} ({currentWord.letters[m.slot.letterIndex]}): </span>
+                <span>нужно <strong>{m.correct.name}</strong> ({m.correct.char} — звук "{m.correct.sound}")</span>
+                {m.placed && (
+                  <span> — ты поставил <span className={styles.wrongMark}>{m.placed.name}</span> ({m.placed.char})</span>
+                )}
+              </div>
+              {m.isSameSound && m.placed && (
+                <div className={styles.sameSoundNote}>
+                  💡 {m.placed.name} и {m.correct.name} звучат одинаково (оба дают звук "{m.correct.sound}"), но здесь нужен именно {m.correct.name}. {m.correct.explanation}
+                </div>
+              )}
+              {!m.isSameSound && (
+                <div className={styles.explanationNote}>
+                  📖 {m.correct.explanation}
+                </div>
               )}
             </div>
           ))}

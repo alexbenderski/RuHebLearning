@@ -190,6 +190,39 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Transliteration toggle */
+.translitToggle {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.translitToggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.translitToggleOn {
+  background: rgba(250, 204, 21, 0.15);
+  border-color: rgba(250, 204, 21, 0.4);
+  color: #facc15;
+}
+
+.translitLine {
+  font-size: 1.1rem;
+  color: #facc15;
+  font-weight: 500;
+  margin-bottom: 20px;
+  letter-spacing: 0.05em;
+}
+
 /* Letters row */
 .lettersRow {
   display: flex;
@@ -405,13 +438,39 @@
 .feedbackItem {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 6px;
+  margin-bottom: 12px;
   line-height: 1.5;
+}
+
+.feedbackHeader {
+  margin-bottom: 4px;
 }
 
 .wrongMark {
   color: #fca5a5;
   text-decoration: line-through;
+}
+
+.sameSoundNote {
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: rgba(250, 204, 21, 0.1);
+  border-left: 3px solid #facc15;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.85rem;
+  color: #fde68a;
+  line-height: 1.5;
+}
+
+.explanationNote {
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid #3b82f6;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.85rem;
+  color: #93c5fd;
+  line-height: 1.5;
 }
 
 .successPanel {
