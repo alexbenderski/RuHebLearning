@@ -21,7 +21,7 @@ interface MistakeDetail {
   slot: NikudSlot;
   placed: NikudMarkDef | null;
   correct: NikudMarkDef;
-  isSameSound: boolean; // true if the placed mark sounds the same as the correct one
+  isSameSound: boolean;
 }
 
 interface WordResult {
@@ -50,8 +50,9 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
   const [results, setResults] = useState<WordResult[]>([]);
 
   // Current word state
-  const [slotAssignments, setSlotAssignments] = useState<Record<string, string>>({});
-  const [draggedMarkId, setDraggedMarkId] = useState<string | null>(null);
+  // slotAssignments maps slotId -> trayIndex (index in availableMarks array)
+  const [slotAssignments, setSlotAssignments] = useState<Record<string, number>>({});
+  const [draggedTrayIdx, setDraggedTrayIdx] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
   const [currentMistakes, setCurrentMistakes] = useState<MistakeDetail[]>([]);
 
@@ -70,7 +71,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
     setSlotAssignments({});
     setChecked(false);
     setCurrentMistakes([]);
-    setDraggedMarkId(null);
+    setDraggedTrayIdx(null);
     resetTimer();
     setPhase('game');
   };
@@ -93,34 +94,34 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
     return shuffle(marks);
   }, [currentWord]);
 
-  const handleDragStart = (markId: string) => {
+  const handleDragStart = (trayIdx: number) => {
     playClick();
-    setDraggedMarkId(markId);
+    setDraggedTrayIdx(trayIdx);
   };
 
   const handleSlotDrop = (slotId: string) => {
-    if (!draggedMarkId || checked) return;
+    if (draggedTrayIdx === null || checked) return;
     setSlotAssignments((prev) => {
-      // Remove this mark from any other slot it was assigned to
-      const next: Record<string, string> = {};
+      // Remove this tray index from any other slot it was assigned to
+      const next: Record<string, number> = {};
       for (const [key, val] of Object.entries(prev)) {
-        if (val !== draggedMarkId) {
+        if (val !== draggedTrayIdx) {
           next[key] = val;
         }
       }
-      next[slotId] = draggedMarkId;
+      next[slotId] = draggedTrayIdx;
       return next;
     });
-    setDraggedMarkId(null);
+    setDraggedTrayIdx(null);
   };
 
   const handleSlotClick = (slotId: string) => {
     if (checked) return;
-    if (draggedMarkId) {
+    if (draggedTrayIdx !== null) {
       handleSlotDrop(slotId);
       return;
     }
-    if (slotAssignments[slotId]) {
+    if (slotAssignments[slotId] !== undefined) {
       setSlotAssignments((prev) => {
         const next = { ...prev };
         delete next[slotId];
@@ -129,20 +130,27 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
     }
   };
 
-  const handleMarkClick = (markId: string) => {
+  const handleMarkClick = (trayIdx: number) => {
     if (checked) return;
     playClick();
-    if (draggedMarkId === markId) {
-      setDraggedMarkId(null);
+    if (draggedTrayIdx === trayIdx) {
+      setDraggedTrayIdx(null);
       return;
     }
-    setDraggedMarkId(markId);
+    setDraggedTrayIdx(trayIdx);
   };
 
   const allSlotsFilled = useMemo(() => {
     if (!currentWord) return false;
-    return currentWord.slots.every((s) => slotAssignments[s.id]);
+    return currentWord.slots.every((s) => slotAssignments[s.id] !== undefined);
   }, [currentWord, slotAssignments]);
+
+  // Get the mark id for a slot by looking up the tray index
+  const getMarkIdForSlot = (slotId: string): string | undefined => {
+    const trayIdx = slotAssignments[slotId];
+    if (trayIdx === undefined) return undefined;
+    return availableMarks[trayIdx]?.id;
+  };
 
   const handleCheck = () => {
     if (!currentWord || !allSlotsFilled) return;
@@ -151,7 +159,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
     let allCorrect = true;
 
     for (const slot of currentWord.slots) {
-      const placedMarkId = slotAssignments[slot.id];
+      const placedMarkId = getMarkIdForSlot(slot.id) ?? '';
       const placedMark = placedMarkId ? NIKUD_MARKS.find((m) => m.id === placedMarkId) : null;
       const correctMark = NIKUD_MARKS.find((m) => m.id === slot.correctMarkId);
 
@@ -182,7 +190,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
       word: currentWord,
       assignments: currentWord.slots.map((s) => ({
         slotId: s.id,
-        markId: slotAssignments[s.id] || '',
+        markId: getMarkIdForSlot(s.id) ?? '',
       })),
       allCorrect,
       mistakes,
@@ -200,11 +208,14 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
       setSlotAssignments({});
       setChecked(false);
       setCurrentMistakes([]);
-      setDraggedMarkId(null);
+      setDraggedTrayIdx(null);
     }
   };
 
   const totalCorrect = results.filter((r) => r.allCorrect).length;
+
+  // Get the set of tray indices that are currently assigned to any slot
+  const usedTrayIndices = new Set(Object.values(slotAssignments));
 
   // ── SETUP PHASE ───────────────────────────────────────────
   if (phase === 'setup') {
@@ -378,13 +389,13 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
               <div key={li} className={styles.letterCell}>
                 {/* Above slot */}
                 {hasAbove && letterSlots.filter((s) => s.position === 'above').map((slot) => {
-                  const assignedMarkId = slotAssignments[slot.id];
-                  const assignedMark = assignedMarkId ? NIKUD_MARKS.find((m) => m.id === assignedMarkId) : null;
-                  const isMistake = checked && assignedMarkId !== slot.correctMarkId;
+                  const placedMarkId = getMarkIdForSlot(slot.id);
+                  const assignedMark = placedMarkId ? NIKUD_MARKS.find((m) => m.id === placedMarkId) : null;
+                  const isMistake = checked && placedMarkId !== slot.correctMarkId;
                   return (
                     <div
                       key={slot.id}
-                      className={`${styles.slot} ${styles.slotAbove} ${assignedMark ? styles.slotFilled : ''} ${isMistake ? styles.slotMistake : ''} ${checked && assignedMarkId === slot.correctMarkId ? styles.slotCorrect : ''} ${draggedMarkId ? styles.slotTarget : ''}`}
+                      className={`${styles.slot} ${styles.slotAbove} ${assignedMark ? styles.slotFilled : ''} ${isMistake ? styles.slotMistake : ''} ${checked && placedMarkId === slot.correctMarkId ? styles.slotCorrect : ''} ${draggedTrayIdx !== null ? styles.slotTarget : ''}`}
                       onClick={() => handleSlotClick(slot.id)}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={() => handleSlotDrop(slot.id)}
@@ -403,13 +414,13 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
                   <span className={styles.letterChar}>{letter}</span>
                   {/* Inside slot (rendered over the letter) */}
                   {hasInside && letterSlots.filter((s) => s.position === 'inside').map((slot) => {
-                    const assignedMarkId = slotAssignments[slot.id];
-                    const assignedMark = assignedMarkId ? NIKUD_MARKS.find((m) => m.id === assignedMarkId) : null;
-                    const isMistake = checked && assignedMarkId !== slot.correctMarkId;
+                    const placedMarkId = getMarkIdForSlot(slot.id);
+                    const assignedMark = placedMarkId ? NIKUD_MARKS.find((m) => m.id === placedMarkId) : null;
+                    const isMistake = checked && placedMarkId !== slot.correctMarkId;
                     return (
                       <div
                         key={slot.id}
-                        className={`${styles.slot} ${styles.slotInside} ${assignedMark ? styles.slotFilled : ''} ${isMistake ? styles.slotMistake : ''} ${checked && assignedMarkId === slot.correctMarkId ? styles.slotCorrect : ''} ${draggedMarkId ? styles.slotTarget : ''}`}
+                        className={`${styles.slot} ${styles.slotInside} ${assignedMark ? styles.slotFilled : ''} ${isMistake ? styles.slotMistake : ''} ${checked && placedMarkId === slot.correctMarkId ? styles.slotCorrect : ''} ${draggedTrayIdx !== null ? styles.slotTarget : ''}`}
                         onClick={() => handleSlotClick(slot.id)}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={() => handleSlotDrop(slot.id)}
@@ -426,13 +437,13 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
 
                 {/* Under slot */}
                 {hasUnder && letterSlots.filter((s) => s.position === 'under').map((slot) => {
-                  const assignedMarkId = slotAssignments[slot.id];
-                  const assignedMark = assignedMarkId ? NIKUD_MARKS.find((m) => m.id === assignedMarkId) : null;
-                  const isMistake = checked && assignedMarkId !== slot.correctMarkId;
+                  const placedMarkId = getMarkIdForSlot(slot.id);
+                  const assignedMark = placedMarkId ? NIKUD_MARKS.find((m) => m.id === placedMarkId) : null;
+                  const isMistake = checked && placedMarkId !== slot.correctMarkId;
                   return (
                     <div
                       key={slot.id}
-                      className={`${styles.slot} ${styles.slotUnder} ${assignedMark ? styles.slotFilled : ''} ${isMistake ? styles.slotMistake : ''} ${checked && assignedMarkId === slot.correctMarkId ? styles.slotCorrect : ''} ${draggedMarkId ? styles.slotTarget : ''}`}
+                      className={`${styles.slot} ${styles.slotUnder} ${assignedMark ? styles.slotFilled : ''} ${isMistake ? styles.slotMistake : ''} ${checked && placedMarkId === slot.correctMarkId ? styles.slotCorrect : ''} ${draggedTrayIdx !== null ? styles.slotTarget : ''}`}
                       onClick={() => handleSlotClick(slot.id)}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={() => handleSlotDrop(slot.id)}
@@ -454,20 +465,20 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
       {/* Available marks tray */}
       <div className={styles.marksTray}>
         <div className={styles.trayLabel}>
-          {draggedMarkId ? 'Отпусти знак на нужное место →' : 'Перетащи знак никуда на слово ↑'}
+          {draggedTrayIdx !== null ? 'Отпусти знак на нужное место →' : 'Перетащи знак никуда на слово ↑'}
         </div>
         <div className={styles.marksRow}>
           {availableMarks.map((mark, idx) => {
-            const isUsed = Object.values(slotAssignments).includes(mark.id);
-            const isDragging = draggedMarkId === mark.id;
+            const isUsed = usedTrayIndices.has(idx);
+            const isDragging = draggedTrayIdx === idx;
             return (
               <div
                 key={`${mark.id}-${idx}`}
                 className={`${styles.markChip} ${isUsed ? styles.markUsed : ''} ${isDragging ? styles.markDragging : ''}`}
                 draggable={!checked && !isUsed}
-                onClick={() => handleMarkClick(mark.id)}
-                onDragStart={() => handleDragStart(mark.id)}
-                onDragEnd={() => setDraggedMarkId(null)}
+                onClick={() => handleMarkClick(idx)}
+                onDragStart={() => handleDragStart(idx)}
+                onDragEnd={() => setDraggedTrayIdx(null)}
               >
                 <span className={styles.markChipChar}>{mark.char}</span>
                 <span className={styles.markChipName}>{mark.name}</span>
