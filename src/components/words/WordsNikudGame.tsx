@@ -8,6 +8,7 @@ import styles from './WordsNikudGame.module.css';
 
 interface WordsNikudGameProps {
   onAnswer?: (correct: boolean, wordId: string) => void;
+  wordPool?: NikudWordData[]; // custom word pool (e.g. saved words only)
 }
 
 type GamePhase = 'setup' | 'game' | 'results';
@@ -35,7 +36,7 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
+const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer, wordPool }) => {
   const { playAudio } = useCloudTTS();
   const { playClick, playMatch } = useSoundEffects();
   const { formattedTime, resetTimer } = useGameTimer(true);
@@ -57,9 +58,10 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer }) => {
   const [currentMistakes, setCurrentMistakes] = useState<MistakeDetail[]>([]);
 
   const availableWords = useMemo(() => {
-    if (difficulty === 'all') return NIKUD_WORDS;
-    return NIKUD_WORDS.filter((w) => w.difficulty === difficulty);
-  }, [difficulty]);
+    const pool = wordPool ?? NIKUD_WORDS;
+    if (difficulty === 'all') return pool;
+    return pool.filter((w) => w.difficulty === difficulty);
+  }, [difficulty, wordPool]);
 
   const effectiveCount = Math.min(wordCount, availableWords.length);
 

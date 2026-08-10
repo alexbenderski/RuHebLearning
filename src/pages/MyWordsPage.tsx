@@ -4,8 +4,11 @@ import type { SavedWord, WordDifficulty } from '../types';
 import { getSavedWords, removeWordFromList, updateSavedWordDifficulty } from '../firebase/userService';
 import { useProgressTracker } from '../hooks/useProgressTracker';
 import useCloudTTS from '../hooks/useCloudTTS';
+import { getNikudWordsForSavedWords } from '../data/nikudWords';
 import WordsMemoryGame from '../components/words/WordsMemoryGame';
 import WordsDragBuilderGame from '../components/words/WordsDragBuilderGame';
+import WordsNikudGame from '../components/words/WordsNikudGame';
+import WordsQuiz from '../components/words/WordsQuiz';
 import styles from './MyWordsPage.module.css';
 
 interface MyWordsPageProps {
@@ -17,7 +20,7 @@ const DIFFS: WordDifficulty[] = ['easy', 'medium', 'hard'];
 const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
   const [savedWords, setSavedWords] = React.useState<SavedWord[]>([]);
   const [difficulty, setDifficulty] = React.useState<WordDifficulty>('easy');
-  const [mode, setMode] = React.useState<'list' | 'memory' | 'drag'>('list');
+  const [mode, setMode] = React.useState<'list' | 'memory' | 'drag' | 'nikud' | 'quiz'>('list');
   const navigate = useNavigate();
   const { trackStep } = useProgressTracker(userId);
   const { playAudio } = useCloudTTS();
@@ -32,6 +35,7 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
   }, [loadWords]);
 
   const filtered = savedWords.filter((w) => w.difficulty === difficulty);
+  const nikudPool = React.useMemo(() => getNikudWordsForSavedWords(savedWords), [savedWords]);
 
   return (
     <div className={styles.page}>
@@ -76,6 +80,24 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
           }}
         >
           🧩 Drag words
+        </button>
+        <button
+          className={`${styles.modeBtn} ${mode === 'quiz' ? styles.modeBtnActive : ''}`}
+          onClick={() => {
+            setMode('quiz');
+            trackStep({ moduleId: 'my-words', stepId: `quiz:${difficulty}` }).catch((err) => console.error('[my words progress]', err));
+          }}
+        >
+          🎯 Квиз
+        </button>
+        <button
+          className={`${styles.modeBtn} ${mode === 'nikud' ? styles.modeBtnActive : ''}`}
+          onClick={() => {
+            setMode('nikud');
+            trackStep({ moduleId: 'my-words', stepId: `nikud:${difficulty}` }).catch((err) => console.error('[my words progress]', err));
+          }}
+        >
+          🔤 Никуд
         </button>
       </div>
 
@@ -138,6 +160,25 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
           sourceWords={filtered}
           onAnswer={(correct, wordId) => {
             trackStep({ moduleId: 'my-words', stepId: `drag:${difficulty}:${wordId}`, isCorrect: correct }).catch((err) => console.error('[my words progress]', err));
+          }}
+        />
+      )}
+
+      {mode === 'quiz' && filtered.length > 0 && (
+        <WordsQuiz
+          userId={userId}
+          categoryId="my-words"
+          difficulty={difficulty}
+          words={filtered}
+          onFinish={() => setMode('list')}
+        />
+      )}
+
+      {mode === 'nikud' && (
+        <WordsNikudGame
+          wordPool={nikudPool}
+          onAnswer={(correct, wordId) => {
+            trackStep({ moduleId: 'my-words', stepId: `nikud:${difficulty}:${wordId}`, isCorrect: correct }).catch((err) => console.error('[my words progress]', err));
           }}
         />
       )}

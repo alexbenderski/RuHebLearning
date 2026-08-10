@@ -11,7 +11,7 @@ type LetterCard = {
   label: string;
   isHebrew: boolean;
   matched: boolean;
-  letterKey: string;
+  letterKey: string; // base letter char for stats/tracking
 };
 
 type LetterResult = {
@@ -29,7 +29,7 @@ function buildDeck(letters: HebrewLetter[], variants: LetterNikudVariant[], pair
   base.forEach((l) => {
     const availableVariants = variants.filter((v) => v.baseLetter === l.letter);
     const hebrewLabel = availableVariants.length > 0
-      ? shuffle(availableVariants)[0].nikudChar
+      ? shuffle(availableVariants)[0].nikudChar // show letter with a nikud mark
       : l.letter;
     cards.push({
       id: `${l.letter}-char-${hebrewLabel}`,
@@ -53,7 +53,7 @@ function buildDeck(letters: HebrewLetter[], variants: LetterNikudVariant[], pair
 
 interface AlphabetMemoryGameProps {
   letters: HebrewLetter[];
-  variants?: LetterNikudVariant[];
+  variants?: LetterNikudVariant[]; // nikud-enhanced letter cards
   onEvent?: (isMatch: boolean) => void;
   onLetterResult?: (letterKey: string, isCorrect: boolean) => void;
 }
@@ -93,6 +93,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, varian
     setPhase('play');
   };
 
+  // 5s play -> 1s flash loop
   React.useEffect(() => {
     if (phase === 'play') {
       if (countdown <= 0) {
@@ -122,6 +123,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, varian
     [seconds],
   );
 
+  // Auto-finish when the turn limit is reached
   React.useEffect(() => {
     if (phase === 'play' && moves >= turnLimit) {
       finishGame(true);
@@ -145,6 +147,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, varian
       const letterKey = deck[a].letterKey;
       onEvent?.(isMatch);
 
+      // Per-letter stats
       setResults((prev) => {
         const prevResult = prev[letterKey] ?? { correct: 0, wrong: 0 };
         return {
@@ -221,6 +224,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, varian
     );
   }
 
+  // ── RESULTS with per-letter stats ─────────────────────────
   if (phase === 'done') {
     const perfectLetters = Object.values(results).filter((r) => r.correct > 0 && r.wrong === 0).length;
     const slowLetters = Object.values(results).filter((r) => r.wrong > 0).length;
@@ -266,6 +270,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, varian
     );
   }
 
+  // ── GAME ───────────────────────────────────────────────────
   return (
     <div className={styles.wrap}>
       <div className={styles.topRow}>
@@ -278,7 +283,7 @@ const AlphabetMemoryGame: React.FC<AlphabetMemoryGameProps> = ({ letters, varian
           )}
         </div>
         <div className={styles.statsRight}>
-          <span className={styles.gameTimer}> {formattedTime}</span>
+          <span className={styles.gameTimer}>⏱ {formattedTime}</span>
           <span>Ходы: {moves}/{turnLimit}</span>
           <span>Пары: {totalPairs}/{totalPairs}</span>
         </div>

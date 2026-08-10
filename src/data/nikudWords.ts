@@ -11,6 +11,9 @@ export interface NikudMarkDef {
   sameSoundGroup: string; // Group ID for marks that sound the same (e.g. "a", "e", "o", "u")
 }
 
+// Regex for stripping Hebrew nikud (vowel) marks
+export const NIKUD_STRIP_RE = /[\u0591-\u05C7]/g;
+
 export const NIKUD_MARKS: NikudMarkDef[] = [
   {
     id: 'kamatz', char: 'ָ', name: 'Камац', sound: 'а', position: 'under',
@@ -326,4 +329,23 @@ export function getMarksForWord(word: NikudWordData): NikudMarkDef[] {
 // Helper: get all unique mark IDs needed for a word (for decoy generation)
 export function getUniqueMarkIdsForWord(word: NikudWordData): Set<string> {
   return new Set(word.slots.map((s) => s.correctMarkId));
+}
+
+/** Strip nikud marks from a vocalised Hebrew string. */
+export function stripNikud(text: string): string {
+  return text.replace(NIKUD_STRIP_RE, '');
+}
+
+/**
+ * Find NikudWordData entries whose unvocalised form matches one of the
+ * provided saved Hebrew words. Used by "My words" page to run the nikud
+ * game against only the words the user saved.
+ */
+export function getNikudWordsForSavedWords(savedWords: { hebrew: string }[]): NikudWordData[] {
+  const wanted = new Map<string, { hebrew: string }>();
+  for (const w of savedWords) {
+    const key = stripNikud(w.hebrew);
+    wanted.set(key, w);
+  }
+  return NIKUD_WORDS.filter((nw) => wanted.has(stripNikud(nw.wordWithNikud)));
 }

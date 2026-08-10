@@ -19,6 +19,19 @@ interface LetterNikudInfo {
 
 const LETTER_NIKUD_INFO: LetterNikudInfo[] = [
   {
+    letter: 'א', letterName: 'Алеф (אלף)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'אָ', transliteration: 'а', explanation: 'Камац (ָ) — чёрточка под буквой. Даёт звук "а". Алеф молчит, поэтому слышится только гласная.' },
+      { markId: 'patach', hebrew: 'אַ', transliteration: 'а', explanation: 'Патах (ַ) — горизонтальная чёрточка под буквой. Тоже "а".' },
+      { markId: 'segol', hebrew: 'אֶ', transliteration: 'э', explanation: 'Сегол (ֶ) — три точки треугольником. Даёт звук "э".' },
+      { markId: 'tsere', hebrew: 'אֵ', transliteration: 'э', explanation: 'Цере (ֵ) — две точки под буквой. Даёт звук "э".' },
+      { markId: 'chirik', hebrew: 'אִ', transliteration: 'и', explanation: 'Хирик (ִ) — одна точка под буквой. Даёт звук "и".' },
+      { markId: 'cholam', hebrew: 'אֹ', transliteration: 'о', explanation: 'Холам (ֹ) — точка над/слева от буквы. Даёт звук "о".' },
+      { markId: 'kubutz', hebrew: 'אֻ', transliteration: 'у', explanation: 'Кубуц (ֻ) — три точки под буквой. Даёт звук "у".' },
+      { markId: 'shva', hebrew: 'אְ', transliteration: 'пауза', explanation: 'Шва (ְ) — двоеточие под буквой. Пауза или очень краткое "э".' },
+    ],
+  },
+  {
     letter: 'ב', letterName: 'Бет (בית)',
     entries: [
       { markId: 'kamatz', hebrew: 'בָּ', transliteration: 'ба', explanation: 'Камац (ָ) — чёрточка под буквой. Даёт звук "а". Самый частый знак для звука "а".' },
@@ -39,20 +52,85 @@ const LETTER_NIKUD_INFO: LetterNikudInfo[] = [
       { markId: 'segol', hebrew: 'גֶּ', transliteration: 'гэ', explanation: 'Сегол — три точки треугольником. Звук "э".' },
       { markId: 'chirik', hebrew: 'גִּ', transliteration: 'ги', explanation: 'Хирик — одна точка под буквой. Звук "и".' },
       { markId: 'cholam', hebrew: 'גֹּ', transliteration: 'го', explanation: 'Холам — точка над буквой. Звук "о".' },
+      { markId: 'shva', hebrew: 'גְּ', transliteration: 'г(э)', explanation: 'Шва — двоеточие. Пауза.' },
     ],
   },
   {
     letter: 'ד', letterName: 'Далет (דלת)',
     entries: [
+      { markId: 'kamatz', hebrew: 'דָּ', transliteration: 'да', explanation: 'Камац — чёрточка под буквой. Звук "а".' },
       { markId: 'patach', hebrew: 'דַּ', transliteration: 'да', explanation: 'Патах — чёрточка под буквой. Звук "а".' },
       { markId: 'segol', hebrew: 'דֶּ', transliteration: 'дэ', explanation: 'Сегол — три точки. Звук "э".' },
       { markId: 'chirik', hebrew: 'דִּ', transliteration: 'ди', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'cholam', hebrew: 'דֹּ', transliteration: 'до', explanation: 'Холам — точка над. Звук "о".' },
+    ],
+  },
+  {
+    letter: 'ה', letterName: 'Хе (הא)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'הָ', transliteration: 'ха', explanation: 'Камац — чёрточка. Звук "ха".' },
+      { markId: 'patach', hebrew: 'הַ', transliteration: 'ха', explanation: 'Патах — чёрточка. Звук "ха".' },
+      { markId: 'segol', hebrew: 'הֶ', transliteration: 'хэ', explanation: 'Сегол — три точки. Звук "хэ".' },
+      { markId: 'tsere', hebrew: 'הֵ', transliteration: 'хэ', explanation: 'Цере — две точки. Звук "хэ".' },
+      { markId: 'chirik', hebrew: 'הִ', transliteration: 'хи', explanation: 'Хирик — одна точка. Звук "хи".' },
+      { markId: 'cholam', hebrew: 'הֹ', transliteration: 'хо', explanation: 'Холам — точка над. Звук "хо".' },
+    ],
+  },
+  {
+    letter: 'ו', letterName: 'Вав (ואו)',
+    entries: [
+      { markId: 'cholam', hebrew: 'וֹ', transliteration: 'во / о', explanation: 'Холам на вав — читается "о" (вав-холам).' },
+      { markId: 'shuruk', hebrew: 'וּ', transliteration: 'у', explanation: 'Шурук (точка внутри вав) — чистый звук "у".' },
+      { markId: 'shva', hebrew: 'וְ', transliteration: 'в(э)', explanation: 'Шва — пауза или краткое "э".' },
+    ],
+  },
+  {
+    letter: 'ז', letterName: 'Заин (זין)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'זָ', transliteration: 'за', explanation: 'Камац — чёрточка. Звук "за".' },
+      { markId: 'segol', hebrew: 'זֶ', transliteration: 'зэ', explanation: 'Сегол — три точки. Звук "зэ".' },
+      { markId: 'chirik', hebrew: 'זִ', transliteration: 'зи', explanation: 'Хирик — одна точка. Звук "зи".' },
+      { markId: 'cholam', hebrew: 'זֹ', transliteration: 'зо', explanation: 'Холам — точка над. Звук "зо".' },
+    ],
+  },
+  {
+    letter: 'ח', letterName: 'Хет (חת)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'חָ', transliteration: 'ха', explanation: 'Камац — чёрточка. Звук "ха" (горловой).' },
+      { markId: 'patach', hebrew: 'חַ', transliteration: 'ха', explanation: 'Патах — чёрточка. Звук "ха".' },
+      { markId: 'segol', hebrew: 'חֶ', transliteration: 'хэ', explanation: 'Сегол — три точки. Звук "хэ".' },
+      { markId: 'chirik', hebrew: 'חִ', transliteration: 'хи', explanation: 'Хирик — одна точка. Звук "хи".' },
+      { markId: 'cholam', hebrew: 'חֹ', transliteration: 'хо', explanation: 'Холам — точка над. Звук "хо".' },
+      { markId: 'shva', hebrew: 'חְ', transliteration: 'х(э)', explanation: 'Шва — пауза.' },
+    ],
+  },
+  {
+    letter: 'ט', letterName: 'Тет (טית)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'טָ', transliteration: 'та', explanation: 'Камац — чёрточка. Звук "та".' },
+      { markId: 'patach', hebrew: 'טַ', transliteration: 'та', explanation: 'Патах — чёрточка. Звук "та".' },
+      { markId: 'segol', hebrew: 'טֶ', transliteration: 'тэ', explanation: 'Сегол — три точки. Звук "тэ".' },
+      { markId: 'tsere', hebrew: 'טֵ', transliteration: 'тэ', explanation: 'Цере — две точки. Звук "тэ".' },
+      { markId: 'chirik', hebrew: 'טִ', transliteration: 'ти', explanation: 'Хирик — одна точка. Звук "ти".' },
+      { markId: 'cholam', hebrew: 'טֹ', transliteration: 'то', explanation: 'Холам — точка над. Звук "то".' },
+    ],
+  },
+  {
+    letter: 'י', letterName: 'Йод (יוד)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'יָ', transliteration: 'я', explanation: 'Камац — чёрточка. Йод + "а" даёт "я".' },
+      { markId: 'segol', hebrew: 'יֶ', transliteration: 'йэ', explanation: 'Сегол — три точки. Звук "йэ".' },
+      { markId: 'tsere', hebrew: 'יֵ', transliteration: 'йэ', explanation: 'Цере — две точки. Звук "йэ".' },
+      { markId: 'chirik', hebrew: 'יִ', transliteration: 'йи', explanation: 'Хирик — одна точка. Звук "йи".' },
+      { markId: 'cholam', hebrew: 'יֹ', transliteration: 'йо', explanation: 'Холам — точка над. Звук "йо".' },
+      { markId: 'shva', hebrew: 'יְ', transliteration: 'й(э)', explanation: 'Шва — пауза.' },
     ],
   },
   {
     letter: 'כ', letterName: 'Каф (כף)',
     entries: [
       { markId: 'kamatz', hebrew: 'כָּ', transliteration: 'ка', explanation: 'Камац — чёрточка. Звук "а".' },
+      { markId: 'patach', hebrew: 'כַּ', transliteration: 'ка', explanation: 'Патах — чёрточка. Звук "а".' },
       { markId: 'tsere', hebrew: 'כֵּ', transliteration: 'кэ', explanation: 'Цере — две точки. Звук "э".' },
       { markId: 'chirik', hebrew: 'כִּ', transliteration: 'ки', explanation: 'Хирик — одна точка. Звук "и".' },
       { markId: 'cholam', hebrew: 'כֹּ', transliteration: 'ко', explanation: 'Холам — точка над. Звук "о".' },
@@ -60,20 +138,62 @@ const LETTER_NIKUD_INFO: LetterNikudInfo[] = [
     ],
   },
   {
+    letter: 'ל', letterName: 'Ламед (למד)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'לָ', transliteration: 'ла', explanation: 'Камац — чёрточка. Звук "ла".' },
+      { markId: 'patach', hebrew: 'לַ', transliteration: 'ла', explanation: 'Патах — чёрточка. Звук "ла".' },
+      { markId: 'segol', hebrew: 'לֶ', transliteration: 'лэ', explanation: 'Сегол — три точки. Звук "лэ".' },
+      { markId: 'tsere', hebrew: 'לֵ', transliteration: 'лэ', explanation: 'Цере — две точки. Звук "лэ".' },
+      { markId: 'chirik', hebrew: 'לִ', transliteration: 'ли', explanation: 'Хирик — одна точка. Звук "ли".' },
+      { markId: 'cholam', hebrew: 'לֹ', transliteration: 'ло', explanation: 'Холам — точка над. Звук "ло".' },
+      { markId: 'shva', hebrew: 'לְ', transliteration: 'л(э)', explanation: 'Шва — пауза.' },
+    ],
+  },
+  {
     letter: 'מ', letterName: 'Мем (מם)',
     entries: [
       { markId: 'kamatz', hebrew: 'מָ', transliteration: 'ма', explanation: 'Камац — чёрточка. Звук "а".' },
+      { markId: 'patach', hebrew: 'מַ', transliteration: 'ма', explanation: 'Патах — чёрточка. Звук "а".' },
       { markId: 'segol', hebrew: 'מֶ', transliteration: 'мэ', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'tsere', hebrew: 'מֵ', transliteration: 'мэ', explanation: 'Цере — две точки. Звук "э".' },
       { markId: 'chirik', hebrew: 'מִ', transliteration: 'ми', explanation: 'Хирик — одна точка. Звук "и".' },
       { markId: 'cholam', hebrew: 'מֹ', transliteration: 'мо', explanation: 'Холам — точка над. Звук "о".' },
+      { markId: 'shva', hebrew: 'מְ', transliteration: 'м(э)', explanation: 'Шва — пауза.' },
     ],
   },
   {
     letter: 'נ', letterName: 'Нун (נון)',
     entries: [
-      { markId: 'patach', hebrew: 'נַ', transliteration: 'на', explanation: 'Патах — чёрточка. Звук "а".' },
-      { markId: 'segol', hebrew: 'נֶ', transliteration: 'нэ', explanation: 'Сегол — три точки. Звук "э".' },
-      { markId: 'chirik', hebrew: 'נִ', transliteration: 'ни', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'kamatz', hebrew: 'נָ', transliteration: 'на', explanation: 'Камац — чёрточка. Звук "на".' },
+      { markId: 'patach', hebrew: 'נַ', transliteration: 'на', explanation: 'Патах — чёрточка. Звук "на".' },
+      { markId: 'segol', hebrew: 'נֶ', transliteration: 'нэ', explanation: 'Сегол — три точки. Звук "нэ".' },
+      { markId: 'tsere', hebrew: 'נֵ', transliteration: 'нэ', explanation: 'Цере — две точки. Звук "нэ".' },
+      { markId: 'chirik', hebrew: 'נִ', transliteration: 'ни', explanation: 'Хирик — одна точка. Звук "ни".' },
+      { markId: 'cholam', hebrew: 'נֹ', transliteration: 'но', explanation: 'Холам — точка над. Звук "но".' },
+      { markId: 'shva', hebrew: 'נְ', transliteration: 'н(э)', explanation: 'Шва — пауза.' },
+    ],
+  },
+  {
+    letter: 'ס', letterName: 'Самех (סמך)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'סָ', transliteration: 'са', explanation: 'Камац — чёрточка. Звук "са".' },
+      { markId: 'patach', hebrew: 'סַ', transliteration: 'са', explanation: 'Патах — чёрточка. Звук "са".' },
+      { markId: 'segol', hebrew: 'סֶ', transliteration: 'сэ', explanation: 'Сегол — три точки. Звук "сэ".' },
+      { markId: 'tsere', hebrew: 'סֵ', transliteration: 'сэ', explanation: 'Цере — две точки. Звук "сэ".' },
+      { markId: 'chirik', hebrew: 'סִ', transliteration: 'си', explanation: 'Хирик — одна точка. Звук "си".' },
+      { markId: 'cholam', hebrew: 'סֹ', transliteration: 'со', explanation: 'Холам — точка над. Звук "со".' },
+    ],
+  },
+  {
+    letter: 'ע', letterName: 'Аин (עין)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'עָ', transliteration: 'а', explanation: 'Камац — чёрточка. Аин почти не читается, слышна гласная "а".' },
+      { markId: 'patach', hebrew: 'עַ', transliteration: 'а', explanation: 'Патах — чёрточка. Звук "а".' },
+      { markId: 'segol', hebrew: 'עֶ', transliteration: 'э', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'tsere', hebrew: 'עֵ', transliteration: 'э', explanation: 'Цере — две точки. Звук "э".' },
+      { markId: 'chirik', hebrew: 'עִ', transliteration: 'и', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'cholam', hebrew: 'עֹ', transliteration: 'о', explanation: 'Холам — точка над. Звук "о".' },
+      { markId: 'shva', hebrew: 'עְ', transliteration: 'пауза', explanation: 'Шва — пауза.' },
     ],
   },
   {
@@ -88,20 +208,57 @@ const LETTER_NIKUD_INFO: LetterNikudInfo[] = [
     ],
   },
   {
+    letter: 'צ', letterName: 'Цади (צדי)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'צָ', transliteration: 'ца', explanation: 'Камац — чёрточка. Звук "ца".' },
+      { markId: 'patach', hebrew: 'צַ', transliteration: 'ца', explanation: 'Патах — чёрточка. Звук "ца".' },
+      { markId: 'segol', hebrew: 'צֶ', transliteration: 'цэ', explanation: 'Сегол — три точки. Звук "цэ".' },
+      { markId: 'tsere', hebrew: 'צֵ', transliteration: 'цэ', explanation: 'Цере — две точки. Звук "цэ".' },
+      { markId: 'chirik', hebrew: 'צִ', transliteration: 'ци', explanation: 'Хирик — одна точка. Звук "ци".' },
+      { markId: 'cholam', hebrew: 'צֹ', transliteration: 'цо', explanation: 'Холам — точка над. Звук "цо".' },
+    ],
+  },
+  {
+    letter: 'ק', letterName: 'Куф (קוף)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'קָ', transliteration: 'ка', explanation: 'Камац — чёрточка. Звук "ка".' },
+      { markId: 'patach', hebrew: 'קַ', transliteration: 'ка', explanation: 'Патах — чёрточка. Звук "ка".' },
+      { markId: 'segol', hebrew: 'קֶ', transliteration: 'кэ', explanation: 'Сегол — три точки. Звук "кэ".' },
+      { markId: 'tsere', hebrew: 'קֵ', transliteration: 'кэ', explanation: 'Цере — две точки. Звук "кэ".' },
+      { markId: 'chirik', hebrew: 'קִ', transliteration: 'ки', explanation: 'Хирик — одна точка. Звук "ки".' },
+      { markId: 'cholam', hebrew: 'קֹ', transliteration: 'ко', explanation: 'Холам — точка над. Звук "ко".' },
+    ],
+  },
+  {
+    letter: 'ר', letterName: 'Реш (ריש)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'רָ', transliteration: 'ра', explanation: 'Камац — чёрточка. Звук "ра".' },
+      { markId: 'patach', hebrew: 'רַ', transliteration: 'ра', explanation: 'Патах — чёрточка. Звук "ра".' },
+      { markId: 'segol', hebrew: 'רֶ', transliteration: 'рэ', explanation: 'Сегол — три точки. Звук "рэ".' },
+      { markId: 'tsere', hebrew: 'רֵ', transliteration: 'рэ', explanation: 'Цере — две точки. Звук "рэ".' },
+      { markId: 'chirik', hebrew: 'רִ', transliteration: 'ри', explanation: 'Хирик — одна точка. Звук "ри".' },
+      { markId: 'cholam', hebrew: 'רֹ', transliteration: 'ро', explanation: 'Холам — точка над. Звук "ро".' },
+    ],
+  },
+  {
     letter: 'ש', letterName: 'Шин / Син (שין)',
     entries: [
       { markId: 'shinDot', hebrew: 'שָׁ', transliteration: 'ша', explanation: 'Шин (точка справа) — звук "ш". Если точка справа — это Ш.' },
       { markId: 'sinDot', hebrew: 'שָׂ', transliteration: 'са', explanation: 'Син (точка слева) — звук "с". Та же буква, точка слева = "с".' },
       { markId: 'kamatz', hebrew: 'שָׁ', transliteration: 'ша', explanation: 'Камац под шин — "ша".' },
       { markId: 'chirik', hebrew: 'שִׁ', transliteration: 'ши', explanation: 'Хирик под шин — "ши".' },
+      { markId: 'shva', hebrew: 'שְׁ', transliteration: 'ш(э)', explanation: 'Шва под шин — пауза.' },
     ],
   },
   {
     letter: 'ת', letterName: 'Тав (תו)',
     entries: [
       { markId: 'kamatz', hebrew: 'תָּ', transliteration: 'та', explanation: 'Камац — чёрточка. Звук "а".' },
+      { markId: 'patach', hebrew: 'תַּ', transliteration: 'та', explanation: 'Патах — чёрточка. Звук "а".' },
       { markId: 'segol', hebrew: 'תֶּ', transliteration: 'тэ', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'tsere', hebrew: 'תֵּ', transliteration: 'тэ', explanation: 'Цере — две точки. Звук "э".' },
       { markId: 'chirik', hebrew: 'תִּ', transliteration: 'ти', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'cholam', hebrew: 'תֹּ', transliteration: 'то', explanation: 'Холам — точка над. Звук "о".' },
       { markId: 'shva', hebrew: 'תְּ', transliteration: 'т(э)', explanation: 'Шва — двоеточие. Пауза.' },
     ],
   },

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HEBREW_LETTERS, FINAL_LETTERS, ALL_LETTERS } from '../../data/alphabet';
+import { getVariantsForLetters } from '../../data/letterNikud';
 import LetterCard from './LetterCard';
 import AlphabetQuiz from './AlphabetQuiz';
 import AlphabetMemoryGame from './AlphabetMemoryGame';
 import AlphabetWordBuilderGame from './AlphabetWordBuilderGame';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
+import { useLetterProgress } from '../../hooks/useLetterProgress';
 import { getSavedWords } from '../../firebase/userService';
 import type { VocabWord } from '../../types';
 import styles from './AlphabetModule.module.css';
@@ -23,6 +25,9 @@ const AlphabetModule: React.FC<AlphabetModuleProps> = ({ userId }) => {
   const [letterStats, setLetterStats] = useState<Record<string, LetterStat>>({});
   const [learnedWords, setLearnedWords] = useState<VocabWord[]>([]);
   const { trackStep } = useProgressTracker(userId);
+  const { trackLetter } = useLetterProgress(userId);
+
+  const nikudVariants = React.useMemo(() => getVariantsForLetters(ALL_LETTERS.map((l) => l.letter)), []);
 
   React.useEffect(() => {
     if (!userId) return;
@@ -39,6 +44,7 @@ const AlphabetModule: React.FC<AlphabetModuleProps> = ({ userId }) => {
         total:   (prev[letterChar]?.total   ?? 0) + 1,
       },
     }));
+    trackLetter({ letter: letterChar, isCorrect, game: 'quiz', detail: 'name-pick' }).catch(console.error);
   };
 
   const totalAttempts = Object.values(letterStats).reduce((s, v) => s + v.total, 0);
@@ -148,12 +154,16 @@ const AlphabetModule: React.FC<AlphabetModuleProps> = ({ userId }) => {
           </section>
         </>
       ) : mode === 'quiz' ? (
-        <AlphabetQuiz letters={ALL_LETTERS} userId={userId} onAnswer={handleQuizAnswer} />
+        <AlphabetQuiz letters={ALL_LETTERS} userId={userId} onAnswer={handleQuizAnswer} variants={nikudVariants} />
       ) : mode === 'memory' ? (
         <AlphabetMemoryGame
           letters={ALL_LETTERS}
+          variants={nikudVariants}
           onEvent={(isMatch) => {
             trackStep({ moduleId: 'alphabet', stepId: 'memory-pair', isCorrect: isMatch }).catch((err) => console.error('[progress alphabet memory]', err));
+          }}
+          onLetterResult={(letterKey, isCorrect) => {
+            trackLetter({ letter: letterKey, isCorrect, game: 'memory', detail: 'match' }).catch(console.error);
           }}
         />
       ) : (

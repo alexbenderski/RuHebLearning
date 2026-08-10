@@ -10,7 +10,7 @@ interface AlphabetQuizProps {
   letters: HebrewLetter[];
   userId?: string;
   onAnswer?: (letterChar: string, correct: boolean) => void;
-  variants?: LetterNikudVariant[];
+  variants?: LetterNikudVariant[]; // nikud-enhanced letter display
 }
 
 type QuizPhase = 'select' | 'quiz' | 'results';
@@ -20,6 +20,14 @@ function buildOptions(correct: HebrewLetter, pool: HebrewLetter[]): HebrewLetter
   const others = pool.filter((l) => l.letter !== correct.letter);
   const wrong = [...others].sort(() => Math.random() - 0.5).slice(0, 3);
   return [...wrong, correct].sort(() => Math.random() - 0.5);
+}
+
+/** Pick a nikud variant for the displayed letter, or fall back to bare letter */
+function getDisplayChar(letter: HebrewLetter, variants: LetterNikudVariant[] | undefined): string {
+  if (!variants || variants.length === 0) return letter.letter;
+  const available = variants.filter((v) => v.baseLetter === letter.letter);
+  if (available.length === 0) return letter.letter;
+  return available[Math.floor(Math.random() * available.length)].nikudChar;
 }
 
 const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, variants }) => {
@@ -36,13 +44,6 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
   const { playAudio } = useCloudTTS();
   const { trackStep } = useProgressTracker(userId);
   const { seconds, formattedTime, resetTimer } = useGameTimer(phase === 'quiz');
-
-  const getVariantFor = (letter: HebrewLetter): string => {
-    if (!variants || variants.length === 0) return letter.letter;
-    const available = variants.filter((v) => v.baseLetter === letter.letter);
-    if (available.length === 0) return letter.letter;
-    return available[Math.floor(Math.random() * available.length)].nikudChar;
-  };
 
   const toggleLetter = (char: string) => {
     setSelected((prev) => {
@@ -113,6 +114,9 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
       <div className={styles.selectWrap}>
         <div className={styles.selectHeader}>
           <p className={styles.selectDesc}>Выбери буквы для квиза — нажми на карточку чтобы выделить</p>
+          {variants && variants.length > 0 && (
+            <p className={styles.selectDesc}>🔤 Буквы показываются с огласовками (никуд)</p>
+          )}
           <div className={styles.selectActions}>
             <button className={styles.selCtrlBtn} onClick={() => setSelected(new Set(letters.map((l) => l.letter)))}>Все</button>
             <button className={styles.selCtrlBtn} onClick={() => setSelected(new Set())}>Сбросить</button>
@@ -128,7 +132,7 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
                 className={`${styles.selCard} ${selected.has(l.letter) ? styles.selCardOn : ''}`}
                 onClick={() => toggleLetter(l.letter)}
               >
-                <span className={styles.selHebrew}>{getVariantFor(l)}</span>
+                <span className={styles.selHebrew}>{l.letter}</span>
                 <span className={styles.selName}>{l.name}</span>
                 <span className={styles.selTranslit}>{l.transliteration}</span>
               </button>
@@ -145,7 +149,7 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
                 className={`${styles.selCard} ${selected.has(l.letter) ? styles.selCardOn : ''}`}
                 onClick={() => toggleLetter(l.letter)}
               >
-                <span className={styles.selHebrew}>{getVariantFor(l)}</span>
+                <span className={styles.selHebrew}>{l.letter}</span>
                 <span className={styles.selName}>{l.name}</span>
                 <span className={styles.selTranslit}>{l.transliteration}</span>
               </button>
@@ -182,9 +186,10 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
           {selectedLetters.map((l) => {
             const att = attempts[l.letter] ?? { correct: 0, wrong: 0 };
             const perfect = att.correct > 0 && att.wrong === 0;
+            const displayChar = getDisplayChar(l, variants);
             return (
               <div key={l.letter} className={`${styles.resultRow} ${perfect ? styles.resultOk : att.wrong > 0 ? styles.resultFail : ''}`}>
-                <span className={styles.resHebrew}>{getVariantFor(l)}</span>
+                <span className={styles.resHebrew}>{displayChar}</span>
                 <div className={styles.resInfo}>
                   <span className={styles.resName}>{l.name}</span>
                   <span className={styles.resTranslit}>{l.transliteration}</span>
@@ -221,7 +226,7 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
       <div className={styles.questionBox}>
         <p className={styles.prompt}>Как называется эта буква?</p>
         <button className={styles.bigLetter} onClick={() => playAudio(current.letter)} title="Прослушать">
-          {getVariantFor(current)}
+          {getDisplayChar(current, variants)}
         </button>
         <p className={styles.tapHint}>нажми на букву, чтобы услышать</p>
       </div>
@@ -245,4 +250,3 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
 };
 
 export default AlphabetQuiz;
-
