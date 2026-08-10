@@ -700,3 +700,200 @@
 .restartBtn:hover {
   background-color: #475569;
 }
+
+/* ── New: Nikud letter selector ── */
+.letterNameSmall {
+  font-size: 0.7rem;
+  color: #71718a;
+  display: block;
+  margin-top: 2px;
+}
+
+.nikudRefGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nikudRefItem {
+  background: #f8f8fc;
+  border: 1px solid #e8e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.nikudRefHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nikudRefHeb {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  direction: rtl;
+  line-height: 1.1;
+}
+
+.nikudRefTranslit {
+  font-size: 0.85rem;
+  color: #6c63ff;
+  font-weight: 500;
+}
+
+.nikudRefExp {
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.nikudRefMark {
+  color: #b45309;
+  font-weight: 600;
+}
+
+/* ── New: Gender grammar rules card ── */
+.grammarRulesCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.grammarPagesNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.grammarNavBtn {
+  background-color: #f0f0f5;
+  color: #33334d;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.grammarNavBtn:hover:not(:disabled) {
+  background-color: #e2e2ec;
+}
+
+.grammarNavBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.grammarPageIndicator {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  flex: 1;
+  text-align: center;
+}
+
+.grammarPageContent {
+  color: #444;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.grammarPageContent p {
+  margin: 0 0 8px 0;
+  white-space: pre-line;
+}
+
+.grammarDots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.grammarDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d0d0dc;
+  transition: background-color 0.2s;
+}
+
+.grammarDotActive {
+  background: #6c63ff;
+}
+
+/* ── New: Gender controls ── */
+.genderControls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.genderCountRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.countLabel {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.countSlider {
+  flex: 1;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.genderToggleRow {
+  display: flex;
+  justify-content: center;
+}
+
+.toggleBtn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.toggleBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.toggleBtnOn {
+  border-color: rgba(250, 204, 21, 0.5);
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+}

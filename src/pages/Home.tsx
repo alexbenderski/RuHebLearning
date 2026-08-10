@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StoryMode from '../components/story/StoryMode';
-import { getModuleProgressMap, getRecentProgressEvents } from '../firebase/userService';
-import type { ModuleProgress, ProgressEvent } from '../types';
+import { getModuleProgressMap } from '../firebase/userService';
+import type { ModuleProgress } from '../types';
 import styles from './Home.module.css';
 
 const MODULES = [
@@ -24,18 +24,11 @@ const Home: React.FC<HomeProps> = ({ userId, userName }) => {
   const hasSeenIntro = localStorage.getItem(introKey) === '1';
   const [storyDone, setStoryDone] = useState(hasSeenIntro);
   const [moduleProgress, setModuleProgress] = useState<Record<string, ModuleProgress>>({});
-  const [recentEvents, setRecentEvents] = useState<ProgressEvent[]>([]);
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    Promise.all([
-      getModuleProgressMap(userId),
-      getRecentProgressEvents(userId, 8),
-    ])
-      .then(([progressMap, events]) => {
-        setModuleProgress(progressMap);
-        setRecentEvents(events);
-      })
+    getModuleProgressMap(userId)
+      .then(setModuleProgress)
       .catch((err) => console.error('[home progress]', err));
   }, [userId]);
 
@@ -92,27 +85,10 @@ const Home: React.FC<HomeProps> = ({ userId, userName }) => {
                 <p>Шагов выполнено: {item?.completedSteps?.length ?? 0}</p>
                 <p>Попытки: {attempts}</p>
                 <p>Точность: {accuracy}%</p>
-                <p>Последний шаг: {item?.lastStep ?? 'пока нет'}</p>
               </div>
             );
           })}
         </div>
-
-        <h3 className={styles.timelineTitle}>Последние действия</h3>
-        <ul className={styles.timeline}>
-          {recentEvents.length === 0 && <li>Сделай первый шаг, и он появится здесь.</li>}
-          {recentEvents.map((event, idx) => (
-            <li key={`${event.moduleId}-${event.stepId}-${idx}`}>
-              <span className={styles.timelineModule}>{event.moduleId}</span>
-              <span>{event.stepId}</span>
-              {typeof event.isCorrect === 'boolean' && (
-                <span className={event.isCorrect ? styles.timelineGood : styles.timelineBad}>
-                  {event.isCorrect ? ' ✅' : ' ❌'}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );

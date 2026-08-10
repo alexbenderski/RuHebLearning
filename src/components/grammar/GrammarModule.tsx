@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { VOCAB_CATEGORIES } from '../../data/vocabulary';
+import { NIKUD_MARKS } from '../../data/nikudWords';
 import type { GrammarItem } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
@@ -7,43 +9,200 @@ import { useProgressTracker } from '../../hooks/useProgressTracker';
 import styles from './GrammarModule.module.css';
 
 // ──────────────────────────────────────────────
-// SECTION 1: Nikud / Vowels & Diacritics Syllable Matcher Data
+// SECTION 1: Nikud Letter Selector Data
 // ──────────────────────────────────────────────
-interface SyllableMatch {
-  id: string;
-  syllable: GrammarItem;
-  sound: string; // The target Russian transcription (e.g., "ба", "бе")
+interface LetterNikudInfo {
+  letter: string;
+  letterName: string;
+  entries: { markId: string; hebrew: string; transliteration: string; explanation: string }[];
 }
 
-const SYLLABLE_DATA: SyllableMatch[] = [
-  { id: 'nik1', syllable: { hebrew: 'בָּ', transliteration: 'ба', translation: 'Слог БА (Огласовка Камац)' }, sound: 'ба' },
-  { id: 'nik2', syllable: { hebrew: 'בֵּ', transliteration: 'бе', translation: 'Слог БЕ (Огласовка Цере)' }, sound: 'бе' },
-  { id: 'nik3', syllable: { hebrew: 'בִּי', transliteration: 'би', translation: 'Слог БИ (Огласовка Хирик)' }, sound: 'би' },
-  { id: 'nik4', syllable: { hebrew: 'בּוֹ', transliteration: 'бо', translation: 'Слог БО (Огласовка Холам)' }, sound: 'бо' },
-  { id: 'nik5', syllable: { hebrew: 'בּוּ', transliteration: 'бу', translation: 'Слог БУ (Огласовка Шурук)' }, sound: 'бу' },
+const LETTER_NIKUD_INFO: LetterNikudInfo[] = [
+  {
+    letter: 'ב', letterName: 'Бет (בית)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'בָּ', transliteration: 'ба', explanation: 'Камац (ָ) — чёрточка под буквой. Даёт звук "а". Самый частый знак для звука "а".' },
+      { markId: 'patach', hebrew: 'בַּ', transliteration: 'ба', explanation: 'Патах (ַ) — горизонтальная чёрточка под буквой. Тоже "а", но встречается реже.' },
+      { markId: 'segol', hebrew: 'בֶּ', transliteration: 'бэ', explanation: 'Сегол (ֶ) — три точки треугольником. Даёт звук "э".' },
+      { markId: 'tsere', hebrew: 'בֵּ', transliteration: 'бэ', explanation: 'Цере (ֵ) — две точки под буквой. Даёт звук "э", чаще в ударных слогах.' },
+      { markId: 'chirik', hebrew: 'בִּ', transliteration: 'би', explanation: 'Хирик (ִ) — одна точка под буквой. Даёт звук "и".' },
+      { markId: 'cholam', hebrew: 'בֹּ', transliteration: 'бо', explanation: 'Холам (ֹ) — точка над/слева от буквы. Даёт звук "о".' },
+      { markId: 'shuruk', hebrew: 'בּוּ', transliteration: 'бу', explanation: 'Шурук (ּ) — точка в середине вав. Даёт звук "у".' },
+      { markId: 'kubutz', hebrew: 'בֻּ', transliteration: 'бу', explanation: 'Кубуц (ֻ) — три точки под буквой. Тоже "у", но реже.' },
+      { markId: 'shva', hebrew: 'בְּ', transliteration: 'б(э)', explanation: 'Шва (ְ) — двоеточие под буквой. Пауза или короткое "э".' },
+    ],
+  },
+  {
+    letter: 'ג', letterName: 'Гимель (גימל)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'גָּ', transliteration: 'га', explanation: 'Камац — чёрточка под буквой. Звук "а".' },
+      { markId: 'segol', hebrew: 'גֶּ', transliteration: 'гэ', explanation: 'Сегол — три точки треугольником. Звук "э".' },
+      { markId: 'chirik', hebrew: 'גִּ', transliteration: 'ги', explanation: 'Хирик — одна точка под буквой. Звук "и".' },
+      { markId: 'cholam', hebrew: 'גֹּ', transliteration: 'го', explanation: 'Холам — точка над буквой. Звук "о".' },
+    ],
+  },
+  {
+    letter: 'ד', letterName: 'Далет (דלת)',
+    entries: [
+      { markId: 'patach', hebrew: 'דַּ', transliteration: 'да', explanation: 'Патах — чёрточка под буквой. Звук "а".' },
+      { markId: 'segol', hebrew: 'דֶּ', transliteration: 'дэ', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'chirik', hebrew: 'דִּ', transliteration: 'ди', explanation: 'Хирик — одна точка. Звук "и".' },
+    ],
+  },
+  {
+    letter: 'כ', letterName: 'Каф (כף)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'כָּ', transliteration: 'ка', explanation: 'Камац — чёрточка. Звук "а".' },
+      { markId: 'tsere', hebrew: 'כֵּ', transliteration: 'кэ', explanation: 'Цере — две точки. Звук "э".' },
+      { markId: 'chirik', hebrew: 'כִּ', transliteration: 'ки', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'cholam', hebrew: 'כֹּ', transliteration: 'ко', explanation: 'Холам — точка над. Звук "о".' },
+      { markId: 'shva', hebrew: 'כְּ', transliteration: 'к(э)', explanation: 'Шва — двоеточие. Пауза.' },
+    ],
+  },
+  {
+    letter: 'מ', letterName: 'Мем (מם)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'מָ', transliteration: 'ма', explanation: 'Камац — чёрточка. Звук "а".' },
+      { markId: 'segol', hebrew: 'מֶ', transliteration: 'мэ', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'chirik', hebrew: 'מִ', transliteration: 'ми', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'cholam', hebrew: 'מֹ', transliteration: 'мо', explanation: 'Холам — точка над. Звук "о".' },
+    ],
+  },
+  {
+    letter: 'נ', letterName: 'Нун (נון)',
+    entries: [
+      { markId: 'patach', hebrew: 'נַ', transliteration: 'на', explanation: 'Патах — чёрточка. Звук "а".' },
+      { markId: 'segol', hebrew: 'נֶ', transliteration: 'нэ', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'chirik', hebrew: 'נִ', transliteration: 'ни', explanation: 'Хирик — одна точка. Звук "и".' },
+    ],
+  },
+  {
+    letter: 'פ', letterName: 'Пэ (פה)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'פָּ', transliteration: 'па', explanation: 'Камац — чёрточка. Звук "а".' },
+      { markId: 'patach', hebrew: 'פַּ', transliteration: 'па', explanation: 'Патах — чёрточка. Звук "а".' },
+      { markId: 'segol', hebrew: 'פֶּ', transliteration: 'пэ', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'chirik', hebrew: 'פִּ', transliteration: 'пи', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'cholam', hebrew: 'פֹּ', transliteration: 'по', explanation: 'Холам — точка над. Звук "о".' },
+      { markId: 'shva', hebrew: 'פְּ', transliteration: 'п(э)', explanation: 'Шва — двоеточие. Пауза.' },
+    ],
+  },
+  {
+    letter: 'ש', letterName: 'Шин / Син (שין)',
+    entries: [
+      { markId: 'shinDot', hebrew: 'שָׁ', transliteration: 'ша', explanation: 'Шин (точка справа) — звук "ш". Если точка справа — это Ш.' },
+      { markId: 'sinDot', hebrew: 'שָׂ', transliteration: 'са', explanation: 'Син (точка слева) — звук "с". Та же буква, точка слева = "с".' },
+      { markId: 'kamatz', hebrew: 'שָׁ', transliteration: 'ша', explanation: 'Камац под шин — "ша".' },
+      { markId: 'chirik', hebrew: 'שִׁ', transliteration: 'ши', explanation: 'Хирик под шин — "ши".' },
+    ],
+  },
+  {
+    letter: 'ת', letterName: 'Тав (תו)',
+    entries: [
+      { markId: 'kamatz', hebrew: 'תָּ', transliteration: 'та', explanation: 'Камац — чёрточка. Звук "а".' },
+      { markId: 'segol', hebrew: 'תֶּ', transliteration: 'тэ', explanation: 'Сегол — три точки. Звук "э".' },
+      { markId: 'chirik', hebrew: 'תִּ', transliteration: 'ти', explanation: 'Хирик — одна точка. Звук "и".' },
+      { markId: 'shva', hebrew: 'תְּ', transliteration: 'т(э)', explanation: 'Шва — двоеточие. Пауза.' },
+    ],
+  },
 ];
 
 // ──────────────────────────────────────────────
-// SECTION 2: Gender & Number Card Sorting Data
+// SECTION 2: Gender & Number - expanded with all words from DB
 // ──────────────────────────────────────────────
 interface GenderWord {
   id: string;
   item: GrammarItem;
   gender: 'masc' | 'fem';
-  explanation?: string; // Russian explanation for exceptions
+  explanation?: string;
 }
 
-const GENDER_WORDS: GenderWord[] = [
-  { id: 'gen1', item: { hebrew: 'יֶלֶד', transliteration: 'йелед', translation: 'мальчик' }, gender: 'masc' },
-  { id: 'gen2', item: { hebrew: 'יַלְדָּה', transliteration: 'яльда', translation: 'девочка' }, gender: 'fem' },
-  { id: 'gen3', item: { hebrew: 'חָתוּל', transliteration: 'хатуль', translation: 'кот' }, gender: 'masc' },
-  { id: 'gen4', item: { hebrew: 'חֲתוּלָה', transliteration: 'хатула', translation: 'кошка' }, gender: 'fem' },
-  { id: 'gen5', item: { hebrew: 'טוֹב', transliteration: 'тов', translation: 'хороший' }, gender: 'masc' },
-  { id: 'gen6', item: { hebrew: 'טוֹבָה', transliteration: 'това', translation: 'хорошая' }, gender: 'fem' },
-  // Tricky exceptions
-  { id: 'gen7', item: { hebrew: 'שֻׁלְחָן', transliteration: 'шулхан', translation: 'стол (исключение!)' }, gender: 'masc', explanation: 'Оканчивается как мужской род, но во множественном числе получает женское окончание "от" (шулханот)!' },
-  { id: 'gen8', item: { hebrew: 'שֻׁלְחָנוֹת', transliteration: 'шулханот', translation: 'столы (исключение!)' }, gender: 'masc', explanation: 'Хотя окончание "-от" женское, само слово "стол" остаётся мужского рода!' },
-  { id: 'gen9', item: { hebrew: 'לַיְלָה', transliteration: 'лайла', translation: 'ночь (исключение!)' }, gender: 'masc', explanation: 'Оканчивается на "-а" (типично для женского рода), но это слово мужского рода!' },
+// Build gender words from vocabulary data
+function buildGenderWords(): GenderWord[] {
+  const allWords = VOCAB_CATEGORIES.flatMap((c) => c.words);
+  const result: GenderWord[] = [];
+  let idx = 0;
+  for (const w of allWords) {
+    // Heuristic: words ending with ה (he) or ת (tav) are likely feminine
+    const lastChar = w.hebrew.slice(-1);
+    const isFem = lastChar === 'ה' || lastChar === 'ת';
+    result.push({
+      id: `gen-vocab-${idx}`,
+      item: { hebrew: w.hebrew, transliteration: w.transliteration, translation: w.translation },
+      gender: isFem ? 'fem' : 'masc',
+      explanation: isFem
+        ? `Слово оканчивается на "${lastChar}" — типичное окончание женского рода в иврите.`
+        : `Слово оканчивается на согласную — типично для мужского рода.`,
+    });
+    idx++;
+  }
+  // Add known exceptions
+  result.push(
+    { id: 'gen-exc1', item: { hebrew: 'לַיְלָה', transliteration: 'лайла', translation: 'ночь (исключение!)' }, gender: 'masc', explanation: 'Исключение! Оканчивается на "-а" (ה), но это мужской род!' },
+    { id: 'gen-exc2', item: { hebrew: 'שֻׁלְחָן', transliteration: 'шулхан', translation: 'стол (исключение!)' }, gender: 'masc', explanation: 'Исключение! Слово мужского рода, но во множественном числе получает женское окончание "-от".' },
+    { id: 'gen-exc3', item: { hebrew: 'שֻׁלְחָנוֹת', transliteration: 'шулханот', translation: 'столы (исключение!)' }, gender: 'masc', explanation: 'Хотя окончание "-от" женское, само слово "стол" остаётся мужского рода!' },
+    { id: 'gen-exc4', item: { hebrew: 'אִמָּא', transliteration: 'има', translation: 'мама (исключение!)' }, gender: 'fem', explanation: 'Хотя "мама" оканчивается на "א", это женский род — логически очевидно.' },
+    { id: 'gen-exc5', item: { hebrew: 'אַבָּא', transliteration: 'аба', translation: 'папа (исключение!)' }, gender: 'masc', explanation: 'Хотя "папа" оканчивается на "א" как женское, это мужской род — логически понятно.' },
+  );
+  return result;
+}
+
+const GENDER_WORDS = buildGenderWords();
+
+// ──────────────────────────────────────────────
+// Grammar explanation pages for gender section
+// ──────────────────────────────────────────────
+const GENDER_GRAMMAR_PAGES = [
+  {
+    title: '📖 Основное правило',
+    content: 'В иврите есть два рода: мужской (זָכָר — захар) и женский (נְקֵבָה — некева).\n\n' +
+      'Обычно слова женского рода оканчиваются на букву "ה" (хей) с огласовкой "камац" (получается звук "а") или на букву "ת" (тав).\n\n' +
+      'Слова мужского рода обычно оканчиваются на любую другую согласную букву.\n\n' +
+      'Примеры:\n• יֶלֶד (йелед) — мальчик 👦 (мужской)\n• יַלְדָּה (яльда) — девочка 👧 (женский)',
+  },
+  {
+    title: '📖 Прилагательные',
+    content: 'Прилагательные в иврите согласуются с существительным в роде и числе.\n\n' +
+      'Мужской род: обычно без окончания. Пример: טוֹב (тов) — хороший.\n' +
+      'Женский род: добавляется окончание "ה" (а). Пример: טוֹבָה (това) — хорошая.\n\n' +
+      'Запомни: прилагательное стоит ПОСЛЕ существительного!\n' +
+      '• יֶלֶד טוֹב (йелед тов) — хороший мальчик\n' +
+      '• יַלְדָּה טוֹבָה (яльда това) — хорошая девочка',
+  },
+  {
+    title: '📖 Множественное число',
+    content: 'Множественное число в иврите тоже зависит от рода!\n\n' +
+      'Мужской род → окончание "ים" (им):\n' +
+      '• יֶלֶד (йелед, мальчик) → יְלָדִים (йеладим, мальчики)\n' +
+      '• סֵפֶר (сефер, книга) → סְפָרִים (сфарим, книги)\n\n' +
+      'Женский род → окончание "ות" (от):\n' +
+      '• יַלְדָּה (яльда, девочка) → יְלָדוֹת (йеладот, девочки)\n' +
+      '• מִשְׁפָּחָה (мишпаха, семья) → מִשְׁפָּחוֹת (мишпахот, семьи)',
+  },
+  {
+    title: '📖 Исключения и ловушки',
+    content: 'В иврите есть много исключений! Вот самые важные:\n\n' +
+      '⚠️ Слова женского рода, выглядящие как мужские:\n' +
+      '• עִיר (ир, город) — мужской? Нет, женский! Оканчивается на согласную, но это женский род.\n\n' +
+      '⚠️ Слова мужского рода, выглядящие как женские:\n' +
+      '• לַיְלָה (лайла, ночь) — оканчивается на "а" (ה), но мужской род!\n\n' +
+      '⚠️ Исключения во множественном числе:\n' +
+      '• שֻׁלְחָן (шулхан, стол) — мужской, но множественное: שֻׁלְחָנוֹת (шулханот) — с женским окончанием!\n\n' +
+      '💡 Совет: при изучении новых слов всегда запоминай их род вместе с артиклем!',
+  },
+  {
+    title: '📖 Как определить род?',
+    content: 'Если сомневаешься, попробуй эти шаги:\n\n' +
+      '1️⃣ Посмотри на последнюю букву:\n' +
+      '   • ה (хей) в конце → скорее всего женский\n' +
+      '   • ת (тав) в конце → скорее всего женский\n' +
+      '   • Другая согласная → скорее всего мужской\n\n' +
+      '2️⃣ Проверь значение: слова, обозначающие людей/животных, обычно соответствуют полу.\n\n' +
+      '3️⃣ Запомни исключения (их не так много, но они важны!).\n\n' +
+      '4️⃣ Используй множественное число для проверки:\n' +
+      '   • ים (им) = мужской род\n' +
+      '   • ות (от) = женский род',
+  },
 ];
 
 // ──────────────────────────────────────────────
@@ -71,8 +230,8 @@ const PREFIX_COMBOS: PrefixCombo[] = [
 // ──────────────────────────────────────────────
 interface RootChallenge {
   id: string;
-  rootLetters: string[]; // e.g. ["כ", "ת", "ב"]
-  correctIndices: number[]; // Indices of actual root letters in the challenge presentation
+  rootLetters: string[];
+  correctIndices: number[];
   wordPool: { word: GrammarItem; isRootNode: boolean }[];
   hint: string;
 }
@@ -81,7 +240,7 @@ const ROOT_CHALLENGES: RootChallenge[] = [
   {
     id: 'root1',
     rootLetters: ['כ', 'ת', 'ב'],
-    correctIndices: [0, 1, 2], // כ-ת-ב
+    correctIndices: [0, 1, 2],
     hint: 'Корень, связанный с письмом и текстом.',
     wordPool: [
       { word: { hebrew: 'לִכְתֹּב', transliteration: 'лихтов', translation: 'писать (глагол)' }, isRootNode: true },
@@ -93,19 +252,19 @@ const ROOT_CHALLENGES: RootChallenge[] = [
   {
     id: 'root2',
     rootLetters: ['ל', 'מ', 'ד'],
-    correctIndices: [0, 1, 2], // ל-מ-ד
+    correctIndices: [0, 1, 2],
     hint: 'Корень, связанный с учёбой и получением знаний.',
     wordPool: [
       { word: { hebrew: 'לִלְמֹד', transliteration: 'лильмод', translation: 'учиться' }, isRootNode: true },
       { word: { hebrew: 'תַּלְמִיד', transliteration: 'талмид', translation: 'ученик' }, isRootNode: true },
-      { word: { hebrew: 'לִמּוּด', transliteration: 'лимуд', translation: 'обучение' }, isRootNode: true },
+      { word: { hebrew: 'לִמּוּד', transliteration: 'лимуд', translation: 'обучение' }, isRootNode: true },
       { word: { hebrew: 'מְלַמֵּד', transliteration: 'меламед', translation: 'преподаёт / учитель' }, isRootNode: true },
     ]
   },
   {
     id: 'root3',
     rootLetters: ['א', 'כ', 'ל'],
-    correctIndices: [0, 1, 2], // א-כ-л
+    correctIndices: [0, 1, 2],
     hint: 'Корень, связанный с приёмом пищи.',
     wordPool: [
       { word: { hebrew: 'לֶאֱכֹל', transliteration: 'леэхоль', translation: 'кушать' }, isRootNode: true },
@@ -122,6 +281,10 @@ interface GrammarModuleProps {
   userId?: string;
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
 const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>('nikud');
@@ -129,32 +292,28 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
   const { playClick, playMatch } = useSoundEffects();
   const { trackStep } = useProgressTracker(userId);
 
-  // ──────────────────────────────────────────────
-  // States for Section 1 (Nikud Game)
-  // ──────────────────────────────────────────────
-  const [selectedSyllableId, setSelectedSyllableId] = useState<string | null>(null);
-  const [nikudScore, setNikudScore] = useState(0);
-  const [nikudDone, setNikudDone] = useState<Set<string>>(new Set());
+  // ── Section 1: Nikud letter selector ──
+  const [selectedLetter, setSelectedLetter] = useState<string>('ב');
 
-  // ──────────────────────────────────────────────
-  // States for Section 2 (Gender Game)
-  // ──────────────────────────────────────────────
+  // ── Section 2: Gender states ──
+  const [genderGameWords, setGenderGameWords] = useState<GenderWord[]>(() => shuffle(GENDER_WORDS).slice(0, 10));
+  const [genderWordCount, setGenderWordCount] = useState(10);
   const [genderIndex, setGenderIndex] = useState(0);
   const [genderFeedback, setGenderFeedback] = useState<string | null>(null);
   const [genderScore, setGenderScore] = useState(0);
   const [genderGameDone, setGenderGameDone] = useState(false);
+  const [showGenderTranslation, setShowGenderTranslation] = useState(false);
+  const [grammarPage, setGrammarPage] = useState(0);
 
-  // ──────────────────────────────────────────────
-  // States for Section 3 (Prefix Simulator)
-  // ──────────────────────────────────────────────
+  // ── Section 3: Prefix Simulator ──
   const [prefixIdx, setPrefixIdx] = useState(0);
 
-  // ──────────────────────────────────────────────
-  // States for Section 4 (Roots Game)
-  // ──────────────────────────────────────────────
+  // ── Section 4: Roots Game ──
   const [rootIdx, setRootIdx] = useState(0);
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
   const [rootSolved, setRootSolved] = useState(false);
+
+  const currentLetterInfo = LETTER_NIKUD_INFO.find((l) => l.letter === selectedLetter);
 
   const handleTabChange = (tab: ActiveTab) => {
     playClick();
@@ -165,39 +324,18 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
     playAudio(hebrew);
   };
 
-  // ──────────────────────────────────────────────
-  // Section 1: Syllable Matcher Handler
-  // ──────────────────────────────────────────────
-  const handleSelectSyllable = (id: string, hebrew: string) => {
-    playClick();
-    handleTTS(hebrew);
-    if (nikudDone.has(id)) return;
-    setSelectedSyllableId(id);
+  // ── Section 2: Gender Handlers ──
+  const startGenderGame = () => {
+    const selected = shuffle(GENDER_WORDS).slice(0, genderWordCount);
+    setGenderGameWords(selected);
+    setGenderIndex(0);
+    setGenderScore(0);
+    setGenderGameDone(false);
+    setGenderFeedback(null);
   };
 
-  const handleMatchSound = (sound: string) => {
-    if (!selectedSyllableId) return;
-    const match = SYLLABLE_DATA.find((s) => s.id === selectedSyllableId);
-    if (match && match.sound === sound) {
-      playMatch();
-      setNikudScore((s) => s + 1);
-      setNikudDone((prev) => new Set(prev).add(selectedSyllableId));
-      setSelectedSyllableId(null);
-      trackStep({
-        moduleId: 'grammar',
-        stepId: `nikud_match:${match.syllable.hebrew}`,
-        isCorrect: true,
-      }).catch((e) => console.error(e));
-    } else {
-      playClick(); // buzz/error tone or regular click
-    }
-  };
-
-  // ──────────────────────────────────────────────
-  // Section 2: Gender Selector Handler
-  // ──────────────────────────────────────────────
   const handleGenderChoice = (choice: 'masc' | 'fem') => {
-    const currentWord = GENDER_WORDS[genderIndex];
+    const currentWord = genderGameWords[genderIndex];
     const isCorrect = currentWord.gender === choice;
 
     if (isCorrect) {
@@ -206,7 +344,8 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
       setGenderFeedback('✅ Правильно!');
     } else {
       playClick();
-      setGenderFeedback(`❌ Неверно! Попробуй ещё раз. ${currentWord.explanation ?? ''}`);
+      const hint = currentWord.explanation ? ` ${currentWord.explanation}` : '';
+      setGenderFeedback(`❌ Неверно! «${currentWord.item.translation}» (${currentWord.item.hebrew}) — это ${currentWord.gender === 'masc' ? 'мужской' : 'женский'} род.${hint}`);
     }
 
     trackStep({
@@ -217,7 +356,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
 
     setTimeout(() => {
       setGenderFeedback(null);
-      if (genderIndex + 1 < GENDER_WORDS.length) {
+      if (genderIndex + 1 < genderGameWords.length) {
         setGenderIndex((idx) => idx + 1);
       } else {
         setGenderGameDone(true);
@@ -225,24 +364,17 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
     }, 2800);
   };
 
-  // ──────────────────────────────────────────────
-  // Section 4: Roots Selector Handler
-  // ──────────────────────────────────────────────
+  // ── Section 4: Roots ──
   const handleLetterClick = (letter: string) => {
     playClick();
     const challenge = ROOT_CHALLENGES[rootIdx];
     let nextSelected = [...selectedLetters];
-
     if (nextSelected.includes(letter)) {
       nextSelected = nextSelected.filter((l) => l !== letter);
     } else {
-      if (nextSelected.length < 3) {
-        nextSelected.push(letter);
-      }
+      if (nextSelected.length < 3) nextSelected.push(letter);
     }
     setSelectedLetters(nextSelected);
-
-    // Verify root letters
     const solved = challenge.rootLetters.every((l) => nextSelected.includes(l));
     if (solved && nextSelected.length === 3) {
       playMatch();
@@ -257,7 +389,6 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
 
   return (
     <div className={styles.container}>
-      {/* Module Title / Navbar */}
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>📝 Интерактивная Грамматика</h1>
@@ -282,115 +413,163 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
         </button>
       </div>
 
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* SECTION 1 VIEW */}
-      {/* ───────────────────────────────────────────────────────────────── */}
+      {/* ── SECTION 1: Nikud with letter selector ── */}
       {activeTab === 'nikud' && (
         <div className={styles.sectionWrap}>
           <div className={styles.explainCard}>
             <h3>🎯 Что такое Никуд (Огласовки)?</h3>
             <p>
               В иврите пишутся только согласные буквы! Гласные звуки (а, е, и, о, у) обозначаются точками и чёрточками вокруг букв.
-              Давай научимся быстро читать огласовки с буквой <strong>ב (Бет)</strong>!
+              Выбери букву слева, чтобы увидеть все её огласовки с примерами и объяснениями.
             </p>
           </div>
 
-          <div className={styles.gameArea}>
-            <div className={styles.nikudLayout}>
-              {/* Syllable Board */}
-              <div className={styles.syllableColumn}>
-                <h4>Выбери слог:</h4>
-                <div className={styles.syllableGrid}>
-                  {SYLLABLE_DATA.map((item) => {
-                    const isSelected = selectedSyllableId === item.id;
-                    const isMatched = nikudDone.has(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        className={`${styles.syllableTile} ${isSelected ? styles.syllableTileActive : ''} ${isMatched ? styles.tileDisabled : ''}`}
-                        onClick={() => handleSelectSyllable(item.id, item.syllable.hebrew)}
-                      >
-                        <span className={styles.hebrewText}>{item.syllable.hebrew}</span>
-                        {isMatched && <span className={styles.matchedCheck}>✅</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Sound Targets */}
-              <div className={styles.soundColumn}>
-                <h4>Сопоставь с русским звуком:</h4>
-                <div className={styles.soundGrid}>
-                  {['ба', 'бе', 'би', 'бо', 'бу'].map((sound) => {
-                    return (
-                      <button
-                        key={sound}
-                        disabled={!selectedSyllableId}
-                        className={`${styles.soundTile} ${!selectedSyllableId ? styles.soundTileInactive : ''}`}
-                        onClick={() => handleMatchSound(sound)}
-                      >
-                        <span className={styles.soundLabel}>{sound.toUpperCase()}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Completion Badge */}
-            <div className={styles.statusRow}>
-              <span>Слогов разгадано: <strong>{nikudScore} / {SYLLABLE_DATA.length}</strong></span>
-              {nikudDone.size === SYLLABLE_DATA.length && (
-                <span className={styles.winBanner}>🎉 Отлично! Ты умеешь читать базовый Никуд!</span>
-              )}
-            </div>
-
-            {/* Syllabus Info Board */}
-            <div className={styles.helperBoard}>
-              <h4>🔍 Справочник по текущим огласовкам:</h4>
-              <div className={styles.referenceGrid}>
-                {SYLLABLE_DATA.map((s) => (
-                  <div key={s.id} className={styles.refItem}>
-                    <button className={styles.miniTtsBtn} onClick={() => handleTTS(s.syllable.hebrew)}>🔊</button>
-                    <strong>{s.syllable.hebrew}</strong> — [{s.syllable.transliteration}] — {s.syllable.translation}
-                  </div>
+          <div className={styles.nikudLayout}>
+            {/* Letter selector */}
+            <div className={styles.syllableColumn}>
+              <h4>Выбери букву:</h4>
+              <div className={styles.syllableGrid}>
+                {LETTER_NIKUD_INFO.map((info) => (
+                  <button
+                    key={info.letter}
+                    className={`${styles.syllableTile} ${selectedLetter === info.letter ? styles.syllableTileActive : ''}`}
+                    onClick={() => {
+                      playClick();
+                      setSelectedLetter(info.letter);
+                    }}
+                  >
+                    <span className={styles.hebrewText}>{info.letter}</span>
+                    <span className={styles.letterNameSmall}>{info.letterName.split(' ')[0]}</span>
+                  </button>
                 ))}
               </div>
+            </div>
+
+            {/* Letter info */}
+            <div className={styles.soundColumn}>
+              {currentLetterInfo && (
+                <>
+                  <h4>Буква {currentLetterInfo.letter} — {currentLetterInfo.letterName}</h4>
+                  <div className={styles.nikudRefGrid}>
+                    {currentLetterInfo.entries.map((entry) => {
+                      const mark = NIKUD_MARKS.find((m) => m.id === entry.markId);
+                      return (
+                        <div key={entry.markId} className={styles.nikudRefItem}>
+                          <div className={styles.nikudRefHeader}>
+                            <button className={styles.miniTtsBtn} onClick={() => handleTTS(entry.hebrew)}>🔊</button>
+                            <span className={styles.nikudRefHeb}>{entry.hebrew}</span>
+                            <span className={styles.nikudRefTranslit}>[{entry.transliteration}]</span>
+                          </div>
+                          <div className={styles.nikudRefExp}>
+                            {mark && <span className={styles.nikudRefMark}>{mark.char} = {mark.name}. </span>}
+                            {entry.explanation}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* SECTION 2 VIEW */}
-      {/* ───────────────────────────────────────────────────────────────── */}
+      {/* ── SECTION 2: Gender with all words, word count, toggle, grammar pages ── */}
       {activeTab === 'gender' && (
         <div className={styles.sectionWrap}>
           <div className={styles.explainCard}>
             <h3>👫 Род в Иврите: Мужской vs Женский</h3>
             <p>
               В иврите существительные и прилагательные делятся на мужской и женский род.
-              Обычно слова женского рода оканчиваются на <strong>"а" (огласовка камац + буква хей «ה»)</strong> или на <strong>"т" (буква тав «ת»)</strong>.
+              Обычно слова женского рода оканчиваются на <strong>"а" (ה)</strong> или на <strong>"т" (ת)</strong>.
               Но берегись ловушек и исключений!
             </p>
+          </div>
+
+          {/* Grammar rules paginated */}
+          <div className={styles.grammarRulesCard}>
+            <div className={styles.grammarPagesNav}>
+              <button
+                className={styles.grammarNavBtn}
+                onClick={() => setGrammarPage((p) => Math.max(0, p - 1))}
+                disabled={grammarPage === 0}
+              >
+                ← Назад
+              </button>
+              <span className={styles.grammarPageIndicator}>
+                {GENDER_GRAMMAR_PAGES[grammarPage].title}
+              </span>
+              <button
+                className={styles.grammarNavBtn}
+                onClick={() => setGrammarPage((p) => Math.min(GENDER_GRAMMAR_PAGES.length - 1, p + 1))}
+                disabled={grammarPage === GENDER_GRAMMAR_PAGES.length - 1}
+              >
+                Далее →
+              </button>
+            </div>
+            <div className={styles.grammarPageContent}>
+              {GENDER_GRAMMAR_PAGES[grammarPage].content.split('\n').map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
+            </div>
+            <div className={styles.grammarDots}>
+              {GENDER_GRAMMAR_PAGES.map((_, i) => (
+                <span key={i} className={`${styles.grammarDot} ${i === grammarPage ? styles.grammarDotActive : ''}`} />
+              ))}
+            </div>
           </div>
 
           <div className={styles.gameArea}>
             {!genderGameDone ? (
               <div className={styles.genderContainer}>
+                {/* Word count + toggle + start */}
+                <div className={styles.genderControls}>
+                  <div className={styles.genderCountRow}>
+                    <span className={styles.countLabel}>
+                      Слов: <strong>{genderWordCount}</strong> (из {GENDER_WORDS.length})
+                    </span>
+                    <input
+                      type="range"
+                      min={5}
+                      max={Math.min(30, GENDER_WORDS.length)}
+                      step={1}
+                      value={genderWordCount}
+                      onChange={(e) => {
+                        setGenderWordCount(Number(e.target.value));
+                        setGenderIndex(0);
+                        setGenderScore(0);
+                        setGenderGameDone(false);
+                        setGenderFeedback(null);
+                      }}
+                      className={styles.countSlider}
+                    />
+                  </div>
+                  <div className={styles.genderToggleRow}>
+                    <button
+                      className={`${styles.toggleBtn} ${showGenderTranslation ? styles.toggleBtnOn : ''}`}
+                      onClick={() => setShowGenderTranslation((v) => !v)}
+                    >
+                      {showGenderTranslation ? '🔤 Значение: ON' : '🔤 Значение: OFF'}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Active card */}
                 {(() => {
-                  const current = GENDER_WORDS[genderIndex];
+                  const current = genderGameWords[genderIndex];
+                  if (!current) return null;
                   return (
                     <div className={styles.genderCard}>
                       <div className={styles.cardHeader}>
                         <button className={styles.speakBtn} onClick={() => handleTTS(current.item.hebrew)}>🔊 Прослушать</button>
-                        <span>Слово {genderIndex + 1} из {GENDER_WORDS.length}</span>
+                        <span>Слово {genderIndex + 1} из {genderGameWords.length}</span>
                       </div>
                       <div className={styles.genderHebValue}>{current.item.hebrew}</div>
                       <div className={styles.genderTranslit}>[{current.item.transliteration}]</div>
-                      <div className={styles.genderTranslation}>Значение: {current.item.translation}</div>
+                      {showGenderTranslation && (
+                        <div className={styles.genderTranslation}>Значение: {current.item.translation}</div>
+                      )}
                     </div>
                   );
                 })()}
@@ -398,7 +577,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                 {/* Feedback */}
                 {genderFeedback && <div className={styles.genderFeedback}>{genderFeedback}</div>}
 
-                {/* Interactive Buckets */}
+                {/* Buckets */}
                 <div className={styles.bucketRow}>
                   <button className={`${styles.bucketBtn} ${styles.bucketMasc}`} onClick={() => handleGenderChoice('masc')}>
                     👨 Мужской род (זָכָר)
@@ -411,16 +590,8 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
             ) : (
               <div className={styles.resultsPanel}>
                 <h3>🎉 Игра пройдена!</h3>
-                <p>Твой результат: <strong>{genderScore} из {GENDER_WORDS.length}</strong> угаданных слов!</p>
-                <button
-                  className={styles.startBtn}
-                  onClick={() => {
-                    setGenderIndex(0);
-                    setGenderScore(0);
-                    setGenderGameDone(false);
-                    setGenderFeedback(null);
-                  }}
-                >
+                <p>Твой результат: <strong>{genderScore} из {genderGameWords.length}</strong> угаданных слов!</p>
+                <button className={styles.startBtn} onClick={startGenderGame}>
                   Играть заново ↩
                 </button>
               </div>
@@ -429,9 +600,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* SECTION 3 VIEW */}
-      {/* ───────────────────────────────────────────────────────────────── */}
+      {/* ── SECTION 3: Prefixes ── */}
       {activeTab === 'prefixes' && (
         <div className={styles.sectionWrap}>
           <div className={styles.explainCard}>
@@ -445,11 +614,8 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
 
           <div className={styles.gameArea}>
             <div className={styles.prefixesSimulator}>
-              {/* Root card display */}
               <div className={styles.simulatorPreview}>
-                <div className={styles.simText}>
-                  {PREFIX_COMBOS[prefixIdx].hebrewResult}
-                </div>
+                <div className={styles.simText}>{PREFIX_COMBOS[prefixIdx].hebrewResult}</div>
                 <div className={styles.simSub}>
                   транслитерация: <strong>{PREFIX_COMBOS[prefixIdx].translitResult}</strong>
                 </div>
@@ -461,7 +627,6 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                 </button>
               </div>
 
-              {/* Selector toggles */}
               <div className={styles.prefixesMenu}>
                 <h4>Выбери приставку для просмотра слияния:</h4>
                 <div className={styles.simButtonsCol}>
@@ -469,11 +634,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                     <button
                       key={combo.label}
                       className={`${styles.simToggle} ${prefixIdx === idx ? styles.simToggleActive : ''}`}
-                      onClick={() => {
-                        playClick();
-                        setPrefixIdx(idx);
-                        handleTTS(combo.hebrewResult);
-                      }}
+                      onClick={() => { playClick(); setPrefixIdx(idx); handleTTS(combo.hebrewResult); }}
                     >
                       <span className={styles.simPrefixMark}>{combo.prefix || '—'}</span>
                       <span className={styles.simPrefixLabel}>{combo.label}</span>
@@ -486,9 +647,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* SECTION 4 VIEW */}
-      {/* ───────────────────────────────────────────────────────────────── */}
+      {/* ── SECTION 4: Roots ── */}
       {activeTab === 'roots' && (
         <div className={styles.sectionWrap}>
           <div className={styles.explainCard}>
@@ -507,7 +666,6 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                 <p>Подсказка: {ROOT_CHALLENGES[rootIdx].hint}</p>
               </div>
 
-              {/* Letters picker */}
               <div className={styles.lettersDisplay}>
                 <h5>Выбери 3 корневые буквы:</h5>
                 <div className={styles.lettersGrid}>
@@ -527,12 +685,10 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                 </div>
               </div>
 
-              {/* Results & Family Map */}
               {rootSolved ? (
                 <div className={styles.rootFamilyMap}>
                   <h4 className={styles.familyTitle}>🎉 Корень найден! Корень: {ROOT_CHALLENGES[rootIdx].rootLetters.join(' - ')}</h4>
                   <p>Смотри, какое дерево слов вырастает из этого корня:</p>
-                  
                   <div className={styles.familyGrid}>
                     {ROOT_CHALLENGES[rootIdx].wordPool.map((node, i) => (
                       <div key={i} className={styles.familyNode}>
@@ -543,31 +699,14 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                       </div>
                     ))}
                   </div>
-
                   {rootIdx + 1 < ROOT_CHALLENGES.length ? (
-                    <button
-                      className={styles.nextChallengeBtn}
-                      onClick={() => {
-                        playClick();
-                        setRootIdx((i) => i + 1);
-                        setSelectedLetters([]);
-                        setRootSolved(false);
-                      }}
-                    >
+                    <button className={styles.nextChallengeBtn} onClick={() => { playClick(); setRootIdx((i) => i + 1); setSelectedLetters([]); setRootSolved(false); }}>
                       Следующий корень →
                     </button>
                   ) : (
                     <div className={styles.completeRootsBox}>
                       <span className={styles.winBanner}>🌳 Потрясающе! Ты разгадал секрет корней в иврите!</span>
-                      <button
-                        className={styles.restartBtn}
-                        onClick={() => {
-                          playClick();
-                          setRootIdx(0);
-                          setSelectedLetters([]);
-                          setRootSolved(false);
-                        }}
-                      >
+                      <button className={styles.restartBtn} onClick={() => { playClick(); setRootIdx(0); setSelectedLetters([]); setRootSolved(false); }}>
                         Пройти сначала ↩
                       </button>
                     </div>
