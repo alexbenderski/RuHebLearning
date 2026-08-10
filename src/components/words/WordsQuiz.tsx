@@ -15,6 +15,11 @@ interface WordsQuizProps {
   optionPool?: VocabWord[]; // optional larger pool for wrong-answer options
 }
 
+interface QuizHistory {
+  question: VocabWord;
+  selected: VocabWord;
+}
+
 function buildOptions(correct: VocabWord, all: VocabWord[]): VocabWord[] {
   const pool = all.filter(w => w.id !== correct.id);
   const wrong = pool.sort(() => Math.random() - 0.5).slice(0, 3);
@@ -33,6 +38,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [totalTime, setTotalTime] = useState(0);
+  const [history, setHistory] = useState<QuizHistory[]>([]);
   const { playAudio, isLoading } = useCloudTTS();
   const { trackStep } = useProgressTracker(userId);
   const { seconds, formattedTime } = useGameTimer(!done);
@@ -44,6 +50,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
     setSelected(w.id);
     const isCorrect = w.id === current.id;
     if (w.id === current.id) setScore(s => s + 1);
+    setHistory((prev) => [...prev, { question: current, selected: w }]);
     trackStep({
       moduleId: 'words',
       stepId: `quiz:${categoryId}:${difficulty}:${current.id}`,
@@ -66,6 +73,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
   if (done) {
     const perfect = score === shuffled.length;
     const good = score >= shuffled.length / 2;
+    const wrongAnswers = history.filter((h) => h.question.id !== h.selected.id);
     return (
       <div className={styles.result}>
         <div className={styles.resultEmoji}>{perfect ? '🏆' : good ? '⭐' : '💪'}</div>
@@ -74,6 +82,29 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
         <p className={styles.resultMsg}>
           {perfect ? 'Отлично! Все слова знаешь!' : good ? 'Хорошо! Продолжай учиться!' : 'Нужна практика. Ещё раз?'}
         </p>
+
+        {wrongAnswers.length > 0 && (
+          <div className={styles.reviewBlock}>
+            <h3 className={styles.reviewTitle}>📖 Разбор ошибок</h3>
+            {wrongAnswers.map((h, i) => (
+              <div key={i} className={styles.reviewItem}>
+                <div className={styles.reviewHeader}>
+                  <span className={styles.reviewCorrectRow}>
+                    <span className={styles.reviewWrongWord} dir="rtl">{h.question.hebrew}</span>
+                    <span className={styles.reviewTranslit}>[{h.question.transliteration}]</span>
+                    <span className={styles.reviewTranslation}>{h.question.translation}</span>
+                    <button className={styles.reviewSpeak} onClick={() => playAudio(h.question.hebrew)} title="Прослушать">🔊</button>
+                  </span>
+                </div>
+                <div className={styles.reviewMistake}>
+                  Ты ответил: «{h.selected.translation}» — это {h.selected.hebrew} [{h.selected.transliteration}]
+                  <button className={styles.reviewSpeak} onClick={() => playAudio(h.selected.hebrew)} title="Прослушать">🔊</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <button className={styles.retryBtn} onClick={onFinish}>
           ← Вернуться к карточкам
         </button>

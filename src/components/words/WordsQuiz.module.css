@@ -160,3 +160,96 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(139, 92, 246, 0.45);
 }
+
+/* Review block */
+.reviewBlock {
+  width: 100%;
+  max-width: 480px;
+  text-align: left;
+  margin-top: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+}
+
+.reviewTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 12px 0;
+  text-align: center;
+}
+
+.reviewItem {
+  padding: 12px;
+  margin-bottom: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+}
+
+.reviewItem:last-child {
+  margin-bottom: 0;
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.reviewCorrectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reviewWrongWord {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.reviewWrongWord:hover {
+  color: #fca5a5;
+}
+
+.reviewTranslit {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.reviewTranslation {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.reviewMistake {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.reviewSpeak {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.reviewSpeak:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
