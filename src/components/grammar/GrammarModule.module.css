@@ -929,55 +929,41 @@
   box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
 }
 
-.prefixWordGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.prefixWordChip {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  padding: 8px 14px;
-  background: #f8f8fc;
-  border: 1px solid #e0e0e8;
+.prefixSelect {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #e0e0e8;
   border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
+  font-size: 0.95rem;
   font-family: inherit;
-}
-
-.prefixWordChip:hover {
-  background: #eef2ff;
-  border-color: #a5b4fc;
-}
-
-.prefixWordChipActive {
-  background: #eef2ff;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-}
-
-.prefixWordChipHeb {
-  font-size: 1.1rem;
-  font-weight: 700;
+  outline: none;
+  box-sizing: border-box;
+  background: #fcfcfd;
   color: #1a1a2e;
-  direction: rtl;
+  cursor: pointer;
+  transition: border-color 0.2s;
 }
 
-.prefixWordChipTranslit {
-  font-size: 0.8rem;
-  color: #6c63ff;
+.prefixSelect:focus {
+  border-color: #6c63ff;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+}
+
+.prefixSelect option {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+.prefixSelect option:checked {
+  background: #eef2ff;
+  color: #1a1a2e;
 }
 
 .prefixNoWords {
   width: 100%;
   text-align: center;
   color: #999;
-  padding: 20px;
+  padding: 12px;
   font-size: 0.9rem;
 }
 

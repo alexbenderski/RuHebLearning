@@ -221,13 +221,14 @@ interface PrefixCombo {
 function buildPrefixCombos(hebrew: string, translit: string, translation: string): PrefixCombo[] {
   // Remove any existing nikud from the base word for clean prefix application
   const cleanWord = hebrew.replace(/[\u0591-\u05C7]/g, '');
+  const lower = translation.toLowerCase();
   return [
     { label: 'Без приставки', prefix: '', hebrewResult: hebrew, translitResult: translit, translationResult: `${translation} (неопределённый)`, description: 'Исходное слово без изменений.' },
-    { label: 'Артикль «הַ» (Определённость)', prefix: 'הַ', hebrewResult: `הַ${cleanWord}`, translitResult: `ха-${translit}`, translationResult: `этот конкретный ${translation}`, description: 'Артикль «הַ» (ха-) прикрепляется к началу слова. Слово становится определённым — "этот конкретный предмет".' },
-    { label: 'Предлог «בְּ» (В)', prefix: 'בְּ', hebrewResult: `בְּ${cleanWord}`, translitResult: `бэ-${translit}`, translationResult: `в (каком-то) ${translation}`, description: 'Предлог «בְּ» (бэ-) = "в". Прикрепляется к началу слова.' },
-    { label: 'Слияние «בַּ» (В + определённость)', prefix: 'בַּ', hebrewResult: `בַּ${cleanWord}`, translitResult: `ба-${translit}`, translationResult: `в этом ${translation}`, description: 'בְּ + הַ = בַּ (ба-). Предлог "в" сливается с артиклем, получается "в этом конкретном".' },
-    { label: 'Предлог «לְ» (К/В направлении)', prefix: 'לְ', hebrewResult: `לְ${cleanWord}`, translitResult: `лэ-${translit}`, translationResult: `к ${translation}`, description: 'Предлог «לְ» (лэ-) = "к, в направлении". Прикрепляется к началу слова.' },
-    { label: 'Слияние «לַ» (К + определённость)', prefix: 'לַ', hebrewResult: `לַ${cleanWord}`, translitResult: `ла-${translit}`, translationResult: `к этому ${translation}`, description: 'לְ + הַ = לַ (ла-). Предлог "к" сливается с артиклем, получается "к этому конкретному".' },
+    { label: 'Артикль «הַ» (Определённость)', prefix: 'הַ', hebrewResult: `הַ${cleanWord}`, translitResult: `ха-${translit}`, translationResult: `этот / эта / это — ${translation}`, description: 'Артикль «הַ» (ха-) прикрепляется к началу слова. Слово становится определённым — "этот конкретный предмет".' },
+    { label: 'Предлог «בְּ» (В/Внутри)', prefix: 'בְּ', hebrewResult: `בְּ${cleanWord}`, translitResult: `бэ-${translit}`, translationResult: `в ${lower}`, description: 'Предлог «בְּ» (бэ-) = "в". Прикрепляется к началу слова. Указывает на местонахождение.' },
+    { label: 'Слияние «בַּ» (В + определённость)', prefix: 'בַּ', hebrewResult: `בַּ${cleanWord}`, translitResult: `ба-${translit}`, translationResult: `в этом / в этой — ${lower}`, description: 'בְּ + הַ = בַּ (ба-). Предлог "в" сливается с артиклем, получается "в этом конкретном предмете".' },
+    { label: 'Предлог «לְ» (К/Направление)', prefix: 'לְ', hebrewResult: `לְ${cleanWord}`, translitResult: `лэ-${translit}`, translationResult: `к ${lower} / в направлении ${lower}`, description: 'Предлог «לְ» (лэ-) = "к, в направлении". Прикрепляется к началу слова.' },
+    { label: 'Слияние «לַ» (К + определённость)', prefix: 'לַ', hebrewResult: `לַ${cleanWord}`, translitResult: `ла-${translit}`, translationResult: `к этому / к этой — ${lower}`, description: 'לְ + הַ = לַ (ла-). Предлог "к" сливается с артиклем, получается "к этому конкретному предмету".' },
   ];
 }
 
@@ -634,38 +635,42 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                 onChange={(e) => setPrefixSearch(e.target.value)}
               />
             </div>
-            <div className={styles.prefixWordGrid}>
+            <select
+              className={styles.prefixSelect}
+              size={8}
+              value={selectedPrefixWord}
+              onChange={(e) => {
+                const selected = e.target.value;
+                const allWords = VOCAB_CATEGORIES.flatMap((c) => c.words);
+                const word = allWords.find((w) => w.hebrew === selected);
+                if (word) {
+                  playClick();
+                  setSelectedPrefixWord(word.hebrew);
+                  setSelectedPrefixWordTranslit(word.transliteration);
+                  setSelectedPrefixWordTranslation(word.translation);
+                  setPrefixIdx(0);
+                }
+              }}
+            >
               {VOCAB_CATEGORIES.flatMap((c) => c.words)
                 .filter((w) => {
                   if (!prefixSearch.trim()) return true;
                   const q = prefixSearch.toLowerCase();
                   return w.translation.toLowerCase().includes(q) || w.hebrew.includes(q) || w.transliteration.toLowerCase().includes(q);
                 })
-                .slice(0, 20)
                 .map((w) => (
-                  <button
-                    key={w.id}
-                    className={`${styles.prefixWordChip} ${selectedPrefixWord === w.hebrew ? styles.prefixWordChipActive : ''}`}
-                    onClick={() => {
-                      playClick();
-                      setSelectedPrefixWord(w.hebrew);
-                      setSelectedPrefixWordTranslit(w.transliteration);
-                      setSelectedPrefixWordTranslation(w.translation);
-                      setPrefixIdx(0);
-                    }}
-                  >
-                    <span className={styles.prefixWordChipHeb}>{w.hebrew}</span>
-                    <span className={styles.prefixWordChipTranslit}>{w.translation}</span>
-                  </button>
+                  <option key={w.id} value={w.hebrew}>
+                    {w.hebrew} — {w.translation} [{w.transliteration}]
+                  </option>
                 ))}
-              {VOCAB_CATEGORIES.flatMap((c) => c.words).filter((w) => {
-                if (!prefixSearch.trim()) return true;
-                const q = prefixSearch.toLowerCase();
-                return w.translation.toLowerCase().includes(q) || w.hebrew.includes(q) || w.transliteration.toLowerCase().includes(q);
-              }).length === 0 && (
-                <div className={styles.prefixNoWords}>Ничего не найдено</div>
-              )}
-            </div>
+            </select>
+            {VOCAB_CATEGORIES.flatMap((c) => c.words).filter((w) => {
+              if (!prefixSearch.trim()) return true;
+              const q = prefixSearch.toLowerCase();
+              return w.translation.toLowerCase().includes(q) || w.hebrew.includes(q) || w.transliteration.toLowerCase().includes(q);
+            }).length === 0 && (
+              <div className={styles.prefixNoWords}>Ничего не найдено</div>
+            )}
           </div>
 
           <div className={styles.gameArea}>
