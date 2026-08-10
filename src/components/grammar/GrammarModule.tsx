@@ -214,16 +214,22 @@ interface PrefixCombo {
   hebrewResult: string;
   translitResult: string;
   translationResult: string;
+  description: string;
 }
 
-const PREFIX_COMBOS: PrefixCombo[] = [
-  { label: 'Без приставки', prefix: '', hebrewResult: 'בַּיִת', translitResult: 'байт', translationResult: 'дом (какой-то один из многих)' },
-  { label: 'Артикль «ה» (Определённость)', prefix: 'הַ', hebrewResult: 'הַבַּיִת', translitResult: 'ха-байт', translationResult: 'конкретный / этот дом' },
-  { label: 'Предлог «ב» (В каком-то)', prefix: 'בְּ', hebrewResult: 'בְּבַיִת', translitResult: 'бэ-байт', translationResult: 'в каком-то доме (неопределённый)' },
-  { label: 'Слияние «ב + ה» (В этом конкретном)', prefix: 'בַּ', hebrewResult: 'בַּבַּיִת', translitResult: 'ба-байт', translationResult: 'в этом конкретном доме (внутри)' },
-  { label: 'Предлог «ל» (К какому-то)', prefix: 'לְ', hebrewResult: 'לְבַיִת', translitResult: 'лэ-байт', translationResult: 'к какому-то дому / в направление дома' },
-  { label: 'Слияние «ל + ה» (К этому конкретному)', prefix: 'לַ', hebrewResult: 'לַבַּיִת', translitResult: 'ла-байт', translationResult: 'к этому конкретному дому / прямо в этот дом' },
-];
+// Build prefix combos dynamically for a given base word
+function buildPrefixCombos(hebrew: string, translit: string, translation: string): PrefixCombo[] {
+  // Remove any existing nikud from the base word for clean prefix application
+  const cleanWord = hebrew.replace(/[\u0591-\u05C7]/g, '');
+  return [
+    { label: 'Без приставки', prefix: '', hebrewResult: hebrew, translitResult: translit, translationResult: `${translation} (неопределённый)`, description: 'Исходное слово без изменений.' },
+    { label: 'Артикль «הַ» (Определённость)', prefix: 'הַ', hebrewResult: `הַ${cleanWord}`, translitResult: `ха-${translit}`, translationResult: `этот конкретный ${translation}`, description: 'Артикль «הַ» (ха-) прикрепляется к началу слова. Слово становится определённым — "этот конкретный предмет".' },
+    { label: 'Предлог «בְּ» (В)', prefix: 'בְּ', hebrewResult: `בְּ${cleanWord}`, translitResult: `бэ-${translit}`, translationResult: `в (каком-то) ${translation}`, description: 'Предлог «בְּ» (бэ-) = "в". Прикрепляется к началу слова.' },
+    { label: 'Слияние «בַּ» (В + определённость)', prefix: 'בַּ', hebrewResult: `בַּ${cleanWord}`, translitResult: `ба-${translit}`, translationResult: `в этом ${translation}`, description: 'בְּ + הַ = בַּ (ба-). Предлог "в" сливается с артиклем, получается "в этом конкретном".' },
+    { label: 'Предлог «לְ» (К/В направлении)', prefix: 'לְ', hebrewResult: `לְ${cleanWord}`, translitResult: `лэ-${translit}`, translationResult: `к ${translation}`, description: 'Предлог «לְ» (лэ-) = "к, в направлении". Прикрепляется к началу слова.' },
+    { label: 'Слияние «לַ» (К + определённость)', prefix: 'לַ', hebrewResult: `לַ${cleanWord}`, translitResult: `ла-${translit}`, translationResult: `к этому ${translation}`, description: 'לְ + הַ = לַ (ла-). Предлог "к" сливается с артиклем, получается "к этому конкретному".' },
+  ];
+}
 
 // ──────────────────────────────────────────────
 // SECTION 4: Roots (Shoresh) Data
@@ -307,6 +313,11 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
 
   // ── Section 3: Prefix Simulator ──
   const [prefixIdx, setPrefixIdx] = useState(0);
+  const [prefixSearch, setPrefixSearch] = useState('');
+  const [selectedPrefixWord, setSelectedPrefixWord] = useState<string>('בַּיִת');
+  const [selectedPrefixWordTranslit, setSelectedPrefixWordTranslit] = useState<string>('байт');
+  const [selectedPrefixWordTranslation, setSelectedPrefixWordTranslation] = useState<string>('дом');
+  const prefixCombos = buildPrefixCombos(selectedPrefixWord, selectedPrefixWordTranslit, selectedPrefixWordTranslation);
 
   // ── Section 4: Roots Game ──
   const [rootIdx, setRootIdx] = useState(0);
@@ -600,7 +611,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
         </div>
       )}
 
-      {/* ── SECTION 3: Prefixes ── */}
+      {/* ── SECTION 3: Prefixes with dynamic word selector ── */}
       {activeTab === 'prefixes' && (
         <div className={styles.sectionWrap}>
           <div className={styles.explainCard}>
@@ -608,29 +619,83 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
             <p>
               В русском языке нет артиклей, но в иврите артикль <strong>ה [ха]</strong> делает слово определённым.
               А если перед ним поставить предлоги <strong>בּ [в]</strong> или <strong>ל [к]</strong>, они поглощают артикль, превращаясь в <strong>ба-</strong> и <strong>ла-</strong>!
-              Давай посмотрим, как преображается корень слова <strong>байт (дом)</strong>:
+              Выбери слово из списка и посмотри, как меняется его форма!
             </p>
+          </div>
+
+          {/* Word selector with search */}
+          <div className={styles.prefixWordSelector}>
+            <div className={styles.prefixSearchRow}>
+              <input
+                type="text"
+                className={styles.prefixSearchInput}
+                placeholder="🔍 Поиск слова..."
+                value={prefixSearch}
+                onChange={(e) => setPrefixSearch(e.target.value)}
+              />
+            </div>
+            <div className={styles.prefixWordGrid}>
+              {VOCAB_CATEGORIES.flatMap((c) => c.words)
+                .filter((w) => {
+                  if (!prefixSearch.trim()) return true;
+                  const q = prefixSearch.toLowerCase();
+                  return w.translation.toLowerCase().includes(q) || w.hebrew.includes(q) || w.transliteration.toLowerCase().includes(q);
+                })
+                .slice(0, 20)
+                .map((w) => (
+                  <button
+                    key={w.id}
+                    className={`${styles.prefixWordChip} ${selectedPrefixWord === w.hebrew ? styles.prefixWordChipActive : ''}`}
+                    onClick={() => {
+                      playClick();
+                      setSelectedPrefixWord(w.hebrew);
+                      setSelectedPrefixWordTranslit(w.transliteration);
+                      setSelectedPrefixWordTranslation(w.translation);
+                      setPrefixIdx(0);
+                    }}
+                  >
+                    <span className={styles.prefixWordChipHeb}>{w.hebrew}</span>
+                    <span className={styles.prefixWordChipTranslit}>{w.translation}</span>
+                  </button>
+                ))}
+              {VOCAB_CATEGORIES.flatMap((c) => c.words).filter((w) => {
+                if (!prefixSearch.trim()) return true;
+                const q = prefixSearch.toLowerCase();
+                return w.translation.toLowerCase().includes(q) || w.hebrew.includes(q) || w.transliteration.toLowerCase().includes(q);
+              }).length === 0 && (
+                <div className={styles.prefixNoWords}>Ничего не найдено</div>
+              )}
+            </div>
           </div>
 
           <div className={styles.gameArea}>
             <div className={styles.prefixesSimulator}>
               <div className={styles.simulatorPreview}>
-                <div className={styles.simText}>{PREFIX_COMBOS[prefixIdx].hebrewResult}</div>
+                <div className={styles.simPreviewWord}>{selectedPrefixWord}</div>
+                <div className={styles.simPreviewTranslit}>[{selectedPrefixWordTranslit}]</div>
+                <div className={styles.simPreviewTranslation}>{selectedPrefixWordTranslation}</div>
+
+                <div className={styles.simDivider} />
+
+                <div className={styles.simText}>{prefixCombos[prefixIdx]?.hebrewResult}</div>
                 <div className={styles.simSub}>
-                  транслитерация: <strong>{PREFIX_COMBOS[prefixIdx].translitResult}</strong>
+                  транслитерация: <strong>{prefixCombos[prefixIdx]?.translitResult}</strong>
                 </div>
                 <div className={styles.simMeaning}>
-                  перевод: <strong>{PREFIX_COMBOS[prefixIdx].translationResult}</strong>
+                  перевод: <strong>{prefixCombos[prefixIdx]?.translationResult}</strong>
                 </div>
-                <button className={styles.simSpeakBtn} onClick={() => handleTTS(PREFIX_COMBOS[prefixIdx].hebrewResult)}>
+                <div className={styles.simDescription}>
+                  {prefixCombos[prefixIdx]?.description}
+                </div>
+                <button className={styles.simSpeakBtn} onClick={() => handleTTS(prefixCombos[prefixIdx]?.hebrewResult ?? selectedPrefixWord)}>
                   🔊 Прослушать произношение
                 </button>
               </div>
 
               <div className={styles.prefixesMenu}>
-                <h4>Выбери приставку для просмотра слияния:</h4>
+                <h4>Выбери приставку:</h4>
                 <div className={styles.simButtonsCol}>
-                  {PREFIX_COMBOS.map((combo, idx) => (
+                  {prefixCombos.map((combo, idx) => (
                     <button
                       key={combo.label}
                       className={`${styles.simToggle} ${prefixIdx === idx ? styles.simToggleActive : ''}`}
