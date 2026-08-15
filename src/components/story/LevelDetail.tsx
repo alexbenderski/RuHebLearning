@@ -11,6 +11,7 @@ import useCloudTTS from '../../hooks/useCloudTTS';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
 import bubbleClickSound from '../../assets/bubbleClickSound.mp3';
 import looseVideo from '../../assets/loose_reaction_character.mp4';
+import winVideo from '../../assets/win_reaction_character.mp4';
 import styles from './LevelDetail.module.css';
 
 const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: string[] }> = {
@@ -203,7 +204,7 @@ const LevelDetail: React.FC = () => {
   const { playAudio } = useCloudTTS();
   const { playSoundFile, playCorrect, playWrong } = useSoundEffects();
 
-  const [phase, setPhase] = useState<'theory' | 'quiz' | 'wordbuild' | 'results' | 'lose' | 'passed'>('theory');
+  const [phase, setPhase] = useState<'theory' | 'quiz' | 'wordbuild' | 'results' | 'lose' | 'win'>('theory');
   const [correctCount, setCorrectCount] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [passed, setPassed] = useState<boolean>(loadPassed()[levelNum] ?? false);
@@ -269,7 +270,8 @@ const LevelDetail: React.FC = () => {
       if (levelNum === 5) {
         setPhase('wordbuild');
       } else {
-        setPhase('passed');
+        setPhase('win');
+        setVideoEnded(false);
       }
     } else {
       // Show lose video
@@ -391,7 +393,7 @@ const LevelDetail: React.FC = () => {
             <span className={styles.quizSub}>(финальное испытание)</span>
           </h3>
           <AlphabetWordBuilderGame learnedWords={allVocabWords} onStep={() => {}} />
-          <button className={styles.startQuizBtn} onClick={() => setPhase('passed')} style={{ marginTop: 24 }}>
+          <button className={styles.startQuizBtn} onClick={() => setPhase('win')} style={{ marginTop: 24 }}>
             📊 К результатам
           </button>
         </div>
@@ -426,22 +428,41 @@ const LevelDetail: React.FC = () => {
         </div>
       )}
 
-      {/* ── PASSED RESULTS ── */}
-      {phase === 'passed' && quizScore !== null && (
-        <div className={styles.resultsSection}>
-          <div className={styles.resultsCard}>
-            <div className={styles.resultsIcon}>🏆</div>
-            <h2 className={styles.resultsScore}>{quizScore}%</h2>
-            <p className={styles.resultsMsg}>Поздравляем! Уровень пройден! 🎉</p>
-            {levelNum < 5 && <p className={styles.unlockMsg}>🔓 Следующий уровень открыт!</p>}
-            <div className={styles.resultsActions}>
-              <button className={styles.retryBtn} onClick={startQuiz}>
-                🔄 Пройти ещё раз
-              </button>
-              <button className={styles.mapBtn} onClick={() => navigate('/stage-map')}>
-                🗺️ На карту
-              </button>
-            </div>
+      {/* ── WIN VIDEO ── */}
+      {phase === 'win' && (
+        <div className={styles.loseOverlay}>
+          <div className={styles.loseVideoWrap}>
+            <video
+              className={styles.loseVideo}
+              src={winVideo}
+              autoPlay
+              onEnded={() => setVideoEnded(true)}
+              playsInline
+            />
+            {videoEnded && (
+              <div className={styles.loseActions}>
+                <p className={styles.loseMsg}>🎉 Уровень пройден! Отлично!</p>
+                {quizScore !== null && (
+                  <p className={styles.loseMsg} style={{fontSize:'0.95rem',marginTop:-8}}>
+                    Результат: {quizScore}%
+                  </p>
+                )}
+                <div className={styles.loseBtnRow}>
+                  <button className={styles.retryBtn} onClick={startQuiz}>
+                    🔄 Пройти ещё раз
+                  </button>
+                  <button className={styles.mapBtn} onClick={() => {
+                    // Store the target level and go through the stage map so the
+                    // character visibly walks to the next point before the page opens.
+                    sessionStorage.setItem('story_pending_level', String(levelNum + 1));
+                    sessionStorage.removeItem('story_in_level');
+                    navigate('/stage-map');
+                  }}>
+                    {levelNum < 5 ? '➡️ Следующий уровень' : '🗺️ На карту'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

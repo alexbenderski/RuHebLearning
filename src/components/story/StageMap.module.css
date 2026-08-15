@@ -66,6 +66,11 @@
   animation: runBob 0.5s ease-in-out infinite;
 }
 
+/* Character walking to a stage — smooth bottom transition */
+.characterWalk {
+  transition: bottom 4s ease-in-out;
+}
+
 @keyframes idleBob {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-8px); }

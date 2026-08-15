@@ -48,6 +48,9 @@ function loadUnlocked(): Record<number, boolean> {
   } catch { /* ignore */ }
   return { 1: true, 2: true, 3: true, 4: false, 5: false };
 }
+function saveUnlocked(state: Record<number, boolean>) {
+  localStorage.setItem('story_unlocked', JSON.stringify(state));
+}
 
 function playSoundFile(src: string) {
   try {
@@ -70,8 +73,14 @@ const StageMap: React.FC = () => {
   const [characterStarted, setCharacterStarted] = useState(true);
   const [isMoving, setIsMoving] = useState(false);
   const [staticFrame, setStaticFrame] = useState<string | null>(null);
-  const [unlocked] = useState<Record<number, boolean>>(loadUnlocked);
+  const [unlocked, setUnlocked] = useState<Record<number, boolean>>(loadUnlocked);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pendingNav = (() => {
+    const raw = sessionStorage.getItem('story_pending_level');
+    return raw ? Number(raw) : null;
+  })();
+  const initRef = useRef(false);
+  const navTimerRef = useRef<number | null>(null);
 
   const stage = STAGES[currentStage - 1];
   const isFirst = currentStage === 1;
@@ -88,6 +97,39 @@ const StageMap: React.FC = () => {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Handle pending navigation from the "Следующий уровень" button
+  useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+
+    if (pendingNav !== null && pendingNav >= 1 && pendingNav <= LAST_STAGE && pendingNav !== currentStage) {
+      // Unlock the level if needed
+      if (!unlocked[pendingNav]) {
+        const next = { ...unlocked, [pendingNav]: true };
+        setUnlocked(next);
+        saveUnlocked(next);
+      }
+      // Animate the character walking to the target stage
+      playSoundFile(runningSound);
+      setCurrentStage(pendingNav);
+      sessionStorage.setItem('story_current_stage', String(pendingNav));
+      startMoveAnimation(4000);
+      // After the walk animation, open the level page
+      navTimerRef.current = window.setTimeout(() => {
+        sessionStorage.removeItem('story_pending_level');
+        sessionStorage.setItem('story_in_level', 'true');
+        navigate(`/story-level/${pendingNav}`);
+      }, 4000);
+    } else {
+      // No pending level — just clean up
+      sessionStorage.removeItem('story_pending_level');
+    }
+
+    return () => {
+      if (navTimerRef.current) window.clearTimeout(navTimerRef.current);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Capture the first frame of the character GIF to freeze it while standing idle
   useEffect(() => {
@@ -204,7 +246,7 @@ const StageMap: React.FC = () => {
 
         {characterStarted && (
           <div
-            className={styles.character}
+            className={`${styles.character} ${isMoving ? styles.characterWalk : ''}`}
             style={{
               bottom: `${charBottom}%`,
               left: '50%',
@@ -223,7 +265,7 @@ const StageMap: React.FC = () => {
         <div className={styles.label}>{stage.label}</div>
 
         <div className={styles.controls}>
-          <button className={styles.arrowBtn} onClick={() => goTo(currentStage - 1)} disabled={isFirst} aria-label="Previous stage">←</button>
+          <button className={styles.arrowBtn} onClick={() => goTo(currentStage - 1)} disabled={isFirst || pendingNav !== null} aria-label="Previous stage">←</button>
           <button
             className={styles.arrowBtn}
             onClick={() => {
@@ -234,7 +276,7 @@ const StageMap: React.FC = () => {
           >
             🏠
           </button>
-          <button className={styles.arrowBtn} onClick={() => goTo(currentStage + 1)} disabled={isLast} aria-label="Next stage">→</button>
+          <button className={styles.arrowBtn} onClick={() => goTo(currentStage + 1)} disabled={isLast || pendingNav !== null} aria-label="Next stage">→</button>
         </div>
       </div>
 
