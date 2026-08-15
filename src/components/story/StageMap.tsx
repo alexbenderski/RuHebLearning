@@ -64,7 +64,12 @@ function playSoundFile(src: string) {
 
 const StageMap: React.FC = () => {
   const navigate = useNavigate();
-  const [showWelcome, setShowWelcome] = useState(() => !sessionStorage.getItem('story_in_level'));
+  const [showWelcome, setShowWelcome] = useState(() => {
+    // When coming from "Следующий уровень", skip the welcome modal so the
+    // character walk on the map is visible.
+    if (sessionStorage.getItem('story_pending_level')) return false;
+    return !sessionStorage.getItem('story_in_level');
+  });
   const [currentStage, setCurrentStage] = useState(() => {
     const saved = Number(sessionStorage.getItem('story_current_stage'));
     return saved >= 1 && saved <= LAST_STAGE ? saved : 1;
@@ -103,30 +108,40 @@ const StageMap: React.FC = () => {
     if (initRef.current) return;
     initRef.current = true;
 
-    if (pendingNav !== null && pendingNav >= 1 && pendingNav <= LAST_STAGE && pendingNav !== currentStage) {
+    if (pendingNav !== null && pendingNav >= 1 && pendingNav <= LAST_STAGE) {
       // Unlock the level if needed
       if (!unlocked[pendingNav]) {
         const next = { ...unlocked, [pendingNav]: true };
         setUnlocked(next);
         saveUnlocked(next);
       }
-      // Animate the character walking to the target stage
-      playSoundFile(runningSound);
-      setCurrentStage(pendingNav);
-      sessionStorage.setItem('story_current_stage', String(pendingNav));
-      startMoveAnimation(4000);
-      // After the walk animation, open the level page
-      navTimerRef.current = window.setTimeout(() => {
+
+      if (pendingNav === currentStage) {
+        // Already standing on that stage — open it directly
         sessionStorage.removeItem('story_pending_level');
         sessionStorage.setItem('story_in_level', 'true');
         navigate(`/story-level/${pendingNav}`);
-      }, 4000);
+      } else {
+        // Animate the character walking to the target stage
+        playSoundFile(runningSound);
+        setCurrentStage(pendingNav);
+        sessionStorage.setItem('story_current_stage', String(pendingNav));
+        startMoveAnimation(4000);
+        // After the walk animation, open the level page
+        navTimerRef.current = window.setTimeout(() => {
+          sessionStorage.removeItem('story_pending_level');
+          sessionStorage.setItem('story_in_level', 'true');
+          navigate(`/story-level/${pendingNav}`);
+        }, 4000);
+      }
     } else {
       // No pending level — just clean up
       sessionStorage.removeItem('story_pending_level');
     }
 
     return () => {
+      // Reset the guard so StrictMode's double-mount re-runs this effect
+      initRef.current = false;
       if (navTimerRef.current) window.clearTimeout(navTimerRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -230,7 +245,7 @@ const StageMap: React.FC = () => {
                   height: size,
                 }}
                 onClick={() => handleLevelClick(s.stage)}
-                disabled={locked}
+                disabled={locked || pendingNav !== null}
                 aria-label={locked ? `${s.label} (заблокирован)` : `Go to ${s.label}`}
               >
                 <img
