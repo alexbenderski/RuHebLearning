@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './StageMap.module.css';
 import characterImage from '../../assets/character.gif';
-import mapImage from '../../assets/CesareaBackgroundStage2.jpeg';
+import mapImage from '../../assets/CesareaBackgroundStage2.png';
 import level1Img from '../../assets/level1.png';
 import level2Img from '../../assets/level2.png';
 import level3Img from '../../assets/level3.png';
@@ -199,7 +199,9 @@ const StageMap2: React.FC = () => {
   };
 
   const charWidth = BASE_CHAR_WIDTH * Math.pow(SHRINK_PER_STAGE, currentStage - 1);
-  const zoomScale = 1 + (currentStage - 1) * 0.2;
+  // Zoom is disabled on Map 2 — the map stays at scale 1 and the camera only
+  // pans (character position changes) between stages.
+  const zoomScale = 1;
   const transformOrigin = `${stage.left} ${stage.top}`;
 
   const charTop = parseFloat(stage.top);

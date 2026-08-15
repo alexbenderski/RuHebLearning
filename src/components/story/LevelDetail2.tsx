@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { VocabWord } from '../../types';
+import { getVocalizedForm } from '../../data/nikudWords';
 import { MAP2_LEVELS, getAllMap2Words } from '../../data/map2Words';
 import AlphabetWordBuilderGame from '../alphabet/AlphabetWordBuilderGame';
 import WordsQuiz from '../words/WordsQuiz';
@@ -321,7 +322,7 @@ const LevelDetail2: React.FC = () => {
                     style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: 6 }}
                     title="Прослушать"
                   >🔊</button>
-                  <strong>{w.hebrew}</strong> [{w.transliteration}] — {w.translation}
+                  <strong>{getVocalizedForm(w.hebrew)}</strong> [{w.transliteration}] — {w.translation}
                 </li>
               ))}
             </ul>
