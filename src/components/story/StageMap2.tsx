@@ -328,30 +328,31 @@ const StageMap2: React.FC = () => {
               {!unlocked[s.stage] && <span className={styles.lockOverlay}>🔒</span>}
             </button>
           ))}
-          </div>
 
-        {/* CHARACTER — fixed overlay, never moves with the drag */}
-        {characterStarted && (
-          <div
-            className={`${styles.character} ${isMoving ? styles.characterWalk : ''}`}
-            style={{
-              position: 'absolute',
-              zIndex: 10,
-              pointerEvents: 'none',
-              top: stage.top,
-              left: stage.left,
-              transform: 'translate(-50%, -50%)',
-              transition: 'top 4s ease-in-out, left 4s ease-in-out',
-            }}
-          >
-            <img
-              className={`${styles.characterImg} ${isMoving ? styles.characterMoving : styles.characterIdle}`}
-              src={isMoving ? characterImage : (staticFrame ?? characterImage)}
-              alt="Character"
-              style={{ width: charWidth }}
-            />
+          {/* CHARACTER — lives inside the world layer so it stays glued to
+              the current stage diamond while the map is dragged/panned. */}
+          {characterStarted && (
+            <div
+              className={`${styles.character} ${isMoving ? styles.characterWalk : ''}`}
+              style={{
+                position: 'absolute',
+                zIndex: 10,
+                pointerEvents: 'none',
+                top: toMapPct(stage.top),
+                left: toMapPct(stage.left),
+                transform: 'translate(-50%, -50%)',
+                transition: 'top 4s ease-in-out, left 4s ease-in-out',
+              }}
+            >
+              <img
+                className={`${styles.characterImg} ${isMoving ? styles.characterMoving : styles.characterIdle}`}
+                src={isMoving ? characterImage : (staticFrame ?? characterImage)}
+                alt="Character"
+                style={{ width: charWidth }}
+              />
+            </div>
+          )}
           </div>
-        )}
 
         <div className={styles.label}>{stage.label}</div>
 
