@@ -209,7 +209,7 @@ const LevelDetail: React.FC = () => {
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [passed, setPassed] = useState<boolean>(loadPassed()[levelNum] ?? false);
 
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() => generateQuiz(nikudVariants, 20));
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() => generateQuiz(nikudVariants, 5));
   const [questionIdx, setQuestionIdx] = useState(0);
   const [options, setOptions] = useState<QuizOption[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
@@ -290,7 +290,7 @@ const LevelDetail: React.FC = () => {
     setTotalAnswered(0);
     setQuestionIdx(0);
     setPicked(null);
-    const fresh = generateQuiz(nikudVariants, 20);
+    const fresh = generateQuiz(nikudVariants, 5);
     setQuizQuestions(fresh);
     setOptions(buildOptionsFor(fresh[0], nikudVariants));
     setPhase('quiz');
