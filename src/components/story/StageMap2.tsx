@@ -35,6 +35,9 @@ const SHRINK_PER_STAGE = 0.9;
 
 const LEVEL_BASE_SIZE = 44 * 1.5; // 66px
 
+/** Minimum drag distance before we treat a gesture as a pan (not a click). */
+const DRAG_CLICK_THRESHOLD = 6;
+
 function getLevelSize(stage: number): number {
   const base = LEVEL_BASE_SIZE * Math.pow(SHRINK_PER_STAGE, stage - 1);
   if (stage === 5) return base * 1.3;
@@ -77,6 +80,14 @@ const StageMap2: React.FC = () => {
   const [staticFrame, setStaticFrame] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState<Record<number, boolean>>(loadUnlocked);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // ── Drag-to-pan state ──
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const dragMovedRef = useRef(false);
+  const dragSuppressClickRef = useRef(false);
+
   const pendingNav = (() => {
     const raw = sessionStorage.getItem('story2_pending_level');
     return raw ? Number(raw) : null;
@@ -172,6 +183,7 @@ const StageMap2: React.FC = () => {
   };
 
   const handleLevelClick = (stageNum: number) => {
+    if (dragSuppressClickRef.current) return; // ignore click after a drag gesture
     if (!unlocked[stageNum]) return;
     playSoundFile(bubbleClickSound);
     sessionStorage.setItem('story2_in_level', 'true');
@@ -206,14 +218,63 @@ const StageMap2: React.FC = () => {
 
   const charTop = parseFloat(stage.top);
 
+  // ── Drag handlers ──
+  const onDragStart = (clientX: number, clientY: number) => {
+    setIsDragging(true);
+    dragMovedRef.current = false;
+    dragStartRef.current = { x: clientX, y: clientY, panX: panOffset.x, panY: panOffset.y };
+  };
+  const onDragMove = (clientX: number, clientY: number) => {
+    if (!isDragging) return;
+    const dx = clientX - dragStartRef.current.x;
+    const dy = clientY - dragStartRef.current.y;
+    if (!dragMovedRef.current && Math.abs(dx) + Math.abs(dy) > DRAG_CLICK_THRESHOLD) {
+      dragMovedRef.current = true;
+    }
+    setPanOffset({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+  };
+  const onDragEnd = () => {
+    if (dragMovedRef.current) {
+      // Suppress the next click so the level icon doesn't open after a drag
+      dragSuppressClickRef.current = true;
+      window.setTimeout(() => { dragSuppressClickRef.current = false; }, 100);
+    }
+    setIsDragging(false);
+  };
+
   return (
     <div className={styles.scene}>
-      <div className={styles.container} ref={containerRef}>
+      <div
+        className={styles.container}
+        ref={containerRef}
+        style={{
+          cursor: isDragging ? 'grabbing' : 'default',
+          touchAction: 'none',
+          userSelect: 'none',
+        }}
+        onMouseDown={(e) => onDragStart(e.clientX, e.clientY)}
+        onMouseMove={(e) => onDragMove(e.clientX, e.clientY)}
+        onMouseUp={onDragEnd}
+        onMouseLeave={onDragEnd}
+        onTouchStart={(e) => {
+          if (e.touches.length === 1) {
+            onDragStart(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }}
+        onTouchMove={(e) => {
+          if (e.touches.length === 1) {
+            onDragMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }}
+        onTouchEnd={onDragEnd}
+      >
         <div
           className={styles.mapLayer}
           style={{
-            transform: `scale(${zoomScale})`,
+            transform: `scale(${zoomScale}) translate(${panOffset.x}px, ${panOffset.y}px)`,
             transformOrigin,
+            // Disable the 3s CSS transition while dragging so the map follows the finger
+            transition: isDragging ? 'none' : undefined,
           }}
         >
           <img className={styles.bgImage} src={mapImage} alt="Caesarea map" />
