@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HEBREW_LETTERS, FINAL_LETTERS, ALL_LETTERS } from '../../data/alphabet';
 import { getVariantsForLetters } from '../../data/letterNikud';
 import LetterCard from './LetterCard';
+import AlphabetTeach from './AlphabetTeach';
 import AlphabetQuiz from './AlphabetQuiz';
 import AlphabetMemoryGame from './AlphabetMemoryGame';
 import AlphabetWordBuilderGame from './AlphabetWordBuilderGame';
+import { VOCAB_CATEGORIES } from '../../data/vocabulary';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { useLetterProgress } from '../../hooks/useLetterProgress';
 import { getSavedWords } from '../../firebase/userService';
@@ -27,28 +29,43 @@ const AlphabetModule: React.FC<AlphabetModuleProps> = ({ userId }) => {
   const { trackStep } = useProgressTracker(userId);
   const { trackLetter } = useLetterProgress(userId);
 
-  const nikudVariants = React.useMemo(() => getVariantsForLetters(ALL_LETTERS.map((l) => l.letter)), []);
+  const nikudVariants = useMemo(
+    () => getVariantsForLetters(ALL_LETTERS.map((l) => l.letter)),
+    [],
+  );
+
+  // Use all vocabulary words as the pool for word-building.
+  // Also load saved words from Firebase as a supplement.
+  const allVocabWords = useMemo(() => VOCAB_CATEGORIES.flatMap((c) => c.words), []);
 
   React.useEffect(() => {
     if (!userId) return;
     getSavedWords(userId)
-      .then((words) => setLearnedWords(words))
-      .catch((err) => console.error('[alphabet learned words]', err));
-  }, [userId]);
+      .then((words) => {
+        // Merge: keep all vocab words + any saved words that aren't already in vocab
+        const existingIds = new Set(allVocabWords.map((w) => w.id));
+        const extras = words.filter((w) => !existingIds.has(w.id));
+        setLearnedWords([...allVocabWords, ...extras]);
+      })
+      .catch((err) => {
+        console.error('[alphabet learned words]', err);
+        setLearnedWords(allVocabWords);
+      });
+  }, [userId, allVocabWords]);
 
   const handleQuizAnswer = (letterChar: string, isCorrect: boolean) => {
-    setLetterStats(prev => ({
+    setLetterStats((prev) => ({
       ...prev,
       [letterChar]: {
         correct: (prev[letterChar]?.correct ?? 0) + (isCorrect ? 1 : 0),
-        total:   (prev[letterChar]?.total   ?? 0) + 1,
+        total: (prev[letterChar]?.total ?? 0) + 1,
       },
     }));
-    trackLetter({ letter: letterChar, isCorrect, game: 'quiz', detail: 'name-pick' }).catch(console.error);
+    trackLetter({ letter: letterChar, isCorrect, game: 'quiz', detail: 'nikud-pick' }).catch(console.error);
   };
 
   const totalAttempts = Object.values(letterStats).reduce((s, v) => s + v.total, 0);
-  const weakLetters = ALL_LETTERS.filter(l => {
+  const weakLetters = ALL_LETTERS.filter((l) => {
     const s = letterStats[l.letter];
     return s && s.total >= 2 && s.correct / s.total < 0.6;
   });
@@ -99,7 +116,7 @@ const AlphabetModule: React.FC<AlphabetModuleProps> = ({ userId }) => {
             <div className={styles.weakPanel}>
               <h3 className={styles.weakTitle}>🔴 Нужна практика:</h3>
               <div className={styles.weakGrid}>
-                {weakLetters.map(l => (
+                {weakLetters.map((l) => (
                   <div key={l.letter} className={styles.weakChip}>
                     <span className={styles.weakLetter}>{l.letter}</span>
                     <span className={styles.weakName}>{l.name}</span>
@@ -112,14 +129,24 @@ const AlphabetModule: React.FC<AlphabetModuleProps> = ({ userId }) => {
             </div>
           )}
 
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              Буквы с никудом — объяснения
+              {totalAttempts > 0 && (
+                <span className={styles.sessionNote}>{totalAttempts} попыток в сессии</span>
+              )}
+            </h2>
+            <p className={styles.sectionHint}>
+              Нажми на любой символ, чтобы услышать его звучание.
+            </p>
+            <AlphabetTeach letters={ALL_LETTERS} />
+          </section>
+
           {/* Main 22 letters */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
               Основные буквы
               <span className={styles.count}>22</span>
-              {totalAttempts > 0 && (
-                <span className={styles.sessionNote}>{totalAttempts} попыток в сессии</span>
-              )}
             </h2>
             <div className={styles.grid}>
               {HEBREW_LETTERS.map((letter, i) => (
@@ -154,7 +181,12 @@ const AlphabetModule: React.FC<AlphabetModuleProps> = ({ userId }) => {
           </section>
         </>
       ) : mode === 'quiz' ? (
-        <AlphabetQuiz letters={ALL_LETTERS} userId={userId} onAnswer={handleQuizAnswer} variants={nikudVariants} />
+        <AlphabetQuiz
+          letters={ALL_LETTERS}
+          userId={userId}
+          onAnswer={handleQuizAnswer}
+          variants={nikudVariants}
+        />
       ) : mode === 'memory' ? (
         <AlphabetMemoryGame
           letters={ALL_LETTERS}

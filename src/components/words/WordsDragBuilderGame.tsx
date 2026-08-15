@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { VOCAB_CATEGORIES } from '../../data/vocabulary';
+import { getVocalizedForm } from '../../data/nikudWords';
 import type { VocabWord, WordDifficulty } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useGameTimer } from '../../hooks/useGameTimer';
@@ -20,6 +21,11 @@ function parseSentence(s: string): { before: string; word: string; after: string
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
+}
+
+/** Display a word with nikud (vowels) when known, otherwise plain text. */
+function vocalized(word: VocabWord): string {
+  return getVocalizedForm(word.hebrew);
 }
 
 const DIFF_LABELS: Record<WordDifficulty, string> = {
@@ -153,18 +159,18 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
                 <div className={styles.resultMark}>{ok ? '✅' : '❌'}</div>
                 <div className={styles.resultBody}>
                   <div className={styles.resultWordRow}>
-                    <span className={styles.hebrewWord}>{word.hebrew}</span>
+                    <span className={styles.hebrewWord}>{vocalized(word)}</span>
                     <span className={styles.resultTranslit}>{word.transliteration}</span>
                     <span className={styles.resultTranslation}>{word.translation}</span>
                   </div>
                   {parsed && (
                     <div className={styles.resultSentence}>
-                      {parsed.before}<strong className={styles.hebrewWord}>{word.hebrew}</strong>{parsed.after}
+                      {parsed.before}<strong className={styles.hebrewWord}>{vocalized(word)}</strong>{parsed.after}
                     </div>
                   )}
                   {!ok && ans && (
                     <div className={styles.resultMistake}>
-                      Ты выбрал: {gameWords.find((w) => w.id === ans.givenId)?.hebrew ?? '—'}
+                      Ты выбрал: {vocalized(gameWords.find((w) => w.id === ans.givenId) ?? word)}
                     </div>
                   )}
                   {!ans && <div className={styles.resultMistake}>Не отвечено</div>}
@@ -198,7 +204,7 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
 
   // Click handler to allow easy mobile tapping alternative to dragging
   const handleTileClick = (word: VocabWord) => {
-    playAudio(word.hebrew);
+    playAudio(vocalized(word));
     if (!isAnswered && currentWord) {
       handleDrop(currentWord.id, word.id);
     }
@@ -223,7 +229,7 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
 
       {/* Question card */}
       <div className={`${styles.card} ${isAnswered ? styles.cardDone : ''}`}>
-        <button className={styles.speakBtn} onClick={() => playAudio(currentWord.hebrew)}>🔊</button>
+        <button className={styles.speakBtn} onClick={() => playAudio(vocalized(currentWord))}>🔊</button>
         <div className={styles.cardContent}>
           {parsedCurrent ? (
             <>
@@ -237,7 +243,7 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
               >
                 {parsedCurrent.before}
                 {currentAnswer
-                  ? <span className={styles.dropZonePlaced}>{gameWords.find(w => w.id === currentAnswer.givenId)?.hebrew ?? '?'}</span>
+                  ? <span className={styles.dropZonePlaced}>{vocalized(gameWords.find(w => w.id === currentAnswer.givenId) ?? currentWord)}</span>
                   : <span className={styles.dropZone}>Перетащи сюда (или нажми на слово ниже)</span>}
                 {parsedCurrent.after}
               </div>
@@ -251,7 +257,7 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
                 onDrop={(e) => { if (!isAnswered) handleDrop(currentWord.id, e.dataTransfer.getData('text/plain')); }}
               >
                 {currentAnswer
-                  ? <span className={styles.dropZonePlaced}>{gameWords.find(w => w.id === currentAnswer.givenId)?.hebrew ?? '?'}</span>
+                  ? <span className={styles.dropZonePlaced}>{vocalized(gameWords.find(w => w.id === currentAnswer.givenId) ?? currentWord)}</span>
                   : <span className={styles.dropZone}>Перетащи перевод сюда (или нажми на слово ниже)</span>}
               </div>
             </>
@@ -294,7 +300,7 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
               onClick={() => handleTileClick(w)}
               title="Нажми чтобы выбрать и озвучить"
             >
-              <span className={styles.tileHebrew}>{w.hebrew}</span>
+              <span className={styles.tileHebrew}>{vocalized(w)}</span>
               <span className={styles.tileTranslit}>{w.transliteration}</span>
             </button>
           );

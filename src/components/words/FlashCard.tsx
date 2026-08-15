@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { VocabWord } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
+import { getVocalizedForm } from '../../data/nikudWords';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import styles from './FlashCard.module.css';
 
@@ -56,11 +57,11 @@ const FlashCard: React.FC<FlashCardProps> = ({ userId, word, isSaved, onToggleSa
           {/* ── Front ── */}
           <div className={styles.front}>
             <span className={styles.faceHint}>нажми чтобы перевернуть ↩</span>
-            <div className={styles.hebrewWord}>{word.hebrew}</div>
+            <div className={styles.hebrewWord}>{getVocalizedForm(word.hebrew)}</div>
             <div className={styles.translit}>{word.transliteration}</div>
             <button
               className={`${styles.audioBtn} ${isLoading ? styles.audioBtnLoading : ''}`}
-              onClick={(e) => { e.stopPropagation(); playAudio(word.hebrew); }}
+              onClick={(e) => { e.stopPropagation(); playAudio(getVocalizedForm(word.hebrew)); }}
               disabled={isLoading}
             >
               {isLoading ? '⏳ Загрузка...' : isPlaying ? '🔉 Воспроизводится...' : '🔊 Слушать'}
@@ -76,7 +77,7 @@ const FlashCard: React.FC<FlashCardProps> = ({ userId, word, isSaved, onToggleSa
           {/* ── Back ── */}
           <div className={styles.back}>
             <span className={styles.faceHint}>нажми чтобы перевернуть ↩</span>
-            <div className={styles.hebrewWordSmall}>{word.hebrew}</div>
+            <div className={styles.hebrewWordSmall}>{getVocalizedForm(word.hebrew)}</div>
             <div className={styles.translation}>{word.translation}</div>
             <div className={styles.translitBack}>{word.transliteration}</div>
             <div className={styles.mnemonic}>
@@ -85,7 +86,7 @@ const FlashCard: React.FC<FlashCardProps> = ({ userId, word, isSaved, onToggleSa
             </div>
             <button
               className={`${styles.audioBtn} ${isLoading ? styles.audioBtnLoading : ''}`}
-              onClick={(e) => { e.stopPropagation(); playAudio(word.hebrew); }}
+              onClick={(e) => { e.stopPropagation(); playAudio(getVocalizedForm(word.hebrew)); }}
               disabled={isLoading}
             >
               {isLoading ? '⏳ Загрузка...' : isPlaying ? '🔉 Воспроизведение...' : '🔊 Слушать'}

@@ -9,6 +9,7 @@ import WordsDragBuilderGame from './WordsDragBuilderGame';
 import WordsNikudGame from './WordsNikudGame';
 import WordsAllQuiz from './WordsAllQuiz';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
+import { getNikudWordDataForWords } from '../../data/nikudWords';
 import { getSavedWords, removeWordFromList, saveWordToList } from '../../firebase/userService';
 import styles from './WordsModule.module.css';
 
@@ -258,6 +259,7 @@ const WordsModule: React.FC<WordsModuleProps> = ({ userId }) => {
 
       {mode === 'nikud' && (
         <WordsNikudGame
+          wordPool={getNikudWordDataForWords(VOCAB_CATEGORIES.flatMap((c) => c.words))}
           onAnswer={(correct, wordId) => {
             trackStep({
               moduleId: 'words',

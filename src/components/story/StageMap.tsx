@@ -2,69 +2,70 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import styles from './StageMap.module.css';
 import characterImage from '../../assets/character.gif';
 import mapImage from '../../assets/bahaiBackgroundStage.png';
+import level1Img from '../../assets/level1.png';
+import level2Img from '../../assets/level2.png';
+import level3Img from '../../assets/level3.png';
+import level4Img from '../../assets/level4.png';
+import level5Img from '../../assets/level5.png';
+
+const LEVEL_IMAGES = [level1Img, level2Img, level3Img, level4Img, level5Img];
 
 interface StageCoord {
   stage: number;
   label: string;
-  /** Distance from the bottom of the container, e.g. '10%' */
   bottom: string;
-  /** Distance from the left of the container, e.g. '50%' */
   left: string;
-  /** CSS transform scale, e.g. 0.9 */
-  scale: number;
 }
 
-/** Video timestamp (in seconds) that corresponds to each stage. */
 const STAGE_TIMESTAMPS = [0, 1.25, 2.5, 3.75, 5];
 
-/**
- * Stage coordinate presets from Figma.
- *
- * Image native size: 1314 × 1920
- * Figma coords (x, y from top-left) converted to % relative to image:
- *   left% = (x / 1314) * 100
- *   bottom% = ((1920 - y) / 1920) * 100
- *
- * The container uses aspect-ratio: 1314/1920 with object-fit: contain,
- * so these percentages stay accurate at any screen size.
- */
 const STAGES: StageCoord[] = [
-  { stage: 1, label: 'Этап 1', bottom: '17.97%', left: '50.0%', scale: 1 },
-  { stage: 2, label: 'Этап 2', bottom: '33.75%', left: '50.0%', scale: 1 },
-  { stage: 3, label: 'Этап 3', bottom: '45.68%', left: '50.0%', scale: 1 },
-  { stage: 4, label: 'Этап 4', bottom: '55.42%', left: '50.0%', scale: 1 },
-  { stage: 5, label: 'Этап 5', bottom: '62.14%', left: '50.0%', scale: 1 },
+  { stage: 1, label: 'Этап 1', bottom: '17.97%', left: '50.0%' },
+  { stage: 2, label: 'Этап 2', bottom: '33.75%', left: '50.0%' },
+  { stage: 3, label: 'Этап 3', bottom: '45.68%', left: '50.0%' },
+  { stage: 4, label: 'Этап 4', bottom: '55.42%', left: '50.0%' },
+  { stage: 5, label: 'Этап 5', bottom: '62.14%', left: '50.0%' },
 ];
 
 const LAST_STAGE = STAGES.length;
 
-/**
- * Base character width: original 120px reduced by 15%.
- * Each subsequent stage shrinks the character by 10% of the previous size.
- *   stage N width = BASE_CHAR_WIDTH * (SHRINK_PER_STAGE ^ (N - 1))
- */
-const BASE_CHAR_WIDTH = 120 * 0.85; // 102px
-const SHRINK_PER_STAGE = 0.9;       // 10% reduction per stage
+const BASE_CHAR_WIDTH = 120 * 0.85 * 0.7;
+const SHRINK_PER_STAGE = 0.9;
 
-/**
- * Replace this with the actual video file path.
- * Place a .mp4 file in `public/` and update the path below, e.g.:
- *   const VIDEO_SRC = '/storyBg.mp4';
- * Or set to `null` to hide the video and only show the black background.
- */
+const LEVEL_BASE_SIZE = 44 * 1.5; // 66px
+
+function getLevelSize(stage: number): number {
+  const base = LEVEL_BASE_SIZE * Math.pow(SHRINK_PER_STAGE, stage - 1);
+  if (stage === 5) return base * 1.3;
+  return base;
+}
+
 const VIDEO_SRC: string | null = null;
 
 const StageMap: React.FC = () => {
   const [currentStage, setCurrentStage] = useState(1);
   const [isScrubbing, setIsScrubbing] = useState(false);
+  const [containerHeight, setContainerHeight] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const targetTimeRef = useRef<number | null>(null);
 
   const stage = STAGES[currentStage - 1];
   const isFirst = currentStage === 1;
   const isLast = currentStage === LAST_STAGE;
 
-  // ── Video scrubbing ──────────────────────────────────────────
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const goTo = useCallback(
     (target: number) => {
       const clamped = Math.max(1, Math.min(LAST_STAGE, target));
@@ -91,7 +92,6 @@ const StageMap: React.FC = () => {
     [currentStage],
   );
 
-  // Monitor timeupdate → pause when we reach the target timestamp
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -112,24 +112,29 @@ const StageMap: React.FC = () => {
     return () => vid.removeEventListener('timeupdate', onTimeUpdate);
   }, [isScrubbing]);
 
-  // Pause video initially
   useEffect(() => {
     const vid = videoRef.current;
     if (vid) vid.pause();
   }, []);
 
-  // Character width shrinks by 10% per stage
   const charWidth = BASE_CHAR_WIDTH * Math.pow(SHRINK_PER_STAGE, currentStage - 1);
 
-  // ── Dev mode: click-to-map ────────────────────────────────────
+  const zoomScale = 1 + (currentStage - 1) * 0.2;
+
+  const stageTopPct = (100 - parseFloat(stage.bottom)).toFixed(2);
+  const transformOrigin = `${stage.left} ${stageTopPct}%`;
+
+  const iconSize = getLevelSize(currentStage);
+  const iconHalfHeightPct = containerHeight > 0 ? (iconSize / 2 / containerHeight) * 100 : 0;
+  const charBottom = (parseFloat(stage.bottom) - iconHalfHeightPct * 2.5).toFixed(2);
+
   const handleMapClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // Ignore clicks on interactive elements
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const y = rect.height - (e.clientY - rect.top); // distance from bottom
+    const y = rect.height - (e.clientY - rect.top);
     const leftPct = ((x / rect.width) * 100).toFixed(1);
     const bottomPct = ((y / rect.height) * 100).toFixed(1);
 
@@ -143,31 +148,61 @@ const StageMap: React.FC = () => {
 
   return (
     <div className={styles.scene}>
-      {/* ── 9:16 mobile-first container ── */}
-      <div className={styles.container} onClick={handleMapClick}>
-        {/* Background image — always visible as fallback */}
-        <img className={styles.bgImage} src={mapImage} alt="Map background" />
+      <div className={styles.container} ref={containerRef} onClick={handleMapClick}>
+        {/* Map layer — scales and pans with zoom */}
+        <div
+          className={styles.mapLayer}
+          style={{
+            transform: `scale(${zoomScale})`,
+            transformOrigin,
+          }}
+        >
+          <img className={styles.bgImage} src={mapImage} alt="Map background" />
 
-        {/* Background video — overlays the image when a video source is set */}
-        {VIDEO_SRC && (
-          <video
-            ref={videoRef}
-            className={styles.video}
-            src={VIDEO_SRC}
-            muted
-            playsInline
-            preload="auto"
-            loop={false}
-          />
-        )}
+          {VIDEO_SRC && (
+            <video
+              ref={videoRef}
+              className={styles.video}
+              src={VIDEO_SRC}
+              muted
+              playsInline
+              preload="auto"
+              loop={false}
+            />
+          )}
 
-        {/* Character overlay */}
+          {/* Level icons at each stage */}
+          {STAGES.map((s) => {
+            const size = getLevelSize(s.stage);
+            const isActive = s.stage === currentStage;
+            return (
+              <div
+                key={s.stage}
+                className={`${styles.levelIcon} ${isActive ? styles.levelIconActive : ''}`}
+                style={{
+                  bottom: s.bottom,
+                  left: s.left,
+                  width: size,
+                  height: size,
+                }}
+              >
+                <img
+                  src={LEVEL_IMAGES[s.stage - 1]}
+                  alt={`Level ${s.stage}`}
+                  className={styles.levelImg}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Character overlay — smoothly moves to each stage */}
         <div
           className={styles.character}
           style={{
-            bottom: stage.bottom,
-            left: stage.left,
-            transform: `translate(-50%, 0) scale(${stage.scale})`,
+            bottom: `${charBottom}%`,
+            left: '50%',
+            transform: 'translate(-50%, 0)',
           }}
         >
           <img
@@ -178,10 +213,8 @@ const StageMap: React.FC = () => {
           />
         </div>
 
-        {/* Stage label */}
         <div className={styles.label}>{stage.label}</div>
 
-        {/* Controls */}
         <div className={styles.controls}>
           <button
             className={styles.arrowBtn}
@@ -212,7 +245,6 @@ const StageMap: React.FC = () => {
           </button>
         </div>
 
-        {/* Dev hint */}
         <p className={styles.devHint}>🖱️ Click the map to copy coordinates</p>
       </div>
     </div>

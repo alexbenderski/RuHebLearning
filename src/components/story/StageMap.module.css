@@ -21,6 +21,16 @@
   cursor: crosshair;
 }
 
+/* ── Map layer — wraps bg + icons, receives zoom/pan transforms ── */
+.mapLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 1.5s ease-in-out;
+  will-change: transform;
+}
+
 /* ── Background image — always visible, no cropping ── */
 .bgImage {
   position: absolute;
@@ -48,7 +58,7 @@
   position: absolute;
   z-index: 10;
   pointer-events: none;
-  transition: bottom 1s ease-in-out, left 1s ease-in-out, transform 1s ease-in-out;
+transition: bottom 2s ease-in-out, left 2s ease-in-out;
 }
 
 .characterImg {
@@ -150,6 +160,36 @@
   color: #231d00;
   border-color: transparent;
   box-shadow: 0 4px 18px rgba(255, 213, 0, 0.45);
+}
+
+/* ── Level icons on the map ── */
+.levelIcon {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  transform: translate(-50%, 50%);
+}
+
+.levelImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: levelBounce 2.4s ease-in-out infinite;
+}
+
+.levelIconActive .levelImg {
+  animation: levelBounceActive 1s ease-in-out infinite;
+}
+
+@keyframes levelBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes levelBounceActive {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-10px) scale(1.15); }
 }
 
 /* ── Dev hint text ── */

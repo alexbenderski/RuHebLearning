@@ -249,3 +249,103 @@
 .empty {
   color: rgba(255, 255, 255, 0.75);
 }
+
+/* ── Letter tile with transcription ── */
+.letterChar {
+  font-size: 30px;
+  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+  line-height: 1.1;
+}
+
+.letterTranslit {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  direction: ltr;
+}
+
+.letter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 58px;
+  height: 62px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.2);
+  color: #fff;
+  cursor: grab;
+  font-family: inherit;
+  padding: 4px;
+  transition: background 0.15s;
+}
+
+.letter:hover {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+/* ── Setup phase ── */
+.setupTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+.setupDesc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0 0 18px;
+  text-align: center;
+}
+
+.setupSection {
+  margin-bottom: 16px;
+}
+
+.setupLabel {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.slider {
+  width: 100%;
+  accent-color: #8b5cf6;
+  cursor: pointer;
+}
+
+.sliderLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 2px;
+}
+
+.startBtn {
+  display: block;
+  margin: 0 auto;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.startBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.startBtn:not(:disabled):hover {
+  opacity: 0.88;
+}

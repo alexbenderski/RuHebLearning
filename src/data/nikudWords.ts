@@ -1,6 +1,8 @@
 // ─────────────────────────────────────────────────────────────
 // Nikud (vowel) marks reference data
 // ─────────────────────────────────────────────────────────────
+import { VOCALIZED_VOCAB } from './vocalizedVocabulary';
+
 export interface NikudMarkDef {
   id: string;
   char: string;       // The actual Unicode nikud character
@@ -341,11 +343,160 @@ export function stripNikud(text: string): string {
  * provided saved Hebrew words. Used by "My words" page to run the nikud
  * game against only the words the user saved.
  */
-export function getNikudWordsForSavedWords(savedWords: { hebrew: string }[]): NikudWordData[] {
-  const wanted = new Map<string, { hebrew: string }>();
+export function getNikudWordsForSavedWords(savedWords: { hebrew: string; transliteration?: string; translation?: string; difficulty?: 'easy' | 'medium' | 'hard' }[]): NikudWordData[] {
+  const wanted = new Map<string, typeof savedWords[0]>();
   for (const w of savedWords) {
     const key = stripNikud(w.hebrew);
     wanted.set(key, w);
   }
-  return NIKUD_WORDS.filter((nw) => wanted.has(stripNikud(nw.wordWithNikud)));
+  // First, match static NIKUD_WORDS
+  const matched = NIKUD_WORDS.filter((nw) => wanted.has(stripNikud(nw.wordWithNikud)));
+  const matchedKeys = new Set(matched.map((nw) => stripNikud(nw.wordWithNikud)));
+  // Then generate dynamic ones for remaining saved words
+  for (const [key, sw] of wanted) {
+    if (matchedKeys.has(key)) continue;
+    const generated = generateNikudWordData(
+      sw.hebrew,
+      sw.transliteration ?? '',
+      sw.translation ?? '',
+      sw.difficulty ?? 'medium',
+    );
+    if (generated) matched.push(generated);
+  }
+  return matched;
+}
+
+/**
+ * Return the vocalised (nicud) form of a Hebrew word if one exists in the
+ * NIKUD_WORDS catalogue; otherwise return the input unchanged. Matching is
+ * done after stripping nikud from both sides, so already-vocalised inputs
+ * also resolve to the canonical form.
+ */
+export function getVocalizedForm(plainOrMixed: string): string {
+  const key = stripNikud(plainOrMixed);
+  const found = NIKUD_WORDS.find((nw) => stripNikud(nw.wordWithNikud) === key);
+  if (found) return found.wordWithNikud;
+  return VOCALIZED_VOCAB[key] ?? plainOrMixed;
+}
+
+/**
+ * Split a (possibly vocalised) Hebrew string into per-letter chunks, keeping
+ * each base letter together with the combining marks that belong to it.
+ * Example: "שָׁלוֹם" → ["שָׁ", "ל", "וֹ", "ם"]
+ */
+export function getVocalizedCharGroups(text: string): string[] {
+  const groups: string[] = [];
+  let current = '';
+  for (const ch of text) {
+    if (/[\u05D0-\u05EA]/.test(ch)) {
+      if (current) groups.push(current);
+      current = ch;
+    } else {
+      current += ch;
+    }
+  }
+  if (current) groups.push(current);
+  return groups;
+}
+
+// ── Mark-to-ID mapping for auto-detecting nikud marks ──────
+const MARK_CHAR_TO_ID: Record<string, string> = {
+  '\u05B8': 'kamatz',
+  '\u05B7': 'patach',
+  '\u05B6': 'segol',
+  '\u05B5': 'tsere',
+  '\u05B4': 'chirik',
+  '\u05B9': 'cholam',
+  '\u05BB': 'kubutz',
+  '\u05B0': 'shva',
+  '\u05B2': 'chatafPatach',
+  '\u05B1': 'chatafSegol',
+  '\u05B3': 'chatafKamatz',
+  '\u05C1': 'shinDot',
+  '\u05C2': 'sinDot',
+  '\u05BC': 'dagesh',
+};
+
+const MARK_ID_TO_POSITION: Record<string, 'under' | 'inside' | 'above'> = {
+  kamatz: 'under', patach: 'under', segol: 'under', tsere: 'under',
+  chirik: 'under', cholam: 'inside', kubutz: 'under', shva: 'under',
+  chatafPatach: 'under', chatafSegol: 'under', chatafKamatz: 'under',
+  shinDot: 'above', sinDot: 'above', dagesh: 'inside',
+};
+
+/**
+ * Dynamically generate a NikudWordData entry from a plain Hebrew word
+ * that has a vocalised form in the VOCALIZED_VOCAB dictionary.
+ * Returns null if the word has no vocalised form or cannot be parsed.
+ */
+export function generateNikudWordData(
+  plainOrMixed: string,
+  transliteration: string,
+  translation: string,
+  difficulty: 'easy' | 'medium' | 'hard' = 'medium',
+): NikudWordData | null {
+  const vocalized = getVocalizedForm(plainOrMixed);
+  if (vocalized === plainOrMixed) return null; // no vocalised form available
+
+  const groups = getVocalizedCharGroups(vocalized);
+  const letters: string[] = [];
+  const slots: NikudSlot[] = [];
+  let slotCounter = 0;
+
+  for (let li = 0; li < groups.length; li++) {
+    const g = groups[li];
+    // Extract base letter (first Hebrew char)
+    const base = [...g].find((ch) => /[\u05D0-\u05EA]/.test(ch)) ?? '';
+    letters.push(base);
+
+    // Find all combining marks (nikud chars) in this group
+    const marks = [...g].filter((ch) => /[\u0591-\u05C7]/.test(ch));
+
+    for (const markChar of marks) {
+      const markId = MARK_CHAR_TO_ID[markChar];
+      if (!markId) continue;
+      const position = MARK_ID_TO_POSITION[markId] ?? 'under';
+      slots.push({
+        id: `auto-slot-${slotCounter++}`,
+        letterIndex: li,
+        position,
+        correctMarkId: markId,
+      });
+    }
+  }
+
+  if (slots.length === 0) return null;
+
+  return {
+    id: `auto-${stripNikud(plainOrMixed)}`,
+    letters,
+    wordWithNikud: vocalized,
+    transliteration,
+    translation,
+    slots,
+    difficulty,
+  };
+}
+
+/**
+ * Return all NikudWordData entries: the static NIKUD_WORDS plus any
+ * vocabulary words that have a vocalised form in VOCALIZED_VOCAB.
+ * This lets the Никуд game use the full vocabulary.
+ */
+export function getNikudWordDataForWords(
+  words: { hebrew: string; transliteration: string; translation: string; difficulty?: 'easy' | 'medium' | 'hard' }[],
+): NikudWordData[] {
+  const result: NikudWordData[] = [...NIKUD_WORDS];
+  const existingKeys = new Set(NIKUD_WORDS.map((nw) => stripNikud(nw.wordWithNikud)));
+
+  for (const w of words) {
+    const key = stripNikud(w.hebrew);
+    if (existingKeys.has(key)) continue;
+    const generated = generateNikudWordData(w.hebrew, w.transliteration, w.translation, w.difficulty ?? 'medium');
+    if (generated) {
+      result.push(generated);
+      existingKeys.add(key);
+    }
+  }
+  return result;
 }

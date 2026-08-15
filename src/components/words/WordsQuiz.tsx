@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { VocabWord } from '../../types';
 import type { WordDifficulty } from '../../types';
+import { getVocalizedForm } from '../../data/nikudWords';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { useGameTimer } from '../../hooks/useGameTimer';
@@ -89,16 +90,16 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
             {wrongAnswers.map((h, i) => (
               <div key={i} className={styles.reviewItem}>
                 <div className={styles.reviewHeader}>
-                  <span className={styles.reviewCorrectRow}>
-                    <span className={styles.reviewWrongWord} dir="rtl">{h.question.hebrew}</span>
-                    <span className={styles.reviewTranslit}>[{h.question.transliteration}]</span>
-                    <span className={styles.reviewTranslation}>{h.question.translation}</span>
-                    <button className={styles.reviewSpeak} onClick={() => playAudio(h.question.hebrew)} title="Прослушать">🔊</button>
+                    <span className={styles.reviewCorrectRow}>
+                      <span className={styles.reviewWrongWord} dir="rtl">{getVocalizedForm(h.question.hebrew)}</span>
+                      <span className={styles.reviewTranslit}>[{h.question.transliteration}]</span>
+                      <span className={styles.reviewTranslation}>{h.question.translation}</span>
+                      <button className={styles.reviewSpeak} onClick={() => playAudio(getVocalizedForm(h.question.hebrew))} title="Прослушать">🔊</button>
                   </span>
                 </div>
                 <div className={styles.reviewMistake}>
-                  Ты ответил: «{h.selected.translation}» — это {h.selected.hebrew} [{h.selected.transliteration}]
-                  <button className={styles.reviewSpeak} onClick={() => playAudio(h.selected.hebrew)} title="Прослушать">🔊</button>
+                  Ты ответил: «{h.selected.translation}» — это {getVocalizedForm(h.selected.hebrew)} [{h.selected.transliteration}]
+                  <button className={styles.reviewSpeak} onClick={() => playAudio(getVocalizedForm(h.selected.hebrew))} title="Прослушать">🔊</button>
                 </div>
               </div>
             ))}
@@ -125,8 +126,8 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
       <div className={styles.questionBox}>
         <p className={styles.prompt}>Переведи слово на русский:</p>
         <button className={`${styles.hebrewWord} ${isLoading ? styles.loading : ''}`}
-          onClick={() => playAudio(current.hebrew)} title={isLoading ? 'Загрузка...' : 'Прослушать'}>
-          {current.hebrew}
+          onClick={() => playAudio(getVocalizedForm(current.hebrew))} title={isLoading ? 'Загрузка...' : 'Прослушать'}>
+          {getVocalizedForm(current.hebrew)}
         </button>
         <div className={styles.translit}>{current.transliteration}</div>
       </div>

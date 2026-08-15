@@ -80,6 +80,133 @@
   box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
 }
 
+/* ── Level picker ── */
+.levelPicker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.levelBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.levelBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.levelBtnActive {
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+.levelBtnBoss {
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.levelBtnBoss.levelBtnActive {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1200;
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);
+}
+
+.levelNum {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.levelLabel {
+  font-size: 13px;
+}
+
+/* ── Level header ── */
+.levelHeader {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.levelTitle {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.levelSubtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Phase switch (Teach / Quiz) ── */
+.phaseSwitch {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.phaseBtn {
+  padding: 12px 30px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.65);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.phaseBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.phaseBtnActive {
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+.toQuizBtn {
+  display: block;
+  margin: 28px auto 0;
+  padding: 14px 36px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.toQuizBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
 /* ── Section ── */
 .section {
   margin-bottom: 44px;

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { VocabWord } from '../../types';
 import { useGameTimer } from '../../hooks/useGameTimer';
+import { getVocalizedForm } from '../../data/nikudWords';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
 import styles from './WordsMemoryGame.module.css';
 
@@ -20,7 +21,7 @@ function buildDeck(words: VocabWord[], pairCount: number): MemoryCard[] {
   const source = shuffle(words).slice(0, Math.min(pairCount, words.length));
   const cards: MemoryCard[] = [];
   source.forEach((w) => {
-    cards.push({ id: `${w.id}-he`, pairId: w.id, value: w.hebrew, isHebrew: true, matched: false });
+    cards.push({ id: `${w.id}-he`, pairId: w.id, value: getVocalizedForm(w.hebrew), isHebrew: true, matched: false });
     cards.push({ id: `${w.id}-ru`, pairId: w.id, value: w.translation, isHebrew: false, matched: false });
   });
   return shuffle(cards);
