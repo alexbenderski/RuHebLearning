@@ -3,6 +3,7 @@ import { VOCAB_CATEGORIES } from '../../data/vocabulary';
 import { getVocalizedForm } from '../../data/nikudWords';
 import type { VocabWord, WordDifficulty } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
+import { useSoundEffects } from '../../hooks/useSoundEffects';
 import { useGameTimer } from '../../hooks/useGameTimer';
 import styles from './WordsDragBuilderGame.module.css';
 
@@ -36,6 +37,7 @@ const DIFF_LABELS: Record<WordDifficulty, string> = {
 
 const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords, onAnswer }) => {
   const { playAudio } = useCloudTTS();
+  const { playCorrect, playWrong } = useSoundEffects();
   const allWords = React.useMemo(
     () => sourceWords ?? VOCAB_CATEGORIES.flatMap((c) => c.words),
     [sourceWords],
@@ -85,6 +87,11 @@ const WordsDragBuilderGame: React.FC<WordsDragBuilderGameProps> = ({ sourceWords
   const handleDrop = (targetWordId: string, draggedWordId: string) => {
     if (answers[targetWordId]) return; // lock after any placement
     const isCorrect = targetWordId === draggedWordId;
+    if (isCorrect) {
+      playCorrect();
+    } else {
+      playWrong();
+    }
     onAnswer?.(isCorrect, draggedWordId);
     setAnswers((prev) => ({ ...prev, [targetWordId]: { givenId: draggedWordId, correct: isCorrect } }));
   };

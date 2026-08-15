@@ -3,6 +3,7 @@ import type { VocabWord } from '../../types';
 import type { WordDifficulty } from '../../types';
 import { getVocalizedForm } from '../../data/nikudWords';
 import useCloudTTS from '../../hooks/useCloudTTS';
+import { useSoundEffects } from '../../hooks/useSoundEffects';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { useGameTimer } from '../../hooks/useGameTimer';
 import styles from './WordsQuiz.module.css';
@@ -41,6 +42,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
   const [totalTime, setTotalTime] = useState(0);
   const [history, setHistory] = useState<QuizHistory[]>([]);
   const { playAudio, isLoading } = useCloudTTS();
+  const { playCorrect, playWrong } = useSoundEffects();
   const { trackStep } = useProgressTracker(userId);
   const { seconds, formattedTime } = useGameTimer(!done);
 
@@ -50,7 +52,12 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
     if (selected !== null) return;
     setSelected(w.id);
     const isCorrect = w.id === current.id;
-    if (w.id === current.id) setScore(s => s + 1);
+    if (w.id === current.id) {
+      setScore(s => s + 1);
+      playCorrect();
+    } else {
+      playWrong();
+    }
     setHistory((prev) => [...prev, { question: current, selected: w }]);
     trackStep({
       moduleId: 'words',

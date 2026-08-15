@@ -38,7 +38,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer, wordPool }) => {
   const { playAudio } = useCloudTTS();
-  const { playClick, playMatch } = useSoundEffects();
+  const { playClick, playMatch, playWrong } = useSoundEffects();
   const { formattedTime, resetTimer } = useGameTimer(true);
 
   const [phase, setPhase] = useState<GamePhase>('setup');
@@ -182,7 +182,7 @@ const WordsNikudGame: React.FC<WordsNikudGameProps> = ({ onAnswer, wordPool }) =
     if (allCorrect) {
       playMatch();
     } else {
-      playClick();
+      playWrong();
     }
 
     setChecked(true);

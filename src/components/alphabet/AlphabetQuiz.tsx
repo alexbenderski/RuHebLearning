@@ -3,6 +3,7 @@ import type { HebrewLetter } from '../../types';
 import type { LetterNikudVariant } from '../../data/letterNikud';
 import { getVariantsForLetters } from '../../data/letterNikud';
 import useCloudTTS from '../../hooks/useCloudTTS';
+import { useSoundEffects } from '../../hooks/useSoundEffects';
 import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { useGameTimer } from '../../hooks/useGameTimer';
 import styles from './AlphabetQuiz.module.css';
@@ -85,6 +86,7 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
   const [totalTime, setTotalTime] = useState(0);
 
   const { playAudio } = useCloudTTS();
+  const { playCorrect, playWrong } = useSoundEffects();
   const { trackStep } = useProgressTracker(userId);
   const { seconds, formattedTime, resetTimer } = useGameTimer(phase === 'quiz');
 
@@ -176,11 +178,13 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
 
       setAttempts((n) => n + 1);
       if (isCorrect) setCorrectCount((n) => n + 1);
-      if (!isCorrect) {
+      if (isCorrect) {
+        playCorrect();
+        playAudio(current.label);
+      } else {
+        playWrong();
         setMistakes((prev) => [...prev, { question: current, chosenSound: `${opt.sound} (${opt.mark})` }]);
       }
-
-      if (isCorrect) playAudio(current.label);
 
       trackStep({
         moduleId: 'alphabet',
@@ -369,9 +373,22 @@ const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ letters, userId, onAnswer, 
 };
 
 function buildOptionsFor(correct: Question, letterVariants: LetterNikudVariant[]): Option[] {
-  const others = shuffle(letterVariants.filter((v) => v.id !== correct.id)).slice(0, 3);
+  const candidates: Option[] = letterVariants
+    .filter((v) => v.id !== correct.id)
+    .map((v) => ({ key: v.id, sound: buildSoundName(v), mark: v.markName }));
+
+  // Deduplicate by sound — when two nikud marks sound the same (e.g. Камац "ла" and Патах "ла"),
+  // keep only one option so the user isn't presented with duplicate answers.
+  const uniqueCandidates: Option[] = [];
+  const seenSounds = new Set<string>([correct.correctSound]);
+  for (const opt of shuffle(candidates)) {
+    if (seenSounds.has(opt.sound)) continue;
+    seenSounds.add(opt.sound);
+    uniqueCandidates.push(opt);
+  }
+
   const options: Option[] = [
-    ...others.map((v) => ({ key: v.id, sound: buildSoundName(v), mark: v.markName })),
+    ...uniqueCandidates.slice(0, 3),
     { key: correct.id, sound: correct.correctSound, mark: correct.correctMark },
   ];
   return shuffle(options);

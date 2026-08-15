@@ -453,7 +453,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>('nikud');
   const { playAudio } = useCloudTTS();
-  const { playClick, playMatch } = useSoundEffects();
+  const { playClick, playMatch, playWrong } = useSoundEffects();
   const { trackStep } = useProgressTracker(userId);
 
   // ── Section 1: Nikud letter selector ──
@@ -512,7 +512,7 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
       setGenderScore((s) => s + 1);
       setGenderFeedback('✅ Правильно!');
     } else {
-      playClick();
+      playWrong();
       const hint = currentWord.explanation ? ` ${currentWord.explanation}` : '';
       setGenderFeedback(`❌ Неверно! «${currentWord.item.translation}» (${currentWord.item.hebrew}) — это ${currentWord.gender === 'masc' ? 'мужской' : 'женский'} род.${hint}`);
     }

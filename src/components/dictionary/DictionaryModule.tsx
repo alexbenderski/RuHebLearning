@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { VOCAB_CATEGORIES } from '../../data/vocabulary';
 import type { VocabWord } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
+import { getVocalizedForm } from '../../data/nikudWords';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
 import styles from './DictionaryModule.module.css';
 
@@ -137,6 +138,7 @@ const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
                 <th className={styles.colIndex}>#</th>
                 <th className={styles.colRu}>🇷🇺 Русский</th>
                 <th className={styles.colHe}>🇮🇱 Иврит</th>
+                <th className={styles.colVocalized}>🎤 С огласовкой</th>
                 <th className={styles.colTranslit}>🔤 Транскрипция</th>
                 <th className={styles.colCat}>📂 Категория</th>
                 <th className={styles.colAudio}>🔊</th>
@@ -157,6 +159,11 @@ const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
                   <td className={styles.colHe}>
                     <span className={styles.heWord} dir="rtl">
                       {word.hebrew}
+                    </span>
+                  </td>
+                  <td className={styles.colVocalized}>
+                    <span className={styles.heWord} dir="rtl">
+                      {getVocalizedForm(word.hebrew)}
                     </span>
                   </td>
                   <td className={styles.colTranslit}>

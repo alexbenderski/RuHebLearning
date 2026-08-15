@@ -4,7 +4,7 @@ import type { SavedWord, WordDifficulty } from '../types';
 import { getSavedWords, removeWordFromList, updateSavedWordDifficulty } from '../firebase/userService';
 import { useProgressTracker } from '../hooks/useProgressTracker';
 import useCloudTTS from '../hooks/useCloudTTS';
-import { getNikudWordsForSavedWords } from '../data/nikudWords';
+import { getNikudWordsForSavedWords, getVocalizedForm } from '../data/nikudWords';
 import WordsMemoryGame from '../components/words/WordsMemoryGame';
 import WordsDragBuilderGame from '../components/words/WordsDragBuilderGame';
 import WordsNikudGame from '../components/words/WordsNikudGame';
@@ -107,7 +107,7 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
           {filtered.map((w) => (
             <div key={w.id} className={styles.wordCard}>
               <div className={styles.wordMain}>
-                <div className={styles.he}>{w.hebrew}</div>
+                <div className={styles.he}>{getVocalizedForm(w.hebrew)}</div>
                 <div className={styles.ru}>{w.translation}</div>
                 <div className={styles.tr}>{w.transliteration}</div>
               </div>

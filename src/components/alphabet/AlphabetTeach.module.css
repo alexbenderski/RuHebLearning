@@ -5,10 +5,11 @@
 }
 
 .letterSection {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 18px;
   padding: 18px 20px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .letterHeader {
@@ -28,7 +29,7 @@
 .baseChar {
   font-size: 56px;
   line-height: 1;
-  color: #fff;
+  color: #1a1a2e;
   direction: rtl;
   font-family: 'David', 'Frank Rühl Libre', 'Arial Hebrew', serif;
 }
@@ -42,18 +43,18 @@
 .baseName {
   font-size: 18px;
   font-weight: 700;
-  color: #fff;
+  color: #1a1a2e;
   margin: 0;
 }
 
 .baseTranslit {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #667;
 }
 
 .playBtn {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(108, 99, 255, 0.08);
+  border: 1px solid rgba(108, 99, 255, 0.25);
   border-radius: 50%;
   width: 42px;
   height: 42px;
@@ -66,7 +67,7 @@
 }
 
 .playBtn:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(108, 99, 255, 0.15);
   transform: scale(1.08);
 }
 
@@ -87,8 +88,8 @@
   align-items: center;
   gap: 4px;
   padding: 10px 6px;
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.18);
+  background: rgba(108, 99, 255, 0.05);
+  border: 1px solid rgba(108, 99, 255, 0.18);
   border-radius: 12px;
 }
 
@@ -97,7 +98,7 @@
   border: none;
   font-size: 34px;
   line-height: 1.1;
-  color: #fff;
+  color: #1a1a2e;
   direction: rtl;
   font-family: 'David', 'Frank Rühl Libre', 'Arial Hebrew', serif;
   cursor: pointer;
@@ -111,18 +112,18 @@
 .variantMark {
   font-size: 11px;
   font-weight: 700;
-  color: #c4b5fd;
+  color: #0d47a1;
   text-align: center;
 }
 
 .variantSound {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #555;
   text-align: center;
 }
 
 .noVariants {
   margin: 0;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #777;
 }

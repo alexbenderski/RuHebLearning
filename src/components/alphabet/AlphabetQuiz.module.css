@@ -402,6 +402,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  color: #111111; /* תיקון: שימוש ב-color במקום text color */
 }
 
 .prompt {

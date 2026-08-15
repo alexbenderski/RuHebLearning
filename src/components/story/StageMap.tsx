@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './StageMap.module.css';
 import characterImage from '../../assets/character.gif';
 import mapImage from '../../assets/bahaiBackgroundStage.png';
@@ -7,6 +8,8 @@ import level2Img from '../../assets/level2.png';
 import level3Img from '../../assets/level3.png';
 import level4Img from '../../assets/level4.png';
 import level5Img from '../../assets/level5.png';
+import bubbleClickSound from '../../assets/bubbleClickSound.mp3';
+import runningSound from '../../assets/runningSound.mp3';
 
 const LEVEL_IMAGES = [level1Img, level2Img, level3Img, level4Img, level5Img];
 
@@ -38,9 +41,36 @@ function getLevelSize(stage: number): number {
   return base;
 }
 
+function loadUnlocked(): Record<number, boolean> {
+  try {
+    const raw = localStorage.getItem('story_unlocked');
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { 1: true, 2: true, 3: true, 4: false, 5: false };
+}
+
+function playSoundFile(src: string) {
+  try {
+    const audio = new Audio(src);
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  } catch (e) {
+    console.error('Audio file error:', e);
+  }
+}
+
 const StageMap: React.FC = () => {
-  const [currentStage, setCurrentStage] = useState(1);
+  const navigate = useNavigate();
+  const [showWelcome, setShowWelcome] = useState(() => !sessionStorage.getItem('story_in_level'));
+  const [currentStage, setCurrentStage] = useState(() => {
+    const saved = Number(sessionStorage.getItem('story_current_stage'));
+    return saved >= 1 && saved <= LAST_STAGE ? saved : 1;
+  });
   const [containerHeight, setContainerHeight] = useState(0);
+  const [characterStarted, setCharacterStarted] = useState(true);
+  const [isMoving, setIsMoving] = useState(false);
+  const [staticFrame, setStaticFrame] = useState<string | null>(null);
+  const [unlocked] = useState<Record<number, boolean>>(loadUnlocked);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const stage = STAGES[currentStage - 1];
@@ -59,16 +89,71 @@ const StageMap: React.FC = () => {
     return () => ro.disconnect();
   }, []);
 
-  const goTo = useCallback((target: number) => {
+  // Capture the first frame of the character GIF to freeze it while standing idle
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          setStaticFrame(canvas.toDataURL('image/png'));
+        }
+      } catch (e) {
+        console.error('Failed to capture character first frame:', e);
+      }
+    };
+    img.src = characterImage;
+  }, []);
+
+  const moveTimerRef = useRef<number | null>(null);
+  const startMoveAnimation = (durationMs: number) => {
+    if (moveTimerRef.current) window.clearTimeout(moveTimerRef.current);
+    setIsMoving(true);
+    moveTimerRef.current = window.setTimeout(() => setIsMoving(false), durationMs);
+  };
+
+  const goTo = (target: number) => {
     const clamped = Math.max(1, Math.min(LAST_STAGE, target));
     if (clamped === currentStage) return;
+    playSoundFile(runningSound);
     setCurrentStage(clamped);
-  }, [currentStage]);
+    sessionStorage.setItem('story_current_stage', String(clamped));
+    startMoveAnimation(4000);
+  };
+
+  const handleLevelClick = (stageNum: number) => {
+    if (!unlocked[stageNum]) return;
+    playSoundFile(bubbleClickSound);
+    sessionStorage.setItem('story_in_level', 'true');
+    const isSameStage = stageNum === currentStage;
+    if (!isSameStage) {
+      playSoundFile(runningSound);
+      setCurrentStage(stageNum);
+      sessionStorage.setItem('story_current_stage', String(stageNum));
+      startMoveAnimation(3000);
+    }
+    setTimeout(() => {
+      navigate(`/story-level/${stageNum}`);
+    }, isSameStage ? 0 : 3000);
+  };
+
+  const handleStartJourney = () => {
+    setShowWelcome(false);
+    setCharacterStarted(true);
+    playSoundFile(runningSound);
+    startMoveAnimation(4000);
+    setTimeout(() => {
+      setCurrentStage(1);
+      sessionStorage.setItem('story_current_stage', '1');
+    }, 100);
+  };
 
   const charWidth = BASE_CHAR_WIDTH * Math.pow(SHRINK_PER_STAGE, currentStage - 1);
-
   const zoomScale = 1 + (currentStage - 1) * 0.2;
-
   const stageTopPct = (100 - parseFloat(stage.bottom)).toFixed(2);
   const transformOrigin = `${stage.left} ${stageTopPct}%`;
 
@@ -79,7 +164,6 @@ const StageMap: React.FC = () => {
   return (
     <div className={styles.scene}>
       <div className={styles.container} ref={containerRef}>
-        {/* Map layer — scales and pans with zoom */}
         <div
           className={styles.mapLayer}
           style={{
@@ -89,72 +173,91 @@ const StageMap: React.FC = () => {
         >
           <img className={styles.bgImage} src={mapImage} alt="Map background" />
 
-          {/* Level icons at each stage — clickable */}
           {STAGES.map((s) => {
             const size = getLevelSize(s.stage);
             const isActive = s.stage === currentStage;
+            const locked = !unlocked[s.stage];
             return (
               <button
                 key={s.stage}
-                className={`${styles.levelIcon} ${isActive ? styles.levelIconActive : ''}`}
+                className={`${styles.levelIcon} ${isActive ? styles.levelIconActive : ''} ${locked ? styles.levelIconLocked : ''}`}
                 style={{
                   bottom: s.bottom,
                   left: s.left,
                   width: size,
                   height: size,
                 }}
-                onClick={() => goTo(s.stage)}
-                aria-label={`Go to ${s.label}`}
+                onClick={() => handleLevelClick(s.stage)}
+                disabled={locked}
+                aria-label={locked ? `${s.label} (заблокирован)` : `Go to ${s.label}`}
               >
                 <img
                   src={LEVEL_IMAGES[s.stage - 1]}
                   alt={`Level ${s.stage}`}
                   className={styles.levelImg}
                 />
+                {locked && <span className={styles.lockOverlay}>🔒</span>}
               </button>
             );
           })}
         </div>
 
-        {/* Character overlay — smoothly moves to each stage */}
-        <div
-          className={styles.character}
-          style={{
-            bottom: `${charBottom}%`,
-            left: '50%',
-            transform: 'translate(-50%, 0)',
-          }}
-        >
-          <img
-            className={styles.characterImg}
-            src={characterImage}
-            alt="Character"
-            style={{ width: charWidth }}
-          />
-        </div>
+        {characterStarted && (
+          <div
+            className={styles.character}
+            style={{
+              bottom: `${charBottom}%`,
+              left: '50%',
+              transform: 'translate(-50%, 0)',
+            }}
+          >
+            <img
+              className={`${styles.characterImg} ${isMoving ? styles.characterMoving : styles.characterIdle}`}
+              src={isMoving ? characterImage : (staticFrame ?? characterImage)}
+              alt="Character"
+              style={{ width: charWidth }}
+            />
+          </div>
+        )}
 
         <div className={styles.label}>{stage.label}</div>
 
-        {/* Arrows-only controls at the very bottom */}
         <div className={styles.controls}>
+          <button className={styles.arrowBtn} onClick={() => goTo(currentStage - 1)} disabled={isFirst} aria-label="Previous stage">←</button>
           <button
             className={styles.arrowBtn}
-            onClick={() => goTo(currentStage - 1)}
-            disabled={isFirst}
-            aria-label="Previous stage"
+            onClick={() => {
+              sessionStorage.removeItem('story_in_level');
+              navigate('/');
+            }}
+            aria-label="Back to dashboard"
           >
-            ←
+            🏠
           </button>
-          <button
-            className={styles.arrowBtn}
-            onClick={() => goTo(currentStage + 1)}
-            disabled={isLast}
-            aria-label="Next stage"
-          >
-            →
-          </button>
+          <button className={styles.arrowBtn} onClick={() => goTo(currentStage + 1)} disabled={isLast} aria-label="Next stage">→</button>
         </div>
       </div>
+
+      {showWelcome && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <h2 className={styles.modalTitle}>🗺️ Добро пожаловать в сюжет!</h2>
+            <div className={styles.modalBody}>
+              <p>Ты находишься на карте приключений. Здесь тебе предстоит пройти <strong>5 этапов</strong> изучения иврита.</p>
+              <p>На каждом этапе ты будешь:</p>
+              <ul>
+                <li>📚 Изучать теорию — буквы, звуки, правила никуда</li>
+                <li>🎯 Проходить квиз из 20 вопросов по теме этапа</li>
+                <li>🔓 Открывать следующий уровень, набрав <strong>80% и выше</strong></li>
+              </ul>
+              <p className={styles.modalHint}>Этапы 1–3 открыты сразу. Этапы 4 и 5 нужно разблокировать!</p>
+            </div>
+            <button className={styles.startBtn} onClick={handleStartJourney}>
+              Давай начнем! 🚀
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

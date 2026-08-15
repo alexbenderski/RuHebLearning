@@ -227,6 +227,10 @@
   display: inline-block;
 }
 
+.colVocalized {
+  min-width: 120px;
+}
+
 .colTranslit {
   min-width: 140px;
 }

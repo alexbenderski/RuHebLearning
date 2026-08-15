@@ -1,4 +1,8 @@
+import correctSound from '../assets/CorrectAnswerSound.mp3';
+import wrongSound from '../assets/WrongAnswerSound.mp3';
+
 export const useSoundEffects = () => {
+  /** Classic retro UI click (WebAudio synth) */
   const playClick = () => {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -22,46 +26,41 @@ export const useSoundEffects = () => {
     }
   };
 
-  const playMatch = () => {
+  /** Correct answer — plays CorrectAnswerSound.mp3 */
+  const playCorrect = () => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      // Node 1: High sparkle (retro coin/ding chord progression)
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-      osc1.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // E5
-      osc1.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16); // G5
-      osc1.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.4);
-      
-      gain1.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
-      
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start();
-      osc1.stop(ctx.currentTime + 0.45);
-
-      // Node 2: Low explosive punch
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(180, ctx.currentTime);
-      osc2.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.35);
-
-      gain2.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start();
-      osc2.stop(ctx.currentTime + 0.35);
-
+      const audio = new Audio(correctSound);
+      audio.volume = 0.55;
+      audio.play().catch(() => {});
     } catch (e) {
-      console.error('Audio match error:', e);
+      console.error('Audio correct error:', e);
     }
   };
 
-  return { playClick, playMatch };
+  /** Wrong answer — plays WrongAnswerSound.mp3 */
+  const playWrong = () => {
+    try {
+      const audio = new Audio(wrongSound);
+      audio.volume = 0.55;
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.error('Audio wrong error:', e);
+    }
+  };
+
+  /** Backwards-compatible alias for correct answer */
+  const playMatch = playCorrect;
+
+  /** Play any sound file from the assets folder */
+  const playSoundFile = (src: string) => {
+    try {
+      const audio = new Audio(src);
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.error('Audio file error:', e);
+    }
+  };
+
+  return { playClick, playMatch, playCorrect, playWrong, playSoundFile };
 };
