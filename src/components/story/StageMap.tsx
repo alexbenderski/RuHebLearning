@@ -17,8 +17,6 @@ interface StageCoord {
   left: string;
 }
 
-const STAGE_TIMESTAMPS = [0, 1.25, 2.5, 3.75, 5];
-
 const STAGES: StageCoord[] = [
   { stage: 1, label: 'Этап 1', bottom: '17.97%', left: '50.0%' },
   { stage: 2, label: 'Этап 2', bottom: '33.75%', left: '50.0%' },
@@ -40,15 +38,10 @@ function getLevelSize(stage: number): number {
   return base;
 }
 
-const VIDEO_SRC: string | null = null;
-
 const StageMap: React.FC = () => {
   const [currentStage, setCurrentStage] = useState(1);
-  const [isScrubbing, setIsScrubbing] = useState(false);
   const [containerHeight, setContainerHeight] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const targetTimeRef = useRef<number | null>(null);
 
   const stage = STAGES[currentStage - 1];
   const isFirst = currentStage === 1;
@@ -66,56 +59,11 @@ const StageMap: React.FC = () => {
     return () => ro.disconnect();
   }, []);
 
-  const goTo = useCallback(
-    (target: number) => {
-      const clamped = Math.max(1, Math.min(LAST_STAGE, target));
-      if (clamped === currentStage) return;
-      setCurrentStage(clamped);
-
-      const vid = videoRef.current;
-      if (!vid) return;
-
-      const targetTime = STAGE_TIMESTAMPS[clamped - 1];
-      if (targetTime > (vid.currentTime ?? 0)) {
-        setIsScrubbing(true);
-        targetTimeRef.current = targetTime;
-        vid.play().catch(() => {
-          vid.currentTime = targetTime;
-          setIsScrubbing(false);
-        });
-      } else {
-        vid.currentTime = targetTime;
-        vid.pause();
-        setIsScrubbing(false);
-      }
-    },
-    [currentStage],
-  );
-
-  useEffect(() => {
-    const vid = videoRef.current;
-    if (!vid) return;
-
-    const onTimeUpdate = () => {
-      if (
-        isScrubbing &&
-        targetTimeRef.current !== null &&
-        vid.currentTime >= targetTimeRef.current
-      ) {
-        vid.pause();
-        setIsScrubbing(false);
-        targetTimeRef.current = null;
-      }
-    };
-
-    vid.addEventListener('timeupdate', onTimeUpdate);
-    return () => vid.removeEventListener('timeupdate', onTimeUpdate);
-  }, [isScrubbing]);
-
-  useEffect(() => {
-    const vid = videoRef.current;
-    if (vid) vid.pause();
-  }, []);
+  const goTo = useCallback((target: number) => {
+    const clamped = Math.max(1, Math.min(LAST_STAGE, target));
+    if (clamped === currentStage) return;
+    setCurrentStage(clamped);
+  }, [currentStage]);
 
   const charWidth = BASE_CHAR_WIDTH * Math.pow(SHRINK_PER_STAGE, currentStage - 1);
 
@@ -128,27 +76,9 @@ const StageMap: React.FC = () => {
   const iconHalfHeightPct = containerHeight > 0 ? (iconSize / 2 / containerHeight) * 100 : 0;
   const charBottom = (parseFloat(stage.bottom) - iconHalfHeightPct * 2.5).toFixed(2);
 
-  const handleMapClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('button')) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = rect.height - (e.clientY - rect.top);
-    const leftPct = ((x / rect.width) * 100).toFixed(1);
-    const bottomPct = ((y / rect.height) * 100).toFixed(1);
-
-    const text = `bottom: '${bottomPct}%', left: '${leftPct}%'`;
-
-    navigator.clipboard.writeText(text).then(
-      () => alert(`📋 Скопировано в буфер обмена!\n${text}`),
-      () => alert(`📍 Координаты:\n${text}`),
-    );
-  }, []);
-
   return (
     <div className={styles.scene}>
-      <div className={styles.container} ref={containerRef} onClick={handleMapClick}>
+      <div className={styles.container} ref={containerRef}>
         {/* Map layer — scales and pans with zoom */}
         <div
           className={styles.mapLayer}
@@ -159,24 +89,12 @@ const StageMap: React.FC = () => {
         >
           <img className={styles.bgImage} src={mapImage} alt="Map background" />
 
-          {VIDEO_SRC && (
-            <video
-              ref={videoRef}
-              className={styles.video}
-              src={VIDEO_SRC}
-              muted
-              playsInline
-              preload="auto"
-              loop={false}
-            />
-          )}
-
-          {/* Level icons at each stage */}
+          {/* Level icons at each stage — clickable */}
           {STAGES.map((s) => {
             const size = getLevelSize(s.stage);
             const isActive = s.stage === currentStage;
             return (
-              <div
+              <button
                 key={s.stage}
                 className={`${styles.levelIcon} ${isActive ? styles.levelIconActive : ''}`}
                 style={{
@@ -185,13 +103,15 @@ const StageMap: React.FC = () => {
                   width: size,
                   height: size,
                 }}
+                onClick={() => goTo(s.stage)}
+                aria-label={`Go to ${s.label}`}
               >
                 <img
                   src={LEVEL_IMAGES[s.stage - 1]}
                   alt={`Level ${s.stage}`}
                   className={styles.levelImg}
                 />
-              </div>
+              </button>
             );
           })}
         </div>
@@ -215,6 +135,7 @@ const StageMap: React.FC = () => {
 
         <div className={styles.label}>{stage.label}</div>
 
+        {/* Arrows-only controls at the very bottom */}
         <div className={styles.controls}>
           <button
             className={styles.arrowBtn}
@@ -224,17 +145,6 @@ const StageMap: React.FC = () => {
           >
             ←
           </button>
-
-          {STAGES.map((s) => (
-            <button
-              key={s.stage}
-              className={`${styles.stageBtn} ${s.stage === currentStage ? styles.active : ''}`}
-              onClick={() => goTo(s.stage)}
-            >
-              {s.stage}
-            </button>
-          ))}
-
           <button
             className={styles.arrowBtn}
             onClick={() => goTo(currentStage + 1)}
@@ -244,8 +154,6 @@ const StageMap: React.FC = () => {
             →
           </button>
         </div>
-
-        <p className={styles.devHint}>🖱️ Click the map to copy coordinates</p>
       </div>
     </div>
   );
