@@ -158,9 +158,15 @@ function generateQuiz(variants: LetterNikudVariant[], count: number): QuizQuesti
 }
 
 function buildOptionsFor(correct: QuizQuestion, allVariants: LetterNikudVariant[]): QuizOption[] {
-  const candidates: QuizOption[] = allVariants
-    .filter((v) => v.id !== correct.variant.id)
-    .map((v) => ({ key: v.id, sound: buildSoundName(v), mark: v.markName }));
+  // All answers must be different vowels of the SAME letter — never other letters.
+  const sameLetterVariants = allVariants.filter(
+    (v) => v.baseLetter === correct.variant.baseLetter && v.id !== correct.variant.id,
+  );
+  const candidates: QuizOption[] = sameLetterVariants.map((v) => ({
+    key: v.id,
+    sound: buildSoundName(v),
+    mark: v.markName,
+  }));
 
   // Deduplicate by sound — when two nikud marks sound the same (e.g. Камац "ла" and Патах "ла"),
   // keep only one option so the user isn't presented with duplicate answers.
@@ -282,7 +288,7 @@ const LevelDetail: React.FC = () => {
     setTotalAnswered(0);
     setQuestionIdx(0);
     setPicked(null);
-    const fresh = generateQuiz(nikudVariants, 5);
+    const fresh = generateQuiz(nikudVariants, 20);
     setQuizQuestions(fresh);
     setOptions(buildOptionsFor(fresh[0], nikudVariants));
     setPhase('quiz');
