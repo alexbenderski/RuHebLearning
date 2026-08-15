@@ -9,6 +9,8 @@ import GrammarModule from './components/grammar/GrammarModule';
 import DictionaryModule from './components/dictionary/DictionaryModule';
 import StageMap from './components/story/StageMap';
 import LevelDetail from './components/story/LevelDetail';
+import StageMap2 from './components/story/StageMap2';
+import LevelDetail2 from './components/story/LevelDetail2';
 import { useUser } from './hooks/useUser';
 
 function App() {
@@ -42,6 +44,8 @@ function App() {
           <Route path="/dictionary" element={<DictionaryModule userId={firebaseUser.uid} />} />
           <Route path="/stage-map" element={<StageMap />} />
           <Route path="/story-level/:levelId" element={<LevelDetail />} />
+          <Route path="/stage-map2" element={<StageMap2 />} />
+          <Route path="/story-level2/:levelId" element={<LevelDetail2 />} />
         </Routes>
       </Layout>
     </BrowserRouter>

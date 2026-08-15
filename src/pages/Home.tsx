@@ -13,6 +13,7 @@ const MODULES = [
   { icon: '📝', title: 'Грамматика', desc: 'Структура языка', ready: true, path: '/grammar' },
   { icon: '📖', title: 'Словарь', desc: 'Русско-ивритский словарь', ready: true, path: '/dictionary' },
   { icon: '🗺️', title: 'Карта этапов', desc: 'Путешествие по уровням', ready: true, path: '/stage-map' },
+  { icon: '🏛️', title: 'Карта 2 — Кейсария', desc: 'Слова и чтение', ready: true, path: '/stage-map2' },
 ];
 
 interface HomeProps {
