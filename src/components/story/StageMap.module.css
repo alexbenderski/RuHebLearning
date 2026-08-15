@@ -9,26 +9,16 @@
   padding: 0;
 }
 
-/* ── Container: always 9:16 aspect ratio, fills viewport height ── */
+/* ── Container matching the image's native aspect ratio (1314/1920 ≈ 0.6844) ── */
 .container {
   position: relative;
-  height: 100vh;
-  aspect-ratio: 9 / 16;
+  width: 100%;
+  max-height: 100vh;
+  aspect-ratio: 1314 / 1920;
   margin: 0 auto;
   overflow: hidden;
   background: #000;
   cursor: crosshair;
-}
-
-/* ── On tall mobile screens, center horizontally and crop sides ── */
-@media (max-width: 768px) {
-  .container {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    height: 100vh;
-    aspect-ratio: 9 / 16;
-  }
 }
 
 /* ── Map layer — wraps bg + icons, receives zoom/pan transforms ── */
@@ -47,7 +37,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   z-index: 0;
   user-select: none;
   pointer-events: none;
