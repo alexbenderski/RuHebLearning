@@ -282,7 +282,7 @@ const LevelDetail: React.FC = () => {
     setTotalAnswered(0);
     setQuestionIdx(0);
     setPicked(null);
-    const fresh = generateQuiz(nikudVariants, 20);
+    const fresh = generateQuiz(nikudVariants, 5);
     setQuizQuestions(fresh);
     setOptions(buildOptionsFor(fresh[0], nikudVariants));
     setPhase('quiz');
