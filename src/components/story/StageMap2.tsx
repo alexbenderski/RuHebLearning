@@ -35,16 +35,6 @@ const SHRINK_PER_STAGE = 0.9;
 
 const LEVEL_BASE_SIZE = 44 * 1.5; // 66px
 
-/** Map layer is 150% of the container so there is room to pan. */
-const MAP_OVERSCALE = 1.5;
-const MAP_OVERSCALE_OFFSET = (MAP_OVERSCALE - 1) / 2; // 0.25
-
-/** Convert a container percentage to the same point inside the oversized map layer. */
-function toMapPct(containerPct: string): string {
-  const val = parseFloat(containerPct) / 100;
-  return `${((val + MAP_OVERSCALE_OFFSET) / MAP_OVERSCALE) * 100}%`;
-}
-
 /** Minimum drag distance before we treat a gesture as a pan (not a click). */
 const DRAG_CLICK_THRESHOLD = 6;
 
@@ -91,6 +81,7 @@ const StageMap2: React.FC = () => {
   const [unlocked, setUnlocked] = useState<Record<number, boolean>>(loadUnlocked);
   const containerRef = useRef<HTMLDivElement>(null);
   const containerSize = useRef({ w: 0, h: 0 });
+  const imgNaturalSize = useRef({ w: 0, h: 0 });
 
   // ── Drag-to-pan state ──
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
@@ -110,6 +101,7 @@ const StageMap2: React.FC = () => {
   const isFirst = currentStage === 1;
   const isLast = currentStage === LAST_STAGE;
 
+  // Track container size and image natural size
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -120,6 +112,15 @@ const StageMap2: React.FC = () => {
     });
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // Get the image's natural dimensions
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      imgNaturalSize.current = { w: img.naturalWidth, h: img.naturalHeight };
+    };
+    img.src = mapImage;
   }, []);
 
   // Handle pending navigation from the "Следующий уровень" button
@@ -196,7 +197,7 @@ const StageMap2: React.FC = () => {
   };
 
   const handleLevelClick = (stageNum: number) => {
-    if (dragSuppressClickRef.current) return; // ignore click after a drag gesture
+    if (dragSuppressClickRef.current) return;
     if (!unlocked[stageNum]) return;
     playSoundFile(bubbleClickSound);
     sessionStorage.setItem('story2_in_level', 'true');
@@ -225,17 +226,45 @@ const StageMap2: React.FC = () => {
 
   const charWidth = BASE_CHAR_WIDTH * Math.pow(SHRINK_PER_STAGE, currentStage - 1);
 
-  /** Clamp a pixel offset so the map layer always covers the entire container. */
+  // ── Calculate the world div size ──
+  // The world div holds the full image (100% of its natural dimensions).
+  // We want to show the image as large as possible, filling the container
+  // in at least one dimension, and extending beyond in the other if needed.
+  // The world div is positioned at negative offsets so the image covers the
+  // container, and the user can drag to see the overflow.
+  const { w: cw, h: ch } = containerSize.current;
+  const { w: iw, h: ih } = imgNaturalSize.current;
+  let worldW = cw || 1;
+  let worldH = ch || 1;
+  if (iw > 0 && ih > 0) {
+    // Scale the image so it fills the container in at least one dimension
+    const scaleX = (cw || 1) / iw;
+    const scaleY = (ch || 1) / ih;
+    const scale = Math.max(scaleX, scaleY); // cover — fill the container completely
+    worldW = iw * scale;
+    worldH = ih * scale;
+  }
+
+  // The world div is centered in the container by default.
+  // Default offset (no pan) centers the world div:
+  const defaultOffsetX = (cw - worldW) / 2;
+  const defaultOffsetY = (ch - worldH) / 2;
+
+  // Clamp pan so the world div always covers the container:
+  // The world div can slide left/right/up/down but its edges must not
+  // come inside the visible area.
   const clampPan = useCallback((x: number, y: number) => {
     const { w, h } = containerSize.current;
     if (w === 0 || h === 0) return { x: 0, y: 0 };
-    const maxX = MAP_OVERSCALE_OFFSET * w;
-    const maxY = MAP_OVERSCALE_OFFSET * h;
+    // The world div is larger than the container in at least one direction.
+    // Calculate how much it can move:
+    const maxPanX = Math.max(0, (worldW - w) / 2);
+    const maxPanY = Math.max(0, (worldH - h) / 2);
     return {
-      x: Math.max(-maxX, Math.min(maxX, x)),
-      y: Math.max(-maxY, Math.min(maxY, y)),
+      x: Math.max(-maxPanX, Math.min(maxPanX, x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, y)),
     };
-  }, []);
+  }, [worldW, worldH]);
 
   // ── Drag handlers ──
   const onDragStart = (clientX: number, clientY: number) => {
@@ -257,7 +286,6 @@ const StageMap2: React.FC = () => {
   };
   const onDragEnd = () => {
     if (dragMovedRef.current) {
-      // Suppress the next click so the level icon doesn't open after a drag
       dragSuppressClickRef.current = true;
       window.setTimeout(() => { dragSuppressClickRef.current = false; }, 100);
     }
@@ -267,9 +295,12 @@ const StageMap2: React.FC = () => {
   return (
     <div className={styles.scene} style={{ background: 'transparent' }}>
       <div
-        className={styles.container}
         ref={containerRef}
         style={{
+          position: 'relative',
+          width: '100%',
+          height: '100vh',
+          overflow: 'hidden',
           background: 'transparent',
           cursor: isDragging ? 'grabbing' : 'default',
           touchAction: 'none',
@@ -291,27 +322,38 @@ const StageMap2: React.FC = () => {
         }}
         onTouchEnd={onDragEnd}
       >
+        {/* WORLD: the full image, can extend beyond the container */}
         <div
-          className={styles.mapLayer}
           style={{
-            width: `${MAP_OVERSCALE * 100}%`,
-            height: `${MAP_OVERSCALE * 100}%`,
-            left: `${-MAP_OVERSCALE_OFFSET * 100}%`,
-            top: `${-MAP_OVERSCALE_OFFSET * 100}%`,
-            transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
-            // Disable the 3s CSS transition while dragging so the map follows the finger
-            transition: isDragging ? 'none' : 'transform 3s ease-in-out',
+            position: 'absolute',
+            width: worldW,
+            height: worldH,
+            left: defaultOffsetX + panOffset.x,
+            top: defaultOffsetY + panOffset.y,
+            transition: isDragging ? 'none' : 'left 3s ease-in-out, top 3s ease-in-out',
           }}
         >
-          <img className={styles.bgImage} src={mapImage} alt="Caesarea map" />
+          <img
+            src={mapImage}
+            alt="Caesarea map"
+            style={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              objectFit: 'fill',
+              userSelect: 'none',
+              pointerEvents: 'none',
+            }}
+          />
 
+          {/* Level icons — positioned as percentages of the world div */}
           {STAGES.map((s) => (
             <button
               key={s.stage}
               className={`${styles.levelIcon} ${s.stage === currentStage ? styles.levelIconActive : ''} ${!unlocked[s.stage] ? styles.levelIconLocked : ''}`}
               style={{
-                top: toMapPct(s.top),
-                left: toMapPct(s.left),
+                top: s.top,
+                left: s.left,
                 width: getLevelSize(s.stage),
                 height: getLevelSize(s.stage),
                 transform: 'translate(-50%, -50%)',
@@ -329,17 +371,13 @@ const StageMap2: React.FC = () => {
             </button>
           ))}
 
-          {/* CHARACTER — lives inside the world layer so it stays glued to
-              the current stage diamond while the map is dragged/panned. */}
+          {/* Character — in the world div, at the same percentage coordinates */}
           {characterStarted && (
             <div
               className={`${styles.character} ${isMoving ? styles.characterWalk : ''}`}
               style={{
-                position: 'absolute',
-                zIndex: 10,
-                pointerEvents: 'none',
-                top: toMapPct(stage.top),
-                left: toMapPct(stage.left),
+                top: stage.top,
+                left: stage.left,
                 transform: 'translate(-50%, -50%)',
                 transition: 'top 4s ease-in-out, left 4s ease-in-out',
               }}
@@ -352,10 +390,12 @@ const StageMap2: React.FC = () => {
               />
             </div>
           )}
-          </div>
+        </div>
 
+        {/* Label — fixed overlay */}
         <div className={styles.label}>{stage.label}</div>
 
+        {/* Controls — fixed */}
         <div className={styles.controls}>
           <button className={styles.arrowBtn} onClick={() => goTo(currentStage - 1)} disabled={isFirst || pendingNav !== null} aria-label="Previous stage">←</button>
           <button
