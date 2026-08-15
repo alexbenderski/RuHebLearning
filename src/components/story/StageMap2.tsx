@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './StageMap.module.css';
 import characterImage from '../../assets/character.gif';
@@ -34,6 +34,16 @@ const BASE_CHAR_WIDTH = 120 * 0.85 * 0.7;
 const SHRINK_PER_STAGE = 0.9;
 
 const LEVEL_BASE_SIZE = 44 * 1.5; // 66px
+
+/** Map layer is 150% of the container so there is room to pan. */
+const MAP_OVERSCALE = 1.5;
+const MAP_OVERSCALE_OFFSET = (MAP_OVERSCALE - 1) / 2; // 0.25
+
+/** Convert a container percentage to the same point inside the oversized map layer. */
+function toMapPct(containerPct: string): string {
+  const val = parseFloat(containerPct) / 100;
+  return `${((val + MAP_OVERSCALE_OFFSET) / MAP_OVERSCALE) * 100}%`;
+}
 
 /** Minimum drag distance before we treat a gesture as a pan (not a click). */
 const DRAG_CLICK_THRESHOLD = 6;
@@ -80,6 +90,7 @@ const StageMap2: React.FC = () => {
   const [staticFrame, setStaticFrame] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState<Record<number, boolean>>(loadUnlocked);
   const containerRef = useRef<HTMLDivElement>(null);
+  const containerSize = useRef({ w: 0, h: 0 });
 
   // ── Drag-to-pan state ──
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
@@ -102,8 +113,10 @@ const StageMap2: React.FC = () => {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => {
-      // observe map resizes for future responsiveness needs
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        containerSize.current = { w: entry.contentRect.width, h: entry.contentRect.height };
+      }
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -211,12 +224,18 @@ const StageMap2: React.FC = () => {
   };
 
   const charWidth = BASE_CHAR_WIDTH * Math.pow(SHRINK_PER_STAGE, currentStage - 1);
-  // Zoom is disabled on Map 2 — the map stays at scale 1 and the camera only
-  // pans (character position changes) between stages.
-  const zoomScale = 1;
-  const transformOrigin = `${stage.left} ${stage.top}`;
 
-  const charTop = parseFloat(stage.top);
+  /** Clamp a pixel offset so the map layer always covers the entire container. */
+  const clampPan = useCallback((x: number, y: number) => {
+    const { w, h } = containerSize.current;
+    if (w === 0 || h === 0) return { x: 0, y: 0 };
+    const maxX = MAP_OVERSCALE_OFFSET * w;
+    const maxY = MAP_OVERSCALE_OFFSET * h;
+    return {
+      x: Math.max(-maxX, Math.min(maxX, x)),
+      y: Math.max(-maxY, Math.min(maxY, y)),
+    };
+  }, []);
 
   // ── Drag handlers ──
   const onDragStart = (clientX: number, clientY: number) => {
@@ -231,7 +250,10 @@ const StageMap2: React.FC = () => {
     if (!dragMovedRef.current && Math.abs(dx) + Math.abs(dy) > DRAG_CLICK_THRESHOLD) {
       dragMovedRef.current = true;
     }
-    setPanOffset({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+    setPanOffset(clampPan(
+      dragStartRef.current.panX + dx,
+      dragStartRef.current.panY + dy,
+    ));
   };
   const onDragEnd = () => {
     if (dragMovedRef.current) {
@@ -243,11 +265,12 @@ const StageMap2: React.FC = () => {
   };
 
   return (
-    <div className={styles.scene}>
+    <div className={styles.scene} style={{ background: 'transparent' }}>
       <div
         className={styles.container}
         ref={containerRef}
         style={{
+          background: 'transparent',
           cursor: isDragging ? 'grabbing' : 'default',
           touchAction: 'none',
           userSelect: 'none',
@@ -271,49 +294,51 @@ const StageMap2: React.FC = () => {
         <div
           className={styles.mapLayer}
           style={{
-            transform: `scale(${zoomScale}) translate(${panOffset.x}px, ${panOffset.y}px)`,
-            transformOrigin,
+            width: `${MAP_OVERSCALE * 100}%`,
+            height: `${MAP_OVERSCALE * 100}%`,
+            left: `${-MAP_OVERSCALE_OFFSET * 100}%`,
+            top: `${-MAP_OVERSCALE_OFFSET * 100}%`,
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
             // Disable the 3s CSS transition while dragging so the map follows the finger
-            transition: isDragging ? 'none' : undefined,
+            transition: isDragging ? 'none' : 'transform 3s ease-in-out',
           }}
         >
           <img className={styles.bgImage} src={mapImage} alt="Caesarea map" />
 
-          {STAGES.map((s) => {
-            const size = getLevelSize(s.stage);
-            const isActive = s.stage === currentStage;
-            const locked = !unlocked[s.stage];
-            return (
-              <button
-                key={s.stage}
-                className={`${styles.levelIcon} ${isActive ? styles.levelIconActive : ''} ${locked ? styles.levelIconLocked : ''}`}
-                style={{
-                  top: s.top,
-                  left: s.left,
-                  width: size,
-                  height: size,
-                  transform: 'translate(-50%, -50%)',
-                }}
-                onClick={() => handleLevelClick(s.stage)}
-                disabled={locked || pendingNav !== null}
-                aria-label={locked ? `${s.label} (заблокирован)` : `Go to ${s.label}`}
-              >
-                <img
-                  src={LEVEL_IMAGES[s.stage - 1]}
-                  alt={`Level ${s.stage}`}
-                  className={styles.levelImg}
-                />
-                {locked && <span className={styles.lockOverlay}>🔒</span>}
-              </button>
-            );
-          })}
-        </div>
+          {STAGES.map((s) => (
+            <button
+              key={s.stage}
+              className={`${styles.levelIcon} ${s.stage === currentStage ? styles.levelIconActive : ''} ${!unlocked[s.stage] ? styles.levelIconLocked : ''}`}
+              style={{
+                top: toMapPct(s.top),
+                left: toMapPct(s.left),
+                width: getLevelSize(s.stage),
+                height: getLevelSize(s.stage),
+                transform: 'translate(-50%, -50%)',
+              }}
+              onClick={() => handleLevelClick(s.stage)}
+              disabled={!unlocked[s.stage] || pendingNav !== null}
+              aria-label={!unlocked[s.stage] ? `${s.label} (заблокирован)` : `Go to ${s.label}`}
+            >
+              <img
+                src={LEVEL_IMAGES[s.stage - 1]}
+                alt={`Level ${s.stage}`}
+                className={styles.levelImg}
+              />
+              {!unlocked[s.stage] && <span className={styles.lockOverlay}>🔒</span>}
+            </button>
+          ))}
+          </div>
 
+        {/* CHARACTER — fixed overlay, never moves with the drag */}
         {characterStarted && (
           <div
             className={`${styles.character} ${isMoving ? styles.characterWalk : ''}`}
             style={{
-              top: `${charTop}%`,
+              position: 'absolute',
+              zIndex: 10,
+              pointerEvents: 'none',
+              top: stage.top,
               left: stage.left,
               transform: 'translate(-50%, -50%)',
               transition: 'top 4s ease-in-out, left 4s ease-in-out',
