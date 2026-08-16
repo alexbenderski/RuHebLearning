@@ -240,7 +240,6 @@ const LevelDetail: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoEnded, setVideoEnded] = useState(false);
-  const [videoPaused, setVideoPaused] = useState(false);
 
   const skipVideo = () => {
     const el = videoRef.current;
