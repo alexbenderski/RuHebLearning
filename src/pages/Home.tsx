@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StoryMode from '../components/story/StoryMode';
 import { getModuleProgressMap } from '../firebase/userService';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import type { ModuleProgress } from '../types';
 import styles from './Home.module.css';
 
@@ -46,8 +47,31 @@ const Home: React.FC<HomeProps> = ({ userId, userName }) => {
     );
   }
 
+  const { isPlaying, volume, togglePlay, changeVolume } = useBackgroundMusic();
+
   return (
     <div className={styles.page}>
+      {/* Music Controls */}
+      <div className={styles.musicBar}>
+        <button
+          className={styles.musicBtn}
+          onClick={togglePlay}
+          title={isPlaying ? 'Выключить музыку' : 'Включить музыку'}
+        >
+          {isPlaying ? '🔊' : '🔇'}
+        </button>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={volume}
+          onChange={(e) => changeVolume(Number(e.target.value))}
+          className={styles.volumeSlider}
+          title={`Громкость: ${volume}%`}
+        />
+        <span className={styles.volumeLabel}>{volume}%</span>
+      </div>
+
       <div className={styles.hero}>
         <h1 className={styles.heroTitle}>Выбери раздел</h1>
         <p className={styles.heroSub}>

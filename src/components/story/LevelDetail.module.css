@@ -321,12 +321,20 @@
   border-radius: 20px;
   padding: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  position: relative;
 }
 
 .loseVideo {
   width: 100%;
   border-radius: 14px;
   display: block;
+  pointer-events: none;
+}
+
+.videoClickWrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .loseActions {
@@ -426,4 +434,44 @@
 
 .mapBtn:hover {
   background: #5a52e0;
+}
+
+.videoPauseHint {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.theoryActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.examBtn {
+  display: block;
+  width: 100%;
+  border: 2px solid #6c63ff;
+  background: transparent;
+  color: #6c63ff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 16px 32px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.examBtn:hover {
+  background: #6c63ff;
+  color: #fff;
 }

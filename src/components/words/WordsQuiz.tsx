@@ -8,12 +8,18 @@ import { useProgressTracker } from '../../hooks/useProgressTracker';
 import { useGameTimer } from '../../hooks/useGameTimer';
 import styles from './WordsQuiz.module.css';
 
+export interface QuizResult {
+  correct: number;
+  total: number;
+  pct: number;
+}
+
 interface WordsQuizProps {
   userId?: string;
   categoryId: string;
   difficulty: WordDifficulty;
   words: VocabWord[];
-  onFinish: () => void;
+  onFinish: (result: QuizResult) => void;
   optionPool?: VocabWord[]; // optional larger pool for wrong-answer options
 }
 
@@ -78,14 +84,20 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
     }, 1200);
   };
 
+  const handleFinish = () => {
+    const pct = shuffled.length > 0 ? Math.round((score / shuffled.length) * 100) : 0;
+    onFinish({ correct: score, total: shuffled.length, pct });
+  };
+
   if (done) {
     const perfect = score === shuffled.length;
     const good = score >= shuffled.length / 2;
     const wrongAnswers = history.filter((h) => h.question.id !== h.selected.id);
+    const pct = shuffled.length > 0 ? Math.round((score / shuffled.length) * 100) : 0;
     return (
       <div className={styles.result}>
         <div className={styles.resultEmoji}>{perfect ? '🏆' : good ? '⭐' : '💪'}</div>
-        <h2 className={styles.resultScore}>{score} / {shuffled.length}</h2>
+        <h2 className={styles.resultScore}>{score} / {shuffled.length} ({pct}%)</h2>
         <div className={styles.resultTime}>Время: {totalTime}s</div>
         <p className={styles.resultMsg}>
           {perfect ? 'Отлично! Все слова знаешь!' : good ? 'Хорошо! Продолжай учиться!' : 'Нужна практика. Ещё раз?'}
@@ -113,7 +125,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
           </div>
         )}
 
-        <button className={styles.retryBtn} onClick={onFinish}>
+        <button className={styles.retryBtn} onClick={handleFinish}>
           ← Вернуться к карточкам
         </button>
       </div>

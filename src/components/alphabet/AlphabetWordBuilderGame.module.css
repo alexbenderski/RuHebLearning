@@ -71,6 +71,7 @@
   font-size: 30px;
   font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
   background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
 }
 
 .letters {
@@ -122,7 +123,7 @@
   background: linear-gradient(135deg, #3b82f6, #6366f1);
   color: #fff;
   font-size: 15px;
-  font-weight: 700;
+  font-weight:700;
   cursor: pointer;
   transition: opacity 0.15s;
 }
@@ -235,7 +236,7 @@
   align-items: center;
   gap: 10px;
   color: #6ee7b7;
-  font-weight: 700;
+  font-weight:700;
 }
 
 .nextBtn {
@@ -243,7 +244,7 @@
   border-radius: 10px;
   padding: 8px 12px;
   cursor: pointer;
-  font-weight: 700;
+  font-weight:700;
 }
 
 .empty {
@@ -335,7 +336,7 @@
   background: linear-gradient(135deg, #8b5cf6, #3b82f6);
   color: #fff;
   font-size: 15px;
-  font-weight: 700;
+  font-weight:700;
   font-family: inherit;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -347,5 +348,218 @@
 }
 
 .startBtn:not(:disabled):hover {
+  opacity: 0.88;
+}
+
+/* ── Difficulty selector ── */
+.diffRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.diffBtn {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+
+.diffBtnActive {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.25);
+}
+
+.diffTitle {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.diffDesc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.previewRow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.previewTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 56px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.previewHeb {
+  font-size: 24px;
+  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
+}
+
+.previewTranslit {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  min-height: 14px;
+  direction: ltr;
+}
+
+/* ── Slot transcription (difficulty 1 & 2) ── */
+.slotTranslit {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.65);
+  direction: ltr;
+}
+
+/* ── Clear button ── */
+.clearBtn {
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.clearBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ── Final feedback modal ── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.modalCard {
+  width: min(680px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #181b2e;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.modalTitle {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+.modalScore {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  margin: 0 0 16px;
+}
+
+.modalNoMistakes {
+  text-align: center;
+  color: #6ee7b7;
+  font-weight:700;
+  margin: 0 0 16px;
+}
+
+.mistakeList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.mistakeListTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fca5a5;
+  margin: 0;
+}
+
+.mistakeItem {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.mistakeWord {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+  direction: ltr;
+}
+
+.mistakeRow {
+  padding: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mistakeLine {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  direction: ltr;
+}
+
+.mistakeNote {
+  font-size: 12px;
+  color: #fcd34d;
+  margin-top: 4px;
+  direction: ltr;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.continueBtn {
+  display: inline-block;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 15px;
+  font-weight:700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.continueBtn:hover {
   opacity: 0.88;
 }

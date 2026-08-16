@@ -374,11 +374,33 @@ interface PrefixCombo {
   description: string;
 }
 
+// ── Verb/infinitive detection ──
+// Hebrew infinitives start with לִ or לְ (lamed + hirik/shva).
+// Russian verbs end with -ть, -чь, -ти, -ся, -сь.
+function isVerbOrInfinitive(hebrew: string, translation: string): boolean {
+  const clean = hebrew.replace(/[\u0591-\u05C7]/g, '');
+  // Hebrew infinitives: start with ל
+  if (clean.startsWith('ל')) return true;
+  // Russian verb endings
+  const lower = translation.toLowerCase();
+  if (lower.endsWith('ть') || lower.endsWith('чь') || lower.endsWith('ти') ||
+      lower.endsWith('тся') || lower.endsWith('ться') || lower.endsWith('сь')) return true;
+  return false;
+}
+
 // Build prefix combos dynamically for a given base word
 function buildPrefixCombos(hebrew: string, translit: string, translation: string): PrefixCombo[] {
   // Remove any existing nikud from the base word for clean prefix application
   const cleanWord = hebrew.replace(/[\u0591-\u05C7]/g, '');
   const lower = translation.toLowerCase();
+
+  // If the word is a verb/infinitive, only show the base form (no prefixes)
+  if (isVerbOrInfinitive(hebrew, translation)) {
+    return [
+      { label: 'Без приставки', prefix: '', hebrewResult: hebrew, translitResult: translit, translationResult: `${translation} (глагол)`, description: 'Это глагол или инфинитив. Приставки ה, ב, ל, מ присоединяются только к существительным и прилагательным, не к глаголам.' },
+    ];
+  }
+
   return [
     { label: 'Без приставки', prefix: '', hebrewResult: hebrew, translitResult: translit, translationResult: `${translation} (неопределённый)`, description: 'Исходное слово без изменений.' },
     { label: 'Артикль «הַ» (Определённость)', prefix: 'הַ', hebrewResult: `הַ${cleanWord}`, translitResult: `ха-${translit}`, translationResult: `этот / эта / это — ${translation}`, description: 'Артикль «הַ» (ха-) прикрепляется к началу слова. Слово становится определённым — "этот конкретный предмет".' },
@@ -439,7 +461,115 @@ const ROOT_CHALLENGES: RootChallenge[] = [
   }
 ];
 
-type ActiveTab = 'nikud' | 'gender' | 'prefixes' | 'roots';
+// ──────────────────────────────────────────────
+// SECTION 5: Comprehensive grammar reference
+// ──────────────────────────────────────────────
+const GRAMMAR_RULES: { section: string; icon: string; rules: string[] }[] = [
+  {
+    section: 'Никуд — гласные точки и чёрточки',
+    icon: '🔤',
+    rules: [
+      'В иврите пишутся только согласные, а гласные обозначаются знаками «никуд» (точки и чёрточки вокруг букв).',
+      'Камац ( ָ ) и Патах ( ַ ) звучат одинаково — «а». Камац похож на маленькую Т, Патах — на горизонтальную чёрточку.',
+      'Сегол ( ֶ ) и Цере ( ֵ ) звучат как «э». Цере (две точки) чаще встречается в ударных слогах.',
+      'Хирик ( ִ ) — одна точка под буквой = «и». Холам ( ֹ ) — точка слева-сверху = «о».',
+      'Кубуц ( ֻ ) и Шурук ( точка внутри ו ) дают звук «у».',
+      'Шва ( ְ ) — двоеточие под буквой: либо пауза (тихий шва), либо краткий «э» (подвижный шва).',
+    ],
+  },
+  {
+    section: 'Матери чтения — буквы ו и י',
+    icon: '🔑',
+    rules: [
+      'Буквы ו (вав) и י (йод) часто пишутся в слове, но обозначают при этом гласные, а не согласные.',
+      'וֹ = «о» (полный холам), וּ = «у» (шурук). Поэтому «шалом» пишется שָׁלוֹם — с ו для звука «о».',
+      'Йод + хирик/цере обозначает «и»/«э» (например, יִ = «и»).',
+      'Совет: если слово звучит как «о» или «у», обычно в нём есть ו. Если «и» или «э» — часто есть י.',
+    ],
+  },
+  {
+    section: 'Гортанные буквы и хатафы',
+    icon: '🌬️',
+    rules: [
+      'Гортанные буквы א, ה, ח, ע любят огласовки «хатаф»: אֲ (краткий «а»), אֱ (краткий «э»), אֳ (краткий «о»).',
+      'א и ע почти не произносятся — они просто «носят» гласный звук.',
+      'ה в конце слова часто молчит или читается как «-а» (например, יַלְדָּה — «яльда»).',
+      'ח — гортанный звук, похожий на украинское «г» или немецкое «ch».',
+    ],
+  },
+  {
+    section: 'Дагеш и буквы ב, כ, פ',
+    icon: '⚫',
+    rules: [
+      'Точка (дагеш) внутри ב, כ, פ делает звук твёрдым: בּ = «б», כּ = «к», פּ = «п».',
+      'Без точки они могут звучать как «в», «х», «ф».',
+      'Дагеш в других буквах чаще всего означает удвоение согласной.',
+    ],
+  },
+  {
+    section: 'Шин и Син',
+    icon: '🔀',
+    rules: [
+      'Одна буква ש читается как «ш» (шин) или «с» (син).',
+      'Точка справа ( שׁ ) = «ш», точка слева ( שׂ ) = «с».',
+    ],
+  },
+  {
+    section: 'Конечные буквы (Софит)',
+    icon: '🔚',
+    rules: [
+      'У 5 букв есть особая форма, которая используется только в конце слова: כ→ך, מ→ם, נ→ן, פ→ף, צ→ץ.',
+      'Звук при этом не меняется — меняется только написание.',
+    ],
+  },
+  {
+    section: 'Важная связка: לִ + י = «ли»',
+    icon: '💡',
+    rules: [
+      'Если ты видишь Ламед с одной точкой Хирик под ним (לִ), то почти всегда следом идёт буква Йод (י).',
+      'Вместе לִי читается «ли» и часто значит «мне».',
+      'Пример: שֶׁלִּי (шели) — «мой». Это שֶׁ («который») + לִּי («у меня»).',
+    ],
+  },
+  {
+    section: 'Род: мужской и женский',
+    icon: '👫',
+    rules: [
+      'Женский род обычно оканчивается на ה (-а) или ת (-т): יַלְדָּה (девочка), בַּת (дочь).',
+      'Мужской род обычно оканчивается на согласную: יֶלֶד (мальчик).',
+      'Прилагательное согласуется с существительным и стоит ПОСЛЕ него: יֶלֶד טוֹב (хороший мальчик), יַלְדָּה טוֹבָה (хорошая девочка).',
+      'Бывают исключения: לַיְלָה (ночь) — мужского рода, хотя оканчивается на «-а».',
+    ],
+  },
+  {
+    section: 'Множественное число',
+    icon: '➕',
+    rules: [
+      'Мужской род → окончание ים (-им): סֵפֶר → סְפָרִים (книги).',
+      'Женский род → окончание וֹת (-от): יַלְדָּה → יְלָדוֹת (девочки).',
+      'Исключения: שֻׁלְחָן (стол, мужской) → שֻׁלְחָנוֹת (с женским окончанием).',
+    ],
+  },
+  {
+    section: 'Артикль и приставки',
+    icon: '🛡️',
+    rules: [
+      'Определённый артикль — ה (ха-): בַּיִת (дом) → הַבַּיִת (этот дом).',
+      'Предлоги בְּ (в) и לְ (к) прикрепляются к началу слова, как и артикль.',
+      'Слияние: בְּ + הַ = בַּ (в этом), לְ + הַ = לַ (к этому).',
+    ],
+  },
+  {
+    section: 'Шореш — корни слов',
+    icon: '🌳',
+    rules: [
+      'Почти все слова строятся на трёхбуквенном корне (шореш).',
+      'Зная один корень, можно угадать целую семью родственных слов (писать → письмо, адрес, написал).',
+    ],
+  },
+];
+
+type ActiveTab = 'nikud' | 'gender' | 'prefixes' | 'roots' | 'rules';
 
 interface GrammarModuleProps {
   userId?: string;
@@ -579,6 +709,9 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
         </button>
         <button className={`${styles.tabBtn} ${activeTab === 'roots' ? styles.tabBtnActive : ''}`} onClick={() => handleTabChange('roots')}>
           🌳 Шореш (Секрет корней)
+        </button>
+        <button className={`${styles.tabBtn} ${activeTab === 'rules' ? styles.tabBtnActive : ''}`} onClick={() => handleTabChange('rules')}>
+          📖 Все правила
         </button>
       </div>
 
@@ -945,6 +1078,29 @@ const GrammarModule: React.FC<GrammarModuleProps> = ({ userId }) => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── SECTION 5: All grammar rules ── */}
+      {activeTab === 'rules' && (
+        <div className={styles.sectionWrap}>
+          <div className={styles.explainCard}>
+            <h3>📖 Все правила иврита — коротко и понятно</h3>
+            <p>
+              Собери все ключевые правила в одном месте: от огласовок и «матерей чтения»
+              до рода, числа, приставок и корней. Читай по порядку или сразу переходи к нужному блоку.
+            </p>
+          </div>
+
+          <div className={styles.rulesList}>
+            {GRAMMAR_RULES.map((group) => (
+              <div key={group.section} className={styles.rulesCard}>
+                <h4 className={styles.rulesCardTitle}>{group.icon} {group.section}</h4>
+                <ul className={styles.rulesCardList}>
+                  {group.rules.map((rule, i) => <li key={i}>{rule}</li>)}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
       )}

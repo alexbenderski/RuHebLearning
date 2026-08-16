@@ -41,14 +41,23 @@ function getLevelSize(stage: number): number {
   return base;
 }
 
+const UNLOCK_VERSION = 2; // bump to reset stale unlock data for existing users
+
 function loadUnlocked(): Record<number, boolean> {
   try {
+    const version = Number(localStorage.getItem('story_unlocked_v'));
     const raw = localStorage.getItem('story_unlocked');
-    if (raw) return JSON.parse(raw);
+    if (raw && version === UNLOCK_VERSION) {
+      const parsed = JSON.parse(raw) as Record<number, boolean>;
+      if (parsed && typeof parsed === 'object') {
+        return { 1: true, ...parsed };
+      }
+    }
   } catch { /* ignore */ }
-  return { 1: true, 2: true, 3: true, 4: false, 5: false };
+  return { 1: true, 2: false, 3: false, 4: false, 5: false };
 }
 function saveUnlocked(state: Record<number, boolean>) {
+  localStorage.setItem('story_unlocked_v', String(UNLOCK_VERSION));
   localStorage.setItem('story_unlocked', JSON.stringify(state));
 }
 
@@ -307,7 +316,7 @@ const StageMap: React.FC = () => {
                 <li>🎯 Проходить квиз из 20 вопросов по теме этапа</li>
                 <li>🔓 Открывать следующий уровень, набрав <strong>80% и выше</strong></li>
               </ul>
-              <p className={styles.modalHint}>Этапы 1–3 открыты сразу. Этапы 4 и 5 нужно разблокировать!</p>
+              <p className={styles.modalHint}>Этап 1 открыт. Этапы 2–5 нужно разблокировать, набрав 80% и выше на предыдущем этапе!</p>
             </div>
             <button className={styles.startBtn} onClick={handleStartJourney}>
               Давай начнем! 🚀

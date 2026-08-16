@@ -1006,3 +1006,40 @@
   border-radius: 8px;
   border-left: 3px solid #a855f7;
 }
+
+/* ── Section 5: All grammar rules reference ── */
+.rulesList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.rulesCard {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-top: 4px solid #4f46e5;
+}
+
+.rulesCardTitle {
+  margin: 0 0 12px 0;
+  font-size: 1.05rem;
+  color: #1e1b4b;
+}
+
+.rulesCardList {
+  margin: 0;
+  padding-left: 20px;
+  color: #444;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.rulesCardList li {
+  margin-bottom: 6px;
+}
+
+.rulesCardList li::marker {
+  color: #4f46e5;
+}

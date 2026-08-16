@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { VocabWord } from '../../types';
 import { getVocalizedForm } from '../../data/nikudWords';
 import { MAP2_LEVELS, getAllMap2Words } from '../../data/map2Words';
-import AlphabetWordBuilderGame from '../alphabet/AlphabetWordBuilderGame';
-import WordsQuiz from '../words/WordsQuiz';
+import AlphabetWordBuilderGame, { type WordBuilderResult } from '../alphabet/AlphabetWordBuilderGame';
+import WordsQuiz, { type QuizResult } from '../words/WordsQuiz';
 import WordsDragBuilderGame from '../words/WordsDragBuilderGame';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
@@ -15,6 +15,8 @@ import styles from './LevelDetail.module.css';
 
 type GameType = 'wordbuild' | 'quiz' | 'drag';
 
+const PASS_THRESHOLD_PCT = 80;
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -24,14 +26,23 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+const UNLOCK_VERSION = 2; // bump to reset stale unlock data for existing users
+
 function loadUnlocked(): Record<number, boolean> {
   try {
+    const version = Number(localStorage.getItem('story2_unlocked_v'));
     const raw = localStorage.getItem('story2_unlocked');
-    if (raw) return JSON.parse(raw);
+    if (raw && version === UNLOCK_VERSION) {
+      const parsed = JSON.parse(raw) as Record<number, boolean>;
+      if (parsed && typeof parsed === 'object') {
+        return { 1: true, ...parsed };
+      }
+    }
   } catch { /* ignore */ }
-  return { 1: true, 2: true, 3: true, 4: false, 5: false };
+  return { 1: true, 2: false, 3: false, 4: false, 5: false };
 }
 function saveUnlocked(state: Record<number, boolean>) {
+  localStorage.setItem('story2_unlocked_v', String(UNLOCK_VERSION));
   localStorage.setItem('story2_unlocked', JSON.stringify(state));
 }
 function loadPassed(): Record<number, boolean> {
@@ -72,12 +83,21 @@ const LevelDetail2: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
+
+  const skipVideo = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    // Jump to the end, which triggers onEnded naturally
+    el.currentTime = el.duration;
+  };
+
+  // Last achieved score (percentage) for the win/lose screens.
+  const [lastScorePct, setLastScorePct] = useState<number | null>(null);
 
   // ── Levels 1–4 state ──
   const levelWords = levelData?.words ?? [];
-  // Track word builder actual score
-  const [l14WbCorrect, setL14WbCorrect] = useState(0);
-  const [l14WbTotal, setL14WbTotal] = useState(0);
+  const [resetWordBuilderKey, setResetWordBuilderKey] = useState(0);
 
   // ── Level 5 exam distribution ──
   const [examDist, setExamDist] = useState<Record<GameType, VocabWord[]> | null>(null);
@@ -93,6 +113,8 @@ const LevelDetail2: React.FC = () => {
   const totalExamAnswered = examScores.wordbuild.total + examScores.quiz.total + examScores.drag.total;
 
   // ── Helpers ──
+  // Mark a level as "won" and unlock the next one ONLY when called with a
+  // verified score >= 80%. This is the single gate for progression.
   const markPassed = useCallback(() => {
     if (!passed) {
       const unlocked = loadUnlocked();
@@ -112,12 +134,20 @@ const LevelDetail2: React.FC = () => {
     setVideoEnded(false);
   }, []);
 
+  // Evaluate a final percentage against the 80% rule.
+  const evaluateResult = useCallback(
+    (pct: number) => {
+      setLastScorePct(pct);
+      if (pct >= PASS_THRESHOLD_PCT) markPassed();
+      else showLose();
+    },
+    [markPassed, showLose],
+  );
+
   // ── LEVELS 1–4: Word Builder step ──
   const handleWordBuildStep = useCallback(
     (correct: boolean) => {
       if (correct) playCorrect();
-      setL14WbTotal((t) => t + 1);
-      if (correct) setL14WbCorrect((c) => c + 1);
     },
     [playCorrect],
   );
@@ -128,16 +158,18 @@ const LevelDetail2: React.FC = () => {
     setPhase('quiz');
   }, [playSoundFile]);
 
-  // ── LEVELS 1–4: Quiz finished (WordsQuiz.onFinish called) ──
-  const handleQuizFinish = useCallback(() => {
-    markPassed();
-  }, [markPassed]);
+  // ── LEVELS 1–4: Quiz finished — progression gate ──
+  const handleQuizFinish = useCallback(
+    (result: QuizResult) => {
+      evaluateResult(result.pct);
+    },
+    [evaluateResult],
+  );
 
   // ── LEVELS 1–4: Retry (back to word builder) ──
   const handleL14Retry = useCallback(() => {
     playSoundFile(bubbleClickSound);
-    setL14WbCorrect(0);
-    setL14WbTotal(0);
+    setResetWordBuilderKey((k) => k + 1);
     setPhase('wordbuild');
   }, [playSoundFile]);
 
@@ -147,6 +179,7 @@ const LevelDetail2: React.FC = () => {
     setExamDist(distributeForExam(pickExamWords()));
     setExamPhase('wordbuild');
     setExamScores({ wordbuild: { correct: 0, total: 0 }, quiz: { correct: 0, total: 0 }, drag: { correct: 0, total: 0 } });
+    setResetWordBuilderKey((k) => k + 1);
     setPhase('wordbuild');
   }, [playSoundFile]);
 
@@ -162,26 +195,32 @@ const LevelDetail2: React.FC = () => {
     [playCorrect],
   );
 
-  // ── LEVEL 5: Word Builder done → go to quiz ──
-  const handleExamWbDone = useCallback(() => {
+  // ── LEVEL 5: Word Builder done → store score ──
+  const handleExamWbDone = useCallback((result: WordBuilderResult) => {
+    setExamScores((s) => ({
+      ...s,
+      wordbuild: { correct: result.correct, total: result.total },
+    }));
+  }, []);
+
+  // ── LEVEL 5: Word Builder "Продолжить" → go to quiz ──
+  const handleExamWbContinue = useCallback(() => {
     playSoundFile(bubbleClickSound);
     setExamPhase('quiz');
   }, [playSoundFile]);
 
-  // ── LEVEL 5: Quiz done → go to drag ──
-  const handleExamQuizDone = useCallback(() => {
-    // Quiz correct count is unknown from WordsQuiz.onFinish callback.
-    // We estimate 85% accuracy for the quiz segment since WordsQuiz
-    // shows its own results screen and doesn't expose the score.
-    const quizWords = examDist?.quiz ?? [];
-    const estimatedCorrect = Math.round(quizWords.length * 0.85);
-    setExamScores((s) => ({
-      ...s,
-      quiz: { correct: estimatedCorrect, total: quizWords.length },
-    }));
-    playSoundFile(bubbleClickSound);
-    setExamPhase('drag');
-  }, [examDist, playSoundFile]);
+  // ── LEVEL 5: Quiz done → store real score, go to drag ──
+  const handleExamQuizDone = useCallback(
+    (result: QuizResult) => {
+      setExamScores((s) => ({
+        ...s,
+        quiz: { correct: result.correct, total: result.total },
+      }));
+      playSoundFile(bubbleClickSound);
+      setExamPhase('drag');
+    },
+    [playSoundFile],
+  );
 
   // ── LEVEL 5: Drag answer ──
   const handleExamDragAnswer = useCallback(
@@ -196,40 +235,44 @@ const LevelDetail2: React.FC = () => {
     [playCorrect, playWrong],
   );
 
-  // ── LEVEL 5: Drag done → finish exam ──
+  // ── LEVEL 5: Drag done → finish exam (>=80% gates the win) ──
   const handleExamDragDone = useCallback(() => {
-    // Check whether passed based on accumulated scores
     const allCorrect = examScores.wordbuild.correct + examScores.quiz.correct + examScores.drag.correct;
     const allTotal = examScores.wordbuild.total + examScores.quiz.total + examScores.drag.total;
     const pct = allTotal > 0 ? Math.round((allCorrect / allTotal) * 100) : 0;
-    if (pct >= 80) {
-      markPassed();
-    } else {
-      showLose();
-    }
-  }, [examScores, markPassed, showLose]);
+    evaluateResult(pct);
+  }, [examScores, evaluateResult]);
 
   // ── LEVEL 5: Retry exam ──
   const handleExamRetry = useCallback(() => {
     startExam();
   }, [startExam]);
 
+  const scorePct = lastScorePct;
+
   // ── RENDER: LOSE ──
   if (phase === 'lose') {
     return (
       <div className={styles.loseOverlay}>
         <div className={styles.loseVideoWrap}>
-          <video
-            ref={videoRef}
-            className={styles.loseVideo}
-            src={looseVideo}
-            autoPlay
-            onEnded={() => setVideoEnded(true)}
-            playsInline
-          />
+          <div className={styles.videoClickWrap} onClick={skipVideo} style={{ cursor: 'pointer' }}>
+            <video
+              ref={videoRef}
+              className={styles.loseVideo}
+              src={looseVideo}
+              autoPlay
+              onEnded={() => setVideoEnded(true)}
+              playsInline
+            />
+          </div>
           {videoEnded && (
             <div className={styles.loseActions}>
               <p className={styles.loseMsg}>Попробуй ещё раз! У тебя получится! 💪</p>
+              {scorePct !== null && (
+                <p className={styles.loseMsg} style={{ fontSize: '0.95rem', marginTop: -8 }}>
+                  Результат: {scorePct}% (нужно {PASS_THRESHOLD_PCT}%)
+                </p>
+              )}
               <div className={styles.loseBtnRow}>
                 <button className={styles.retryBtn} onClick={isFinalExam ? handleExamRetry : handleL14Retry}>
                   🔄 Попробовать снова
@@ -247,19 +290,19 @@ const LevelDetail2: React.FC = () => {
 
   // ── RENDER: WIN ──
   if (phase === 'win') {
-    const scorePct = isFinalExam
-      ? (totalExamAnswered > 0 ? Math.round((totalExamScore / totalExamAnswered) * 100) : null)
-      : (l14WbTotal > 0 ? Math.round((l14WbCorrect / l14WbTotal) * 100) : null);
     return (
       <div className={styles.loseOverlay}>
         <div className={styles.loseVideoWrap}>
-          <video
-            className={styles.loseVideo}
-            src={winVideo}
-            autoPlay
-            onEnded={() => setVideoEnded(true)}
-            playsInline
-          />
+          <div className={styles.videoClickWrap} onClick={skipVideo} style={{ cursor: 'pointer' }}>
+            <video
+              ref={videoRef}
+              className={styles.loseVideo}
+              src={winVideo}
+              autoPlay
+              onEnded={() => setVideoEnded(true)}
+              playsInline
+            />
+          </div>
           {videoEnded && (
             <div className={styles.loseActions}>
               <p className={styles.loseMsg}>🎉 Уровень пройден! Отлично!</p>
@@ -327,9 +370,14 @@ const LevelDetail2: React.FC = () => {
               ))}
             </ul>
           </div>
-          <button className={styles.startQuizBtn} onClick={() => { playSoundFile(bubbleClickSound); setPhase('wordbuild'); }}>
-            🧩 Начать обучение →
-          </button>
+          <div className={styles.theoryActions}>
+            <button className={styles.startQuizBtn} onClick={() => { playSoundFile(bubbleClickSound); setPhase('wordbuild'); }}>
+              🧩 Начать обучение →
+            </button>
+            <button className={styles.examBtn} onClick={() => { playSoundFile(bubbleClickSound); setPhase('quiz'); }}>
+              🎯 Сразу к экзамену →
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -348,10 +396,12 @@ const LevelDetail2: React.FC = () => {
             <p className={styles.subtitle}>🧩 Собери слово</p>
           </div>
         </div>
-        <AlphabetWordBuilderGame learnedWords={levelWords} onStep={handleWordBuildStep} />
-        <button className={styles.startQuizBtn} onClick={handleStartQuiz} style={{ marginTop: 24 }}>
-          🎯 Перейти к квизу →
-        </button>
+        <AlphabetWordBuilderGame
+          key={resetWordBuilderKey}
+          learnedWords={levelWords}
+          onStep={handleWordBuildStep}
+          onContinue={handleStartQuiz}
+        />
       </div>
     );
   }
@@ -402,12 +452,13 @@ const LevelDetail2: React.FC = () => {
         </div>
 
         {examPhase === 'wordbuild' && (
-          <>
-            <AlphabetWordBuilderGame learnedWords={examDist.wordbuild} onStep={handleExamWbStep} />
-            <button className={styles.startQuizBtn} onClick={handleExamWbDone} style={{ marginTop: 24 }}>
-              Далее (Квиз) →
-            </button>
-          </>
+          <AlphabetWordBuilderGame
+            key={`exam-wb-${resetWordBuilderKey}`}
+            learnedWords={examDist.wordbuild}
+            onStep={handleExamWbStep}
+            onComplete={handleExamWbDone}
+            onContinue={handleExamWbContinue}
+          />
         )}
 
         {examPhase === 'quiz' && (
@@ -434,7 +485,6 @@ const LevelDetail2: React.FC = () => {
 
   // ── Level 5 initial: no dist yet → start exam ──
   if (isFinalExam && !examDist) {
-    // Auto-start
     return (
       <div className={styles.page}>
         <div className={styles.header}>

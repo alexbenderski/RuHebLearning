@@ -21,11 +21,14 @@ const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: strin
       'Буквы א (Алеф), ב (Бет), ג (Гимел), ד (Далет), ה (Хе), ו (Вав)',
       'Базовые гласные: Камац (а), Патах (а), Сегол (э)',
       'Понятие огласовок (никуд) — как они меняют звучание буквы',
+      'Гортанные буквы א, ה и то, что они часто «молчат» или «дышат»',
     ],
     tips: [
       '💡 Камац ( ָ ) и Патах ( ַ ) звучат одинаково — оба дают звук «а». Разница только в написании. Камац похож на маленькую букву Т, Патах — просто чёрточка.',
       '💡 Сегол ( ֶ ) даёт звук «э». Это три точки треугольником под буквой.',
-      '💡 Буква א (Алеф) — «немая» буква. Она не произносится, но может нести любой гласный звук сверху или снизу.',
+      '💡 Буква א (Алеф) — «немая» буква. Она не произносится, но может нести любой гласный звук сверху или снизу. Например אָ = «а», אֶ = «э».',
+      '💡 В иврите пишут только согласные! Гласные (а, э, и, о, у) — это точки и чёрточки вокруг букв, которые называются «никуд».',
+      '💡 Гортанные буквы א и ה любят огласовку «хатаф» (например אֲ, אֱ): маленький значок = короткий гласный звук.',
     ],
   },
   2: {
@@ -34,6 +37,7 @@ const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: strin
       'Буквы ז (Заин), ח (Хет), ט (Тет), י (Йод), כ (Каф), ל (Ламед)',
       'Новые никуды: Цере (э), Хирик (и), Холам (о)',
       'Буква כ и её конечная форма ך (Каф-Софит)',
+      'Буква י (Йод) как согласная «й» и как мать чтения для звуков и/э',
     ],
     tips: [
       '💡 Камац ( ָ ) и Патах ( ַ ) звучат одинаково — оба дают звук «а». Камац похож на букву Т, Патах — просто чёрточка под буквой.',
@@ -42,6 +46,8 @@ const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: strin
       '💡 Цере ( ֵ ) — две точки под буквой, даёт звук «э». Не путай с Сегол (три точки) — оба звучат как «э», но Цере чаще в ударных слогах.',
       '💡 Буква כ (Каф) в конце слова превращается в ך (Каф-Софит). Это как русская прописная и строчная буква — форма меняется, звук тот же.',
       '💡 Буква ח (Хет) — гортанный звук, похожий на украинское «г» или немецкое «ch». В русском точного аналога нет.',
+      '💡 Буква י (Йод) — «йот». Если после неё идёт гласная, вместе получается «я/е/ё/ю»: יָ = «я», יֶ = «йе».',
+      '💡 Важная связка! Если ты видишь Ламед с одной точкой Хирик под ним (לִ), то почти всегда за ним идёт буква י (Йод): לִ + י = «ли» (לי, «мне»). Запомни эту пару לִי — «ли».',
     ],
   },
   3: {
@@ -50,11 +56,14 @@ const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: strin
       'Буквы מ (Мем), נ (Нун), ס (Самех), ע (Аин), פ (Пе), צ (Цади)',
       'Новые никуды: Кубуц (у), Шва (пауза/краткий э)',
       'Конечные формы: ם, ן, ף, ץ',
+      'Согласные с дагешем: ב/כ/פ читаются твёрдо (б/к/п)',
     ],
     tips: [
-      '💡 Шва ( ְ ) — двоеточие под буквой. Может быть «паузой» (шва нах — без звука) или кратким «э» (шва на).',
-      '💡 Кубуц (  ֻ ) — три точки под буквой, даёт звук «у». Альтернатива Шуруку.',
+      '💡 Шва ( ְ ) — двоеточие под буквой. Может быть «паузой» (шва нах — без звука) или кратким «э» (шва на). Открывает слог — читается как «э», закрывает — молчит.',
+      '💡 Кубуц ( ֻ ) — три точки под буквой, даёт звук «у». Альтернатива Шуруку (точка внутри ו).',
       '💡 У букв מ, נ, פ, צ есть конечные формы: ם, ן, ף, ץ. Они используются ТОЛЬКО в конце слова.',
+      '💡 Точка (дагеш) внутри ב, כ, פ меняет звук на твёрдый: בּ = «б», כּ = «к», פּ = «п». Без точки они могут звучать как «в», «х», «ф».',
+      '💡 Буква ע (Аин) — гортанная и почти не произносится. Она просто «носит» гласную, как и א.',
     ],
   },
   4: {
@@ -63,11 +72,14 @@ const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: strin
       'Буквы ק (Куф), ר (Реш), ש (Шин/Син), ת (Тав)',
       'Точки шин (прав.) и син (лев.) — различие между Ш и С',
       'Все 5 конечных букв: ך, ם, ן, ף, ץ',
+      'Буквы-«матери чтения»: ו и י могут обозначать гласные о/у и и/э',
     ],
     tips: [
       '💡 Одна буква ש может читаться как «ш» (шин) и как «с» (син). Точка справа = Ш, точка слева = С.',
       '💡 Буква ר (Реш) похожа на французскую «r» — картавый звук. Не старайся произнести как русскую «р».',
       '💡 5 конечных букв: ך (Каф-Софит), ם (Мем-Софит), ן (Нун-Софит), ף (Пе-Софит), ץ (Цади-Софит).',
+      '💡 «Матери чтения» ו и י часто пишутся в слове, но обозначают гласные, а не согласные: וֹ = «о», וּ = «у», ִי = «и». Поэтому слово «шалом» пишется שָׁלוֹם — с ו для звука «о».',
+      '💡 Конечная ת (тав) и ה (хей) в конце слова часто означают женский род и часто «молчат» или дают окончание «-а»/«-т».',
     ],
   },
   5: {
@@ -76,22 +88,34 @@ const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: strin
       'Повторение всех букв алфавита',
       'Все гласные никуды и их комбинации',
       'Сборка слов с огласовками (Собери слово)',
+      'Применение всех правил чтения вместе',
     ],
     tips: [
       '💡 На этом уровне проверяется всё, что ты выучил на предыдущих этапах.',
       '💡 Вспомни: одинаковые звуки могут быть у разных никудов (Камац/Патах → «а», Сегол/Цере → «э»).',
+      '💡 Помни про матери чтения ו и י, про дагеш в ב/כ/פ и про пару לִ + י = «ли».',
+      '💡 Сначала ищи знакомый корень и «матери чтения», потом дочитывай огласовки по слогам.',
     ],
   },
 };
 
+const UNLOCK_VERSION = 2; // bump to reset stale unlock data for existing users
+
 function loadUnlocked(): Record<number, boolean> {
   try {
+    const version = Number(localStorage.getItem('story_unlocked_v'));
     const raw = localStorage.getItem('story_unlocked');
-    if (raw) return JSON.parse(raw);
+    if (raw && version === UNLOCK_VERSION) {
+      const parsed = JSON.parse(raw) as Record<number, boolean>;
+      if (parsed && typeof parsed === 'object') {
+        return { 1: true, ...parsed };
+      }
+    }
   } catch { /* ignore */ }
-  return { 1: true, 2: true, 3: true, 4: false, 5: false };
+  return { 1: true, 2: false, 3: false, 4: false, 5: false };
 }
 function saveUnlocked(state: Record<number, boolean>) {
+  localStorage.setItem('story_unlocked_v', String(UNLOCK_VERSION));
   localStorage.setItem('story_unlocked', JSON.stringify(state));
 }
 function loadPassed(): Record<number, boolean> {
@@ -209,13 +233,21 @@ const LevelDetail: React.FC = () => {
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [passed, setPassed] = useState<boolean>(loadPassed()[levelNum] ?? false);
 
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() => generateQuiz(nikudVariants, 5));
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() => generateQuiz(nikudVariants, 3));
   const [questionIdx, setQuestionIdx] = useState(0);
   const [options, setOptions] = useState<QuizOption[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
+
+  const skipVideo = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    // Jump to the end, which triggers onEnded naturally
+    el.currentTime = el.duration;
+  };
 
   React.useEffect(() => {
     if (phase === 'quiz' && quizQuestions.length > 0 && options.length === 0) {
@@ -290,7 +322,7 @@ const LevelDetail: React.FC = () => {
     setTotalAnswered(0);
     setQuestionIdx(0);
     setPicked(null);
-    const fresh = generateQuiz(nikudVariants, 5);
+    const fresh = generateQuiz(nikudVariants, 3);
     setQuizQuestions(fresh);
     setOptions(buildOptionsFor(fresh[0], nikudVariants));
     setPhase('quiz');
@@ -403,14 +435,16 @@ const LevelDetail: React.FC = () => {
       {phase === 'lose' && (
         <div className={styles.loseOverlay}>
           <div className={styles.loseVideoWrap}>
-            <video
-              ref={videoRef}
-              className={styles.loseVideo}
-              src={looseVideo}
-              autoPlay
-              onEnded={handleVideoEnd}
-              playsInline
-            />
+            <div className={styles.videoClickWrap} onClick={skipVideo} style={{ cursor: 'pointer' }}>
+              <video
+                ref={videoRef}
+                className={styles.loseVideo}
+                src={looseVideo}
+                autoPlay
+                onEnded={handleVideoEnd}
+                playsInline
+              />
+            </div>
             {videoEnded && (
               <div className={styles.loseActions}>
                 <p className={styles.loseMsg}>Попробуй ещё раз! У тебя получится! 💪</p>
@@ -432,13 +466,16 @@ const LevelDetail: React.FC = () => {
       {phase === 'win' && (
         <div className={styles.loseOverlay}>
           <div className={styles.loseVideoWrap}>
-            <video
-              className={styles.loseVideo}
-              src={winVideo}
-              autoPlay
-              onEnded={() => setVideoEnded(true)}
-              playsInline
-            />
+            <div className={styles.videoClickWrap} onClick={skipVideo} style={{ cursor: 'pointer' }}>
+              <video
+                ref={videoRef}
+                className={styles.loseVideo}
+                src={winVideo}
+                autoPlay
+                onEnded={() => setVideoEnded(true)}
+                playsInline
+              />
+            </div>
             {videoEnded && (
               <div className={styles.loseActions}>
                 <p className={styles.loseMsg}>🎉 Уровень пройден! Отлично!</p>
