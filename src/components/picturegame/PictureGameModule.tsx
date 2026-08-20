@@ -7,7 +7,7 @@ interface PictureGameModuleProps {
   userId: string;
 }
 
-const PictureGameModule: React.FC<PictureGameModuleProps> = ({ userId }) => {
+const PictureGameModule: React.FC<PictureGameModuleProps> = ({ userId: _userId }) => {
   const navigate = useNavigate();
   const [unlockedLevels] = useState<Set<number>>(new Set([1])); // For now, only level 1 is unlocked
 
