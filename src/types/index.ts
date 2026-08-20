@@ -62,6 +62,7 @@ export interface VocabWord {
   category: string;
   difficulty: WordDifficulty;
   sentenceRu?: string; // template with [target word] marked, e.g. "Скажи [привет] другу"
+  grammarExplanation?: string; // Russian grammar breakdown
 }
 
 export type WordDifficulty = 'easy' | 'medium' | 'hard';

@@ -12,13 +12,15 @@ interface AlphabetWordBuilderGameProps {
   onStep?: (correct: boolean) => void;
   onComplete?: (result: WordBuilderResult) => void;
   onContinue?: () => void;
+  /** When true, skips setup screen and shows one word at a time in building mode */
+  singleWordMode?: boolean;
 }
 
 export type WordBuilderDifficulty = 1 | 2 | 3;
 
 interface TileData {
-  uid: string;          // unique instance id
-  text: string;         // Hebrew letter + nikud (e.g. "יָ")
+  uid: string;
+  text: string;
   transcription: string;
 }
 
@@ -65,7 +67,6 @@ const ENCOURAGE = [
   'Близко! Обрати внимание, какие знаки стоят у каждой буквы.',
 ];
 
-// ── Transcription helpers ─────────────────────────────────────────
 const NIKUD_ID_BY_CHAR: Record<string, string> = {
   '\u05B8': 'kamatz',
   '\u05B7': 'patach',
@@ -137,7 +138,6 @@ function transcribe(text: string): { full: string; vowel: string } {
   } else if (base === 'א' || base === 'ע') {
     consonant = '';
   } else if (base === 'ה' && markChars.length === 0) {
-    // Word-final ה (мать чтения) is silent.
     consonant = '';
   }
 
@@ -240,8 +240,8 @@ function generateDistractors(count: number, excludeSet: Set<string>, difficulty:
     }));
 }
 
-const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learnedWords, onStep, onComplete, onContinue }) => {
-  const [phase, setPhase] = useState<'setup' | 'building' | 'checked' | 'finished'>('setup');
+const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learnedWords, onStep, onComplete, onContinue, singleWordMode }) => {
+  const [phase, setPhase] = useState<'setup' | 'building' | 'checked' | 'finished'>(singleWordMode ? 'building' : 'setup');
   const [difficulty, setDifficulty] = useState<WordBuilderDifficulty>(1);
   const [wordCount, setWordCount] = useState(5);
   const [roundIndex, setRoundIndex] = useState(0);
@@ -253,7 +253,7 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
   const [sessionRounds, setSessionRounds] = useState<SessionRound[]>([]);
   const [finalResult, setFinalResult] = useState<WordBuilderResult | null>(null);
   const { playAudio } = useCloudTTS();
-  const { formattedTime, resetTimer } = useGameTimer(phase === 'building');
+  const { resetTimer } = useGameTimer(phase === 'building');
 
   const availableWords = useMemo(
     () => learnedWords.filter((w) => splitChars(w.hebrew).length >= 2),
@@ -261,6 +261,28 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
   );
 
   const effectiveCount = Math.min(wordCount, availableWords.length);
+
+  // Single-word mode: auto-init on mount
+  const initRef = React.useRef(false);
+  React.useEffect(() => {
+    if (singleWordMode && !initRef.current && learnedWords.length > 0) {
+      initRef.current = true;
+      const w = learnedWords[0];
+      const t = splitChars(w.hebrew);
+      const b = vocalizedChars(w.hebrew);
+      const resolved = b.length === t.length ? b : t;
+      const targetTiles = buildTiles(resolved, difficulty);
+      const ex = new Set(resolved);
+      const distractors = generateDistractors(2, ex, difficulty);
+      setQueue([w]);
+      setTarget(targetTiles);
+      setSlots(Array(targetTiles.length).fill(null));
+      setBank(shuffle([...targetTiles.map((x) => ({ ...x, uid: `b-${x.uid}` })), ...distractors]));
+      setCheckResult([]);
+      setPhase('building');
+      resetTimer();
+    }
+  }, [singleWordMode, learnedWords, difficulty, resetTimer]);
 
   const startGame = useCallback(() => {
     const selected = shuffle(availableWords).slice(0, effectiveCount);
@@ -323,7 +345,6 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
     onComplete?.(result);
   }, [sessionRounds, onComplete]);
 
-  // ── Pre-submit editing helpers ──
   const placeTile = useCallback((si: number, tile: TileData) => {
     const displaced = slots[si];
     setSlots((prev) => {
@@ -350,19 +371,7 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
     setBank((prev) => [...prev, tile]);
   }, [phase, slots]);
 
-  const clearAll = useCallback(() => {
-    if (phase !== 'building') return;
-    const filled = slots.filter((s): s is TileData => s !== null);
-    setSlots((prev) => prev.map(() => null));
-    setBank((prev) => [...prev, ...filled]);
-  }, [phase, slots]);
-
-  const handleDrop = useCallback((si: number, uid: string) => {
-    if (phase !== 'building') return;
-    const tile = bank.find((t) => t.uid === uid);
-    if (!tile) return;
-    placeTile(si, tile);
-  }, [phase, bank, placeTile]);
+  // clearAll and handleDrop removed – kept in git history for future reuse
 
   const handleBankClick = (tile: TileData) => {
     playAudio(tile.text);
@@ -378,12 +387,17 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
       .map((t, i) => (!r[i] ? { position: i, expected: t, actual: slots[i] ?? null } : null))
       .filter((m): m is Mistake => m !== null);
     setCheckResult(r);
-    setSessionRounds((prev) => [...prev, { word: currentWord, correct, mistakes }]);
+    setSessionRounds((prev) => [...prev, { word: queue[roundIndex], correct, mistakes }]);
     setPhase('checked');
     onStep?.(correct);
   };
 
   const handleNext = () => {
+    if (singleWordMode) {
+      // In single-word mode, just call onContinue
+      onContinue?.();
+      return;
+    }
     if (roundIndex + 1 >= queue.length) {
       finishSession();
     } else {
@@ -392,8 +406,8 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
     }
   };
 
-  // ── Setup screen ──
-  if (phase === 'setup' && queue.length === 0) {
+  // ── Setup screen (hidden in singleWordMode) ──
+  if (phase === 'setup' && queue.length === 0 && !singleWordMode) {
     return (
       <div className={styles.wrap}>
         <h3 className={styles.setupTitle}>🧩 Построй слово</h3>
@@ -449,8 +463,8 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
     );
   }
 
-  // ── Final feedback modal ──
-  if (phase === 'finished' && finalResult) {
+  // ── Final feedback modal (hidden in singleWordMode) ──
+  if (phase === 'finished' && finalResult && !singleWordMode) {
     const byWord = new Map<string, WordBuilderMistake[]>();
     for (const m of finalResult.mistakes) {
       const list = byWord.get(m.word.id) ?? [];
@@ -512,102 +526,83 @@ const AlphabetWordBuilderGame: React.FC<AlphabetWordBuilderGameProps> = ({ learn
     );
   }
 
+  // ── Building / Checked phase ──
   const currentWord = queue[roundIndex];
-  if (!currentWord) return null;
-  const isComplete = slots.every((s) => s !== null);
+  const isChecked = phase === 'checked';
   const allCorrect = checkResult.length > 0 && checkResult.every(Boolean);
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.header}>
-        <span>Слово {roundIndex + 1} / {queue.length} · ⏱ {formattedTime}</span>
-        <button className={styles.speakBtn} onClick={() => playAudio(getVocalizedForm(currentWord.hebrew))}>🔊</button>
-      </div>
-      <p className={styles.prompt}>{currentWord.translation}</p>
-      <p className={styles.promptTranslit}>[{currentWord.transliteration}]</p>
+      {/* Word info header */}
+      {currentWord && (
+        <div className={styles.header}>
+          <div className={styles.prompt}>{currentWord.translation}</div>
+          <div className={styles.promptTranslit}>[{currentWord.transliteration}]</div>
+        </div>
+      )}
 
+      {/* Slots row */}
       <div className={styles.slotsWrap}>
         <div className={styles.slots}>
           {slots.map((s, i) => (
             <div
               key={i}
-              className={`${styles.slot} ${s ? styles.slotFilled : ''} ${checkResult[i] === true ? styles.slotCorrect : ''} ${checkResult[i] === false ? styles.slotWrong : ''}`}
-              onClick={() => removeFromSlot(i)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                if (phase === 'building') {
-                  const uid = e.dataTransfer.getData('text/plain');
-                  if (uid) handleDrop(i, uid);
-                }
-              }}
+              className={`${styles.slot} ${s ? styles.slotFilled : ''} ${isChecked ? (checkResult[i] ? styles.slotCorrect : styles.slotWrong) : ''}`}
+              onClick={() => !isChecked && removeFromSlot(i)}
             >
-              {s ? (
-                <>
-                  <span className={styles.feedbackLetter}>{s.text}</span>
-                  {s.transcription && <span className={styles.slotTranslit}>{s.transcription}</span>}
-                </>
-              ) : (
-                <span style={{ color: 'rgba(255,255,255,0.3)' }}>?</span>
+              {s && (
+                <span className={styles.letterChar} dir="rtl">
+                  {s.text}
+                </span>
+              )}
+              {s && !isChecked && (
+                <span style={{ position: 'absolute', top: -4, right: -4, fontSize: 12, color: '#ef4444', cursor: 'pointer' }}>✕</span>
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {phase === 'building' && (
-        <p className={styles.hint}>
-          💡 Нажми на заполненный слот, чтобы вернуть букву в банк. Перетащи новую букву на занятый слот, чтобы заменить.
-        </p>
-      )}
-
+      {/* Bank */}
       <div className={styles.letters}>
-        {bank.map((t) => (
+        {bank.map((tile) => (
           <button
-            key={t.uid}
-            draggable={phase === 'building'}
-            onDragStart={(e) => { e.dataTransfer.setData('text/plain', t.uid); }}
+            key={tile.uid}
             className={styles.letter}
-            onClick={() => handleBankClick(t)}
+            onClick={() => handleBankClick(tile)}
+            disabled={isChecked}
           >
-            <span className={styles.letterChar}>{t.text}</span>
-            {t.transcription && <span className={styles.letterTranslit}>{t.transcription}</span>}
+            <span className={styles.letterChar} dir="rtl">{tile.text}</span>
+            <span className={styles.letterTranslit}>{tile.transcription}</span>
           </button>
         ))}
       </div>
 
-      {phase === 'building' && bank.length > 0 && slots.some((s) => s !== null) && (
-        <button className={styles.clearBtn} onClick={clearAll}>🗑 Очистить</button>
-      )}
-
-      {phase === 'building' && (
-        <button className={styles.checkBtn} disabled={!isComplete} onClick={handleCheck}>
-          {isComplete ? '✓ Проверить' : 'Заполни все слоты'}
-        </button>
-      )}
-
-      {phase === 'checked' && (
-        <div className={styles.feedback}>
-          <div className={styles.feedbackTitle}>
-            {allCorrect ? PRAISE[roundIndex % PRAISE.length] : ENCOURAGE[roundIndex % ENCOURAGE.length]}
-          </div>
-          <div className={styles.feedbackSlots}>
-            {target.map((t, i) => (
-              <div key={i} className={`${styles.feedbackSlotItem} ${checkResult[i] ? styles.feedbackSlotOk : styles.feedbackSlotErr}`}>
-                <span className={styles.feedbackLetter}>{t.text}</span>
-                {t.transcription && <span className={styles.feedbackLetterName}>{t.transcription}</span>}
-                {!checkResult[i] && (
-                  <span className={styles.feedbackWasLetter}>
-                    {slots[i] ? `${slots[i]?.text} ${slots[i]?.transcription}` : 'пусто'}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-          <button className={styles.nextBtn} onClick={handleNext}>
-            {roundIndex + 1 >= queue.length ? '📊 Итоги' : 'Далее →'}
+      {/* Check / Next button */}
+      <div>
+        {!isChecked ? (
+          <button
+            className={styles.checkBtn}
+            onClick={handleCheck}
+            disabled={slots.some((s) => s === null)}
+          >
+            ✅ Проверить
           </button>
-        </div>
-      )}
+        ) : (
+          <>
+            <div className={styles.feedback}>
+              <div className={styles.feedbackTitle}>
+                {allCorrect
+                  ? PRAISE[Math.floor(Math.random() * PRAISE.length)]
+                  : ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)]}
+              </div>
+            </div>
+            <button className={styles.continueBtn} onClick={handleNext} style={{ display: 'block', margin: '12px auto 0' }}>
+              ➡️ {singleWordMode ? 'Далее' : (roundIndex + 1 >= queue.length ? 'К результатам' : 'Следующее слово')}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 };

@@ -71,8 +71,16 @@ function playSoundFile(src: string) {
   }
 }
 
-const StageMap: React.FC = () => {
+// ── Admin user ID for testing overrides ──
+const ADMIN_USER_ID = 'QPqOShAyR2OuSBvZYRU9SB09HC33';
+
+interface StageMapProps {
+  userId: string;
+}
+
+const StageMap: React.FC<StageMapProps> = ({ userId }) => {
   const navigate = useNavigate();
+  const isAdmin = userId === ADMIN_USER_ID;
   const [showWelcome, setShowWelcome] = useState(() => {
     // When coming from "Следующий уровень", skip the welcome modal so the
     // character walk on the map is visible.
@@ -87,7 +95,14 @@ const StageMap: React.FC = () => {
   const [characterStarted, setCharacterStarted] = useState(true);
   const [isMoving, setIsMoving] = useState(false);
   const [staticFrame, setStaticFrame] = useState<string | null>(null);
-  const [unlocked, setUnlocked] = useState<Record<number, boolean>>(loadUnlocked);
+  const [unlocked, setUnlocked] = useState<Record<number, boolean>>(() => {
+    const base = loadUnlocked();
+    if (isAdmin) {
+      // Admin: unlock all 5 levels
+      return { 1: true, 2: true, 3: true, 4: true, 5: true };
+    }
+    return base;
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingNav = (() => {
     const raw = sessionStorage.getItem('story_pending_level');
@@ -294,7 +309,7 @@ const StageMap: React.FC = () => {
             className={styles.arrowBtn}
             onClick={() => {
               sessionStorage.removeItem('story_in_level');
-              navigate('/');
+              navigate('/main-map');
             }}
             aria-label="Back to dashboard"
           >

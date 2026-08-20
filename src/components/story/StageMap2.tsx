@@ -74,8 +74,16 @@ function playSoundFile(src: string) {
   }
 }
 
-const StageMap2: React.FC = () => {
+// ── Admin user ID for testing overrides ──
+const ADMIN_USER_ID = 'QPqOShAyR2OuSBvZYRU9SB09HC33';
+
+interface StageMap2Props {
+  userId: string;
+}
+
+const StageMap2: React.FC<StageMap2Props> = ({ userId }) => {
   const navigate = useNavigate();
+  const isAdmin = userId === ADMIN_USER_ID;
   const [showWelcome, setShowWelcome] = useState(() => {
     if (sessionStorage.getItem('story2_pending_level')) return false;
     return !sessionStorage.getItem('story2_in_level');
@@ -87,7 +95,14 @@ const StageMap2: React.FC = () => {
   const [characterStarted, setCharacterStarted] = useState(true);
   const [isMoving, setIsMoving] = useState(false);
   const [staticFrame, setStaticFrame] = useState<string | null>(null);
-  const [unlocked, setUnlocked] = useState<Record<number, boolean>>(loadUnlocked);
+  const [unlocked, setUnlocked] = useState<Record<number, boolean>>(() => {
+    const base = loadUnlocked();
+    if (isAdmin) {
+      // Admin: unlock all 5 levels
+      return { 1: true, 2: true, 3: true, 4: true, 5: true };
+    }
+    return base;
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const containerSize = useRef({ w: 0, h: 0 });
   const imgNaturalSize = useRef({ w: 0, h: 0 });
@@ -411,7 +426,7 @@ const StageMap2: React.FC = () => {
             className={styles.arrowBtn}
             onClick={() => {
               sessionStorage.removeItem('story2_in_level');
-              navigate('/');
+              navigate('/main-map');
             }}
             aria-label="Back to dashboard"
           >

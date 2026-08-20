@@ -11,7 +11,10 @@ import StageMap from './components/story/StageMap';
 import LevelDetail from './components/story/LevelDetail';
 import StageMap2 from './components/story/StageMap2';
 import LevelDetail2 from './components/story/LevelDetail2';
+import StageMap3 from './components/story/StageMap3';
+import LevelDetail3 from './components/story/LevelDetail3';
 import { useUser } from './hooks/useUser';
+import MainMap from './components/story/MainMap';
 
 function App() {
   const { firebaseUser, userProfile, loading } = useUser();
@@ -42,10 +45,13 @@ function App() {
           <Route path="/my-words" element={<MyWordsPage userId={firebaseUser.uid} />} />
           <Route path="/grammar" element={<GrammarModule userId={firebaseUser.uid} />} />
           <Route path="/dictionary" element={<DictionaryModule userId={firebaseUser.uid} />} />
-          <Route path="/stage-map" element={<StageMap />} />
+          <Route path="/stage-map" element={<StageMap userId={firebaseUser.uid} />} />
           <Route path="/story-level/:levelId" element={<LevelDetail />} />
-          <Route path="/stage-map2" element={<StageMap2 />} />
+          <Route path="/stage-map2" element={<StageMap2 userId={firebaseUser.uid} />} />
           <Route path="/story-level2/:levelId" element={<LevelDetail2 />} />
+          <Route path="/stage-map3" element={<StageMap3 userId={firebaseUser.uid} />} />
+          <Route path="/story-level3/:levelId" element={<LevelDetail3 />} />
+          <Route path="/main-map" element={<MainMap userId={firebaseUser.uid} />} />
         </Routes>
       </Layout>
     </BrowserRouter>

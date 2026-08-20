@@ -9,12 +9,11 @@ import styles from './Home.module.css';
 const MODULES = [
   { icon: '🔤', title: 'Алфавит', desc: 'Буквы и звуки', ready: true,  path: '/alphabet' },
   { icon: '💬', title: 'Слова',   desc: 'Базовая лексика', ready: true, path: '/words'    },
-  { icon: '🗂️', title: 'My words list', desc: 'Личные слова и тренировка', ready: true, path: '/my-words' },
+  { icon: '🗂️', title: 'Мой список слов', desc: 'Личные слова и тренировка', ready: true, path: '/my-words' },
   { icon: '🗣️', title: 'Фразы',   desc: 'Разговорная речь', ready: false },
   { icon: '📝', title: 'Грамматика', desc: 'Структура языка', ready: true, path: '/grammar' },
   { icon: '📖', title: 'Словарь', desc: 'Русско-ивритский словарь', ready: true, path: '/dictionary' },
-  { icon: '🗺️', title: 'Карта этапов', desc: 'Путешествие по уровням', ready: true, path: '/stage-map' },
-  { icon: '🏛️', title: 'Карта 2 — Кейсария', desc: 'Слова и чтение', ready: true, path: '/stage-map2' },
+  { icon: '🗺️', title: 'Карта', desc: 'Путешествие по городам', ready: true, path: '/main-map' },
 ];
 
 interface HomeProps {

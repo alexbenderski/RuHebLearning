@@ -41,7 +41,7 @@ const MyWordsPage: React.FC<MyWordsPageProps> = ({ userId }) => {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>🗂️ My words list</h1>
+          <h1 className={styles.title}>🗂️ Мой список слов</h1>
           <p className={styles.subtitle}>Личный словарь по сложности + мини-игры</p>
         </div>
         <button className={styles.backBtn} onClick={() => navigate('/')}>← На главную</button>

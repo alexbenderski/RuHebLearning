@@ -72,6 +72,7 @@
   font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
   background: rgba(255, 255, 255, 0.06);
   cursor: pointer;
+  position: relative;
 }
 
 .letters {
@@ -79,18 +80,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.letter {
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
-  border: 1px solid rgba(59, 130, 246, 0.6);
-  background: rgba(59, 130, 246, 0.2);
-  color: #fff;
-  font-size: 30px;
-  cursor: grab;
-  font-family: 'David', 'Frank Ruhl Libre', 'Arial Hebrew', serif;
 }
 
 .hint {

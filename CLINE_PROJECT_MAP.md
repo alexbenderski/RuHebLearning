@@ -151,8 +151,7 @@ Keep these architecture rules in mind during every feature request:
 2. **Respect the Database Prefix.** All root Firestore collection names must refer to the constants in `src/types/index.ts`. Their real database names are prefixed with `RuHeb_` to prevent collisions.
 3. **Handle Errors Cleanly.** On the backend (`server/src/routes/tts.ts`), ensure files/directories/tokens are checked before operations, throwing proper JSON error messages. On the frontend, prevent application crashes by matching error messages gracefully.
 4. **Strict Types.** Avoid using `any` type. Update `src/types/index.ts` first if any data structures or game stats are modified, and then propagate these changes to components.
-5. **No truncation on edits.** When editing files using `replace_in_file`, provide exact, complete lines. Always double-check matching syntax.
-
+5. **Targeted Edits Only & No Truncation.** DO NOT rewrite or replace the entire file unless explicitly requested. Use the `replace_in_file` tool to strictly modify ONLY the specific lines that need to be changed. However, when providing the replacement block for those specific lines, provide the exact and complete modified lines without using `// ...` placeholders. Always double-check matching syntax.
 ---
 
 *This document was created automatically as a roadmap. Please update this file if you add new folders, files, routes, or services so that subsequent Cline/AI sessions remain 100% synchronized with the project architecture.*

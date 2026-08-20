@@ -99,7 +99,7 @@ const LEVEL_META: Record<number, { phrase: string; topics: string[]; tips: strin
   },
 };
 
-const UNLOCK_VERSION = 2; // bump to reset stale unlock data for existing users
+const UNLOCK_VERSION = 2;
 
 function loadUnlocked(): Record<number, boolean> {
   try {
@@ -183,7 +183,6 @@ function generateQuiz(variants: LetterNikudVariant[], count: number): QuizQuesti
 }
 
 function buildOptionsFor(correct: QuizQuestion, allVariants: LetterNikudVariant[]): QuizOption[] {
-  // All answers must be different vowels of the SAME letter — never other letters.
   const sameLetterVariants = allVariants.filter(
     (v) => v.baseLetter === correct.variant.baseLetter && v.id !== correct.variant.id,
   );
@@ -193,8 +192,6 @@ function buildOptionsFor(correct: QuizQuestion, allVariants: LetterNikudVariant[
     mark: v.markName,
   }));
 
-  // Deduplicate by sound — when two nikud marks sound the same (e.g. Камац "ла" and Патах "ла"),
-  // keep only one option so the user isn't presented with duplicate answers.
   const uniqueCandidates: QuizOption[] = [];
   const seenSounds = new Set<string>([correct.correctSound]);
   for (const opt of shuffle(candidates)) {
@@ -228,7 +225,7 @@ const LevelDetail: React.FC = () => {
   const { playAudio } = useCloudTTS();
   const { playSoundFile, playCorrect, playWrong } = useSoundEffects();
 
-  const [phase, setPhase] = useState<'theory' | 'quiz' | 'wordbuild' | 'results' | 'lose' | 'win'>('theory');
+  const [phase, setPhase] = useState<'theory' | 'quiz' | 'training' | 'results' | 'lose' | 'win'>('theory');
   const [correctCount, setCorrectCount] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [passed, setPassed] = useState<boolean>(loadPassed()[levelNum] ?? false);
@@ -244,7 +241,6 @@ const LevelDetail: React.FC = () => {
   const skipVideo = () => {
     const el = videoRef.current;
     if (!el) return;
-    // Jump to the end, which triggers onEnded naturally
     el.currentTime = el.duration;
   };
 
@@ -298,14 +294,10 @@ const LevelDetail: React.FC = () => {
         savePassed(passedState);
         setPassed(true);
       }
-      if (levelNum === 5) {
-        setPhase('wordbuild');
-      } else {
-        setPhase('win');
-        setVideoEnded(false);
-      }
+      // Level 5 goes straight to win video (no wordbuild phase)
+      setPhase('win');
+      setVideoEnded(false);
     } else {
-      // Show lose video
       setPhase('lose');
       setVideoEnded(false);
     }
@@ -315,13 +307,14 @@ const LevelDetail: React.FC = () => {
     setVideoEnded(true);
   };
 
-  const startQuiz = () => {
+  const startQuiz = (questionCount?: number) => {
     playSoundFile(bubbleClickSound);
     setCorrectCount(0);
     setTotalAnswered(0);
     setQuestionIdx(0);
     setPicked(null);
-    const fresh = generateQuiz(nikudVariants, 3);
+    const count = questionCount ?? (levelNum === 5 ? 40 : 3);
+    const fresh = generateQuiz(nikudVariants, count);
     setQuizQuestions(fresh);
     setOptions(buildOptionsFor(fresh[0], nikudVariants));
     setPhase('quiz');
@@ -364,9 +357,20 @@ const LevelDetail: React.FC = () => {
           <div className={styles.teachWrap}>
             <AlphabetTeach letters={levelLetters} />
           </div>
-          <button className={styles.startQuizBtn} onClick={startQuiz}>
-            🎯 Начать тест (20 вопросов) →
-          </button>
+          {levelNum === 5 ? (
+            <div className={styles.theoryActions}>
+              <button className={styles.startQuizBtn} onClick={() => startQuiz(40)}>
+                🎯 Начать тест (40 вопросов) →
+              </button>
+              <button className={styles.examBtn} onClick={() => { playSoundFile(bubbleClickSound); setPhase('training'); }}>
+                📚 Тренировка всех слов карты →
+              </button>
+            </div>
+          ) : (
+            <button className={styles.startQuizBtn} onClick={() => startQuiz()}>
+              🎯 Начать тест (20 вопросов) →
+            </button>
+          )}
         </div>
       )}
 
@@ -416,16 +420,16 @@ const LevelDetail: React.FC = () => {
         </div>
       )}
 
-      {/* ── WORD BUILD (Level 5 only) ── */}
-      {phase === 'wordbuild' && levelNum === 5 && (
+      {/* ── TRAINING (Level 5 only) ── */}
+      {phase === 'training' && levelNum === 5 && (
         <div className={styles.wordbuildSection}>
           <h3 className={styles.quizTitle}>
-            🧩 Собери слово
-            <span className={styles.quizSub}>(финальное испытание)</span>
+            📚 Тренировка всех слов
+            <span className={styles.quizSub}>(практика без оценки)</span>
           </h3>
           <AlphabetWordBuilderGame learnedWords={allVocabWords} onStep={() => {}} />
-          <button className={styles.startQuizBtn} onClick={() => setPhase('win')} style={{ marginTop: 24 }}>
-            📊 К результатам
+          <button className={styles.startQuizBtn} onClick={() => { playSoundFile(bubbleClickSound); setPhase('theory'); }} style={{ marginTop: 24 }}>
+            ← Назад к теории
           </button>
         </div>
       )}
@@ -448,7 +452,7 @@ const LevelDetail: React.FC = () => {
               <div className={styles.loseActions}>
                 <p className={styles.loseMsg}>Попробуй ещё раз! У тебя получится! 💪</p>
                 <div className={styles.loseBtnRow}>
-                  <button className={styles.retryBtn} onClick={startQuiz}>
+                  <button className={styles.retryBtn} onClick={() => startQuiz()}>
                     🔄 Попробовать снова
                   </button>
                   <button className={styles.mapBtn} onClick={() => navigate('/stage-map')}>
@@ -484,17 +488,20 @@ const LevelDetail: React.FC = () => {
                   </p>
                 )}
                 <div className={styles.loseBtnRow}>
-                  <button className={styles.retryBtn} onClick={startQuiz}>
+                  <button className={styles.retryBtn} onClick={() => startQuiz()}>
                     🔄 Пройти ещё раз
                   </button>
                   <button className={styles.mapBtn} onClick={() => {
-                    // Store the target level and go through the stage map so the
-                    // character visibly walks to the next point before the page opens.
-                    sessionStorage.setItem('story_pending_level', String(levelNum + 1));
-                    sessionStorage.removeItem('story_in_level');
-                    navigate('/stage-map');
+                    if (levelNum < 5) {
+                      sessionStorage.setItem('story_pending_level', String(levelNum + 1));
+                      sessionStorage.removeItem('story_in_level');
+                      navigate('/stage-map');
+                    } else {
+                      // Level 5 completed: transition to next map (StageMap2)
+                      navigate('/stage-map2');
+                    }
                   }}>
-                    {levelNum < 5 ? '➡️ Следующий уровень' : '🗺️ На карту'}
+                    {levelNum < 5 ? '➡️ Следующий уровень' : '🗺️ Следующая карта'}
                   </button>
                 </div>
               </div>
