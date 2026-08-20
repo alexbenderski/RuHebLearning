@@ -305,21 +305,22 @@ const StageMap3: React.FC<StageMap3Props> = ({ userId }) => {
           touchAction: 'none',
           userSelect: 'none',
         }}
-        onMouseDown={(e) => onDragStart(e.clientX, e.clientY)}
-        onMouseMove={(e) => onDragMove(e.clientX, e.clientY)}
-        onMouseUp={onDragEnd}
-        onMouseLeave={onDragEnd}
-        onTouchStart={(e) => {
-          if (e.touches.length === 1) {
-            onDragStart(e.touches[0].clientX, e.touches[0].clientY);
-          }
+        onPointerDown={(e) => {
+          e.preventDefault();
+          onDragStart(e.clientX, e.clientY);
         }}
-        onTouchMove={(e) => {
-          if (e.touches.length === 1) {
-            onDragMove(e.touches[0].clientX, e.touches[0].clientY);
-          }
+        onPointerMove={(e) => {
+          e.preventDefault();
+          onDragMove(e.clientX, e.clientY);
         }}
-        onTouchEnd={onDragEnd}
+        onPointerUp={(e) => {
+          e.preventDefault();
+          onDragEnd();
+        }}
+        onPointerLeave={(e) => {
+          e.preventDefault();
+          onDragEnd();
+        }}
       >
         <div
           style={{

@@ -18,6 +18,8 @@
   margin: 0 auto;
   overflow: hidden;
   background: #000;
+  touch-action: none;
+  user-select: none;
 }
 
 /* ── Map layer — wraps bg + icons, receives zoom/pan transforms ── */
