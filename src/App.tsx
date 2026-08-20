@@ -13,6 +13,8 @@ import StageMap2 from './components/story/StageMap2';
 import LevelDetail2 from './components/story/LevelDetail2';
 import StageMap3 from './components/story/StageMap3';
 import LevelDetail3 from './components/story/LevelDetail3';
+import PictureGameModule from './components/picturegame/PictureGameModule';
+import PictureGameBoard from './components/picturegame/PictureGameBoard';
 import { useUser } from './hooks/useUser';
 import MainMap from './components/story/MainMap';
 
@@ -52,6 +54,8 @@ function App() {
           <Route path="/stage-map3" element={<StageMap3 userId={firebaseUser.uid} />} />
           <Route path="/story-level3/:levelId" element={<LevelDetail3 />} />
           <Route path="/main-map" element={<MainMap userId={firebaseUser.uid} />} />
+          <Route path="/picture-game" element={<PictureGameModule userId={firebaseUser.uid} />} />
+          <Route path="/picture-game/:levelId" element={<PictureGameBoard />} />
         </Routes>
       </Layout>
     </BrowserRouter>

@@ -38,8 +38,8 @@ const NODE_COORDS_ABSOLUTE: MapNode[] = [
 ];
 
 // ── Constants (matching StageMap2) ──
-const CHAR_WIDTH = 120 * 0.85 * 0.7;
-const NODE_ICON_SIZE = 66;
+const CHAR_WIDTH = 100 * 0.85 * 0.7;
+const NODE_ICON_SIZE = 45;//222
 const DRAG_CLICK_THRESHOLD = 6;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
