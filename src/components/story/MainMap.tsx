@@ -41,6 +41,8 @@ const NODE_COORDS_ABSOLUTE: MapNode[] = [
 const CHAR_WIDTH = 120 * 0.85 * 0.7;
 const NODE_ICON_SIZE = 66;
 const DRAG_CLICK_THRESHOLD = 6;
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 3;
 
 // ── Helpers ──
 function playSoundFile(src: string) {
@@ -54,7 +56,6 @@ function playSoundFile(src: string) {
 }
 
 function isStory1Completed(): boolean {
-  // A city is "completed" only when its final level (5) has been PASSED.
   try {
     const raw = localStorage.getItem('story_passed');
     if (raw) {
@@ -66,7 +67,6 @@ function isStory1Completed(): boolean {
 }
 
 function isStory2Completed(): boolean {
-  // A city is "completed" only when its final level (5) has been PASSED.
   try {
     const raw = localStorage.getItem('story2_passed');
     if (raw) {
@@ -79,20 +79,14 @@ function isStory2Completed(): boolean {
 
 function isNodeLocked(id: number, isAdmin: boolean): boolean {
   if (isAdmin) {
-    // Admin: unlock nodes 1, 2, 3; keep 4 locked
     return id === 4;
   }
   switch (id) {
-    case 1:
-      return false;
-    case 2:
-      return !isStory1Completed();
-    case 3:
-      return !isStory2Completed();
-    case 4:
-      return true;
-    default:
-      return true;
+    case 1: return false;
+    case 2: return !isStory1Completed();
+    case 3: return !isStory2Completed();
+    case 4: return true;
+    default: return true;
   }
 }
 
@@ -102,6 +96,10 @@ function coordsToPercent(x: number, y: number, imgW: number, imgH: number): { to
     left: `${(x / imgW) * 100}%`,
     top: `${(y / imgH) * 100}%`,
   };
+}
+
+function distance(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
+  return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
 }
 
 interface MainMapProps {
@@ -118,9 +116,6 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
   });
   const [isMoving, setIsMoving] = useState(false);
   const [staticFrame, setStaticFrame] = useState<string | null>(null);
-
-  // ── Layout readiness: only render world div after both container size
-  //     and image natural size are known, fixing the initial-load layout bug.
   const [layoutReady, setLayoutReady] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -134,6 +129,18 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
   const dragMovedRef = useRef(false);
   const dragSuppressClickRef = useRef(false);
 
+  // ── Pinch-to-zoom state ──
+  const [scale, setScale] = useState(1);
+  const pinchRef = useRef<{
+    active: boolean;
+    dist: number;
+    centerX: number;
+    centerY: number;
+    startScale: number;
+    startPanX: number;
+    startPanY: number;
+  }>({ active: false, dist: 0, centerX: 0, centerY: 0, startScale: 1, startPanX: 0, startPanY: 0 });
+
   // ── Track container size via ResizeObserver ──
   useEffect(() => {
     const el = containerRef.current;
@@ -144,7 +151,6 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
         const h = entry.contentRect.height;
         if (w > 0 && h > 0) {
           containerSize.current = { w, h };
-          // Mark layout ready once both container and image are known
           if (imgNaturalSize.current.w > 0 && imgNaturalSize.current.h > 0) {
             setLayoutReady(true);
           }
@@ -160,7 +166,6 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
     const img = new Image();
     img.onload = () => {
       imgNaturalSize.current = { w: img.naturalWidth, h: img.naturalHeight };
-      // Mark layout ready once both container and image are known
       if (containerSize.current.w > 0 && containerSize.current.h > 0) {
         setLayoutReady(true);
       }
@@ -199,12 +204,7 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
   // ── Build node data with computed percentages ──
   const nodes: ResolvedNode[] = NODE_COORDS_ABSOLUTE.map((n) => {
     const { left, top } = coordsToPercent(n.x, n.y, imgNaturalSize.current.w, imgNaturalSize.current.h);
-    return {
-      ...n,
-      left,
-      top,
-      locked: isNodeLocked(n.id, isAdmin),
-    };
+    return { ...n, left, top, locked: isNodeLocked(n.id, isAdmin) };
   });
 
   const activeNode = nodes.find((n) => n.id === currentNode) || nodes[0];
@@ -216,22 +216,19 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
     if (!node.route) return;
 
     playSoundFile(bubbleClickSound);
-
     const isSameNode = node.id === currentNode;
-
     if (!isSameNode) {
       playSoundFile(runningSound);
       setCurrentNode(node.id);
       sessionStorage.setItem('mainmap_current_node', String(node.id));
       startMoveAnimation(3000);
     }
-
     setTimeout(() => {
       navigate(node.route!);
     }, isSameNode ? 0 : 3000);
   };
 
-  // ── Calculate world div size (cover-style, same as StageMap2) ──
+  // ── Calculate world div size (cover-style) ──
   const { w: cw, h: ch } = containerSize.current;
   const { w: iw, h: ih } = imgNaturalSize.current;
   let worldW = cw || 1;
@@ -239,9 +236,9 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
   if (iw > 0 && ih > 0) {
     const scaleX = (cw || 1) / iw;
     const scaleY = (ch || 1) / ih;
-    const scale = Math.max(scaleX, scaleY);
-    worldW = iw * scale;
-    worldH = ih * scale;
+    const s = Math.max(scaleX, scaleY);
+    worldW = iw * s;
+    worldH = ih * s;
   }
 
   const defaultOffsetX = (cw - worldW) / 2;
@@ -251,14 +248,14 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
     (x: number, y: number) => {
       const { w, h } = containerSize.current;
       if (w === 0 || h === 0) return { x: 0, y: 0 };
-      const maxPanX = Math.max(0, (worldW - w) / 2);
-      const maxPanY = Math.max(0, (worldH - h) / 2);
+      const maxPanX = Math.max(0, (worldW * scale - w) / 2);
+      const maxPanY = Math.max(0, (worldH * scale - h) / 2);
       return {
         x: Math.max(-maxPanX, Math.min(maxPanX, x)),
         y: Math.max(-maxPanY, Math.min(maxPanY, y)),
       };
     },
-    [worldW, worldH],
+    [worldW, worldH, scale],
   );
 
   // ── Drag handlers ──
@@ -279,11 +276,43 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
   const onDragEnd = () => {
     if (dragMovedRef.current) {
       dragSuppressClickRef.current = true;
-      window.setTimeout(() => {
-        dragSuppressClickRef.current = false;
-      }, 100);
+      window.setTimeout(() => { dragSuppressClickRef.current = false; }, 100);
     }
     setIsDragging(false);
+  };
+
+  // ── Pinch handlers (multi-touch only) ──
+  const handleTouchStartForPinch = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const t1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      const t2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+      pinchRef.current = {
+        active: true,
+        dist: distance(t1, t2),
+        centerX: (t1.x + t2.x) / 2,
+        centerY: (t1.y + t2.y) / 2,
+        startScale: scale,
+        startPanX: panOffset.x,
+        startPanY: panOffset.y,
+      };
+    }
+  };
+
+  const handleTouchMoveForPinch = (e: React.TouchEvent) => {
+    if (!pinchRef.current.active) return;
+    if (e.touches.length !== 2) return;
+    const t1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    const t2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+    const newDist = distance(t1, t2);
+    const ratio = pinchRef.current.dist > 0 ? newDist / pinchRef.current.dist : 1;
+    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchRef.current.startScale * ratio));
+    setScale(newScale);
+  };
+
+  const handleTouchEndForPinch = () => {
+    if (pinchRef.current.active) {
+      pinchRef.current.active = false;
+    }
   };
 
   // ── Render ──
@@ -311,8 +340,10 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
           e.preventDefault();
           onDragEnd();
         }}
+        onTouchStart={handleTouchStartForPinch}
+        onTouchMove={handleTouchMoveForPinch}
+        onTouchEnd={handleTouchEndForPinch}
       >
-        {/* Only render the world div once layout measurements are ready */}
         {layoutReady && (
           <div
             className={styles.world}
@@ -321,14 +352,12 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
               height: worldH,
               left: defaultOffsetX + panOffset.x,
               top: defaultOffsetY + panOffset.y,
+              transform: `scale(${scale})`,
+              transformOrigin: '0 0',
               transition: isDragging ? 'none' : 'left 3s ease-in-out, top 3s ease-in-out',
             }}
           >
-            <img
-              src={mapImage}
-              alt="Israel map"
-              className={styles.bgImage}
-            />
+            <img src={mapImage} alt="Israel map" className={styles.bgImage} />
 
             {nodes.map((node) => (
               <button
@@ -345,11 +374,7 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
                 disabled={node.locked || !node.route}
                 aria-label={node.locked ? `${node.name} (заблокирован)` : `Перейти в ${node.name}`}
               >
-                <img
-                  src={node.icon}
-                  alt={node.name}
-                  className={styles.nodeImg}
-                />
+                <img src={node.icon} alt={node.name} className={styles.nodeImg} />
                 {node.locked && <span className={styles.lockOverlay}>🔒</span>}
               </button>
             ))}
@@ -376,11 +401,7 @@ const MainMap: React.FC<MainMapProps> = ({ userId }) => {
         <div className={styles.label}>{activeNode.name}</div>
 
         <div className={styles.controls}>
-          <button
-            className={styles.homeBtn}
-            onClick={() => navigate('/')}
-            aria-label="Back to dashboard"
-          >
+          <button className={styles.homeBtn} onClick={() => navigate('/')} aria-label="Back to dashboard">
             🏠
           </button>
         </div>

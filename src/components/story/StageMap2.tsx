@@ -37,6 +37,12 @@ const LEVEL_BASE_SIZE = 44 * 1.5; // 66px
 
 /** Minimum drag distance before we treat a gesture as a pan (not a click). */
 const DRAG_CLICK_THRESHOLD = 6;
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 3;
+
+function distance(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
+  return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+}
 
 function getLevelSize(stage: number): number {
   const base = LEVEL_BASE_SIZE * Math.pow(SHRINK_PER_STAGE, stage - 1);
@@ -113,6 +119,18 @@ const StageMap2: React.FC<StageMap2Props> = ({ userId }) => {
   const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const dragMovedRef = useRef(false);
   const dragSuppressClickRef = useRef(false);
+
+  // ── Pinch-to-zoom state ──
+  const [scale, setScale] = useState(1);
+  const pinchRef = useRef<{
+    active: boolean;
+    dist: number;
+    centerX: number;
+    centerY: number;
+    startScale: number;
+    startPanX: number;
+    startPanY: number;
+  }>({ active: false, dist: 0, centerX: 0, centerY: 0, startScale: 1, startPanX: 0, startPanY: 0 });
 
   const pendingNav = (() => {
     const raw = sessionStorage.getItem('story2_pending_level');
@@ -280,15 +298,13 @@ const StageMap2: React.FC<StageMap2Props> = ({ userId }) => {
   const clampPan = useCallback((x: number, y: number) => {
     const { w, h } = containerSize.current;
     if (w === 0 || h === 0) return { x: 0, y: 0 };
-    // The world div is larger than the container in at least one direction.
-    // Calculate how much it can move:
-    const maxPanX = Math.max(0, (worldW - w) / 2);
-    const maxPanY = Math.max(0, (worldH - h) / 2);
+    const maxPanX = Math.max(0, (worldW * scale - w) / 2);
+    const maxPanY = Math.max(0, (worldH * scale - h) / 2);
     return {
       x: Math.max(-maxPanX, Math.min(maxPanX, x)),
       y: Math.max(-maxPanY, Math.min(maxPanY, y)),
     };
-  }, [worldW, worldH]);
+  }, [worldW, worldH, scale]);
 
   // ── Drag handlers ──
   const onDragStart = (clientX: number, clientY: number) => {
@@ -314,6 +330,38 @@ const StageMap2: React.FC<StageMap2Props> = ({ userId }) => {
       window.setTimeout(() => { dragSuppressClickRef.current = false; }, 100);
     }
     setIsDragging(false);
+  };
+
+  // ── Pinch handlers ──
+  const handleTouchStartForPinch = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const t1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      const t2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+      pinchRef.current = {
+        active: true,
+        dist: distance(t1, t2),
+        centerX: (t1.x + t2.x) / 2,
+        centerY: (t1.y + t2.y) / 2,
+        startScale: scale,
+        startPanX: panOffset.x,
+        startPanY: panOffset.y,
+      };
+    }
+  };
+  const handleTouchMoveForPinch = (e: React.TouchEvent) => {
+    if (!pinchRef.current.active) return;
+    if (e.touches.length !== 2) return;
+    const t1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    const t2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+    const newDist = distance(t1, t2);
+    const ratio = pinchRef.current.dist > 0 ? newDist / pinchRef.current.dist : 1;
+    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchRef.current.startScale * ratio));
+    setScale(newScale);
+  };
+  const handleTouchEndForPinch = () => {
+    if (pinchRef.current.active) {
+      pinchRef.current.active = false;
+    }
   };
 
   return (
@@ -346,6 +394,9 @@ const StageMap2: React.FC<StageMap2Props> = ({ userId }) => {
           e.preventDefault();
           onDragEnd();
         }}
+        onTouchStart={handleTouchStartForPinch}
+        onTouchMove={handleTouchMoveForPinch}
+        onTouchEnd={handleTouchEndForPinch}
       >
         {/* WORLD: the full image, can extend beyond the container */}
         <div
@@ -355,6 +406,8 @@ const StageMap2: React.FC<StageMap2Props> = ({ userId }) => {
             height: worldH,
             left: defaultOffsetX + panOffset.x,
             top: defaultOffsetY + panOffset.y,
+            transform: `scale(${scale})`,
+            transformOrigin: '0 0',
             transition: isDragging ? 'none' : 'left 3s ease-in-out, top 3s ease-in-out',
           }}
         >
