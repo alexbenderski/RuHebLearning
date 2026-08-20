@@ -43,9 +43,7 @@ const PictureGameBoard: React.FC = () => {
 
   const clampPosition = useCallback((pos: { x: number; y: number }, currentScale: number) => {
     if (!containerRef.current) return pos;
-    const container = containerRef.current;
-    const containerW = container.clientWidth;
-    const containerH = container.clientHeight;
+
     const scaledW = IMAGE_WIDTH * currentScale;
     const scaledH = IMAGE_HEIGHT * currentScale;
 
