@@ -1,3 +1,5 @@
+import homePictureGame from '../assets/homePictureGame.png';
+
 // Picture Game Level Data
 export interface PictureGameItem {
   id: number;
@@ -19,7 +21,7 @@ export interface PictureGameLevel {
 export const PICTURE_GAME_LEVELS: PictureGameLevel[] = [
   {
     levelId: 1,
-    imageSrc: "/src/assets/homePictureGame.png",
+    imageSrc: homePictureGame,
     items: [
         { id: 1, wordHebrew: "דלת", wordVowels: "דֶּלֶת", transcription: "делет", translation: "Дверь", x: 147, y: 630 },
         { id: 2, wordHebrew: "שמש", wordVowels: "שֶׁמֶשׁ", transcription: "шемеш", translation: "Солнце", x: 480, y: 232 },
