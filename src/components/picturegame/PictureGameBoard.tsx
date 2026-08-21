@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PICTURE_GAME_LEVELS, type PictureGameItem } from '../../data/pictureGameData';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
+import bubbleClickSound from '../../assets/bubbleClickSound.mp3';
 import styles from './PictureGameBoard.module.css';
 
 interface PlacedWord {
@@ -13,6 +14,16 @@ const MIN_SCALE = 0.3;
 const MAX_SCALE = 3;
 const IMAGE_WIDTH = 1920;
 const IMAGE_HEIGHT = 1200;
+
+function playSoundFile(src: string) {
+  try {
+    const audio = new Audio(src);
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  } catch (e) {
+    console.error('Audio file error:', e);
+  }
+}
 
 const PictureGameBoard: React.FC = () => {
   const { levelId } = useParams<{ levelId: string }>();
@@ -116,6 +127,7 @@ const PictureGameBoard: React.FC = () => {
 
   const handleDropZoneClick = (targetItem: PictureGameItem) => {
     if (!selectedWord || showResults) return;
+    playSoundFile(bubbleClickSound);
 
     // Check if this drop zone already has a word
     const existingPlacement = placedWords.find((p) => p.itemId === targetItem.id);
@@ -128,6 +140,7 @@ const PictureGameBoard: React.FC = () => {
 
   const handleRemoveWord = (itemId: number) => {
     if (showResults) return;
+    playSoundFile(bubbleClickSound);
     setPlacedWords(placedWords.filter((p) => p.itemId !== itemId));
   };
 
