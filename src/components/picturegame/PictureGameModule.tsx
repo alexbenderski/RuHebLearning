@@ -13,14 +13,16 @@ const PictureGameModule: React.FC<PictureGameModuleProps> = ({ userId: _userId }
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => navigate('/')}>
           ← Домой
         </button>
+      <div className={styles.header}>
+
         <h1 className={styles.title}>🖼️ Игра с картинками</h1>
         <p className={styles.subtitle}>
           Перетащи слова на правильные места на картинке
         </p>
+
       </div>
 
       <div className={styles.levelsGrid}>
@@ -53,7 +55,9 @@ const PictureGameModule: React.FC<PictureGameModuleProps> = ({ userId: _userId }
           );
         })}
       </div>
+
     </div>
+    
   );
 };
 

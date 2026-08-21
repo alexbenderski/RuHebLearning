@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PICTURE_GAME_LEVELS, type PictureGameItem } from '../../data/pictureGameData';
-import useCloudTTS from '../../hooks/useCloudTTS';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
 import styles from './PictureGameBoard.module.css';
 
@@ -18,7 +17,6 @@ const IMAGE_HEIGHT = 1200;
 const PictureGameBoard: React.FC = () => {
   const { levelId } = useParams<{ levelId: string }>();
   const navigate = useNavigate();
-  const { playAudio } = useCloudTTS();
   const { playCorrect, playWrong } = useSoundEffects();
 
   const level = PICTURE_GAME_LEVELS.find((l) => l.levelId === Number(levelId));
