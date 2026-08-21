@@ -34,7 +34,7 @@ const ExamQuestion: React.FC<ExamQuestionProps> = ({ question, onAnswer, onNext,
   const { playAudio } = useCloudTTS();
   const [answered, setAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [, setSelectedId] = useState<string | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
 
   const options = useMemo(() => buildOptions(question.word, allWords), [question.word, allWords]);
