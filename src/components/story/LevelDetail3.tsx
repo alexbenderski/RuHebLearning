@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { VocabWord } from '../../types';
 import { getVocalizedForm } from '../../data/nikudWords';
-import { MAP2_LEVELS, getAllMap2Words } from '../../data/map2Words';
+import { MAP3_LEVELS, getAllMap3Words } from '../../data/map3Words';
 import AlphabetWordBuilderGame, { type WordBuilderResult } from '../alphabet/AlphabetWordBuilderGame';
 import WordsQuiz, { type QuizResult } from '../words/WordsQuiz';
 import ExamQuestion from './ExamQuestion';
@@ -77,7 +77,7 @@ const LevelDetail3: React.FC = () => {
   const levelNum = Number(levelId) || 1;
   const isFinalExam = levelNum === 5;
 
-  const levelData = MAP2_LEVELS.find((l) => l.level === levelNum);
+  const levelData = MAP3_LEVELS.find((l) => l.level === levelNum);
 
   const { playAudio } = useCloudTTS();
   const { playSoundFile, playCorrect, playWrong } = useSoundEffects();
@@ -97,7 +97,7 @@ const LevelDetail3: React.FC = () => {
   const [lastScorePct, setLastScorePct] = useState<number | null>(null);
 
   const levelWords = levelData?.words ?? [];
-  const allMap2Words = useMemo(() => getAllMap2Words(), []);
+  const allMap3Words = useMemo(() => getAllMap3Words(), []);
   const [resetKey, setResetKey] = useState(0);
 
   // Exam state
@@ -154,10 +154,11 @@ const LevelDetail3: React.FC = () => {
     setPhase('exam');
   }, [playSoundFile, levelWords, levelNum]);
 
-  // ── Exam: Level 5 ──
+  // ── Exam: Level 5 (exactly 40 random questions from all 80 words) ──
   const startExam = useCallback(() => {
     playSoundFile(bubbleClickSound);
-    setExamQuestions(generateExamQuestions(getAllMap2Words(), 5));
+    const pool = shuffle(getAllMap3Words()).slice(0, 40);
+    setExamQuestions(generateExamQuestions(pool, 5));
     setExamIdx(0);
     setExamCorrect(0);
     setExamTotal(0);
@@ -356,7 +357,7 @@ const LevelDetail3: React.FC = () => {
           question={currentQ}
           onAnswer={handleExamAnswer}
           onNext={advanceExam}
-          allWords={allMap2Words}
+          allWords={allMap3Words}
         />
       </div>
     );
@@ -379,7 +380,7 @@ const LevelDetail3: React.FC = () => {
           <div className={styles.topicsBox}>
             <h3>⚙️ Настройки тренировки</h3>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#fff' }}>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#fbf9f9' }}>
                 Тип игры:
               </label>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -391,9 +392,9 @@ const LevelDetail3: React.FC = () => {
                       flex: 1,
                       padding: '10px 16px',
                       borderRadius: 12,
-                      border: trainingGameType === t ? '2px solid #ffd700' : '2px solid rgba(255,255,255,0.15)',
-                      background: trainingGameType === t ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.05)',
-                      color: '#fff',
+                      border: trainingGameType === t ? '2px solid rgb(255, 215, 0)' : '2px solid rgba(65, 65, 65, 0.66)',
+                      background: trainingGameType === t ? 'rgba(255,215,0,0.15)' : 'rgba(128, 128, 128, 0.49)',
+                      color: '#f9f7f7',
                       cursor: 'pointer',
                       fontWeight: trainingGameType === t ? 700 : 400,
                       fontSize: '0.95rem',
@@ -405,7 +406,7 @@ const LevelDetail3: React.FC = () => {
               </div>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#fff' }}>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#fcfafa' }}>
                 Количество слов: <strong>{trainingQuestionCount}</strong>
               </label>
               <input
@@ -436,7 +437,7 @@ const LevelDetail3: React.FC = () => {
 
   // ── RENDER: TRAINING GAME (Level 5 only) ──
   if (phase === 'trainingGame') {
-    const words = shuffle(getAllMap2Words()).slice(0, trainingQuestionCount);
+    const words = shuffle(getAllMap3Words()).slice(0, trainingQuestionCount);
     return (
       <div className={styles.page}>
         <div className={styles.header}>
@@ -454,7 +455,7 @@ const LevelDetail3: React.FC = () => {
             categoryId="map3-training"
             difficulty="easy"
             words={words}
-            optionPool={getAllMap2Words()}
+            optionPool={getAllMap3Words()}
             onFinish={() => { playSoundFile(bubbleClickSound); setPhase('training'); }}
           />
         ) : (

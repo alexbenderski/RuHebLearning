@@ -153,5 +153,29 @@ Keep these architecture rules in mind during every feature request:
 4. **Strict Types.** Avoid using `any` type. Update `src/types/index.ts` first if any data structures or game stats are modified, and then propagate these changes to components.
 5. **Targeted Edits Only & No Truncation.** DO NOT rewrite or replace the entire file unless explicitly requested. Use the `replace_in_file` tool to strictly modify ONLY the specific lines that need to be changed. However, when providing the replacement block for those specific lines, provide the exact and complete modified lines without using `// ...` placeholders. Always double-check matching syntax.
 ---
+## 📝 6. Data Standards & Schema Rules (Adding New Content)
+
+Whenever you are asked to generate or add new vocabulary words to `src/data/vocabulary.ts`, you MUST structure each word with the following strictly required fields:
+
+1. **Base Word (`wordHebrew`):** Written in Modern Israeli "Ktiv Male" (full spelling with Vav and Yod, e.g., שולחן instead of שלחן).
+2. **Vowels (`wordVowels`):** The precisely vowelized version (Nikud), adhering to the linguistic rules in section 7.
+3. **Translation (`translation` / `russian`):** Accurate Russian translation.
+4. **Transcription (`transcription`):** Russian Cyrillic transcription of the pronunciation (e.g., "шульхан").
+5. **Grammar Explanation (`grammarExplanation`):** A short, friendly explanation in Russian detailing the morphology, the Root (Шореш - שורש), specific Nikud choices, and any suffixes/prefixes.
+
+## 🧠 7. Linguistic & Pedagogical Rules (Hebrew Grammar)
+
+Our application strictly teaches **Modern Spoken Israeli Hebrew**. When writing code, generating words, or updating the grammar section, ALWAYS apply these exact filtering rules:
+
+* **Ktiv Male First:** Always assume and write in full spelling (כתיב מלא). 
+* **Obsolete Vowels (REMOVE):** 
+  - NEVER use 'Kubutz' (ֻ) or 'Holam Haser' (◌ֹ). Replace them with 'Shuruk' (וּ) and 'Holam Male' (וֹ) respectively.
+  - DO NOT use 'Hatafim' (ֲ, ֱ, ֳ) as interactive choices in games; they sound identical to standard short vowels (ַ, ֶ, ָ) in modern Hebrew[cite: 4, 9].
+* **Dagesh (Inner Dot) Rules:**
+  - STRICTLY REMOVE the Dagesh from all letters where it does NOT change modern pronunciation (remove from גּ, דּ, תּ, טּ, קּ, לּ, מּ, נּ, etc.)[cite: 4, 9].
+  - STRICTLY KEEP the Dagesh ONLY in these three letters: **בּ (B/V), כּ (K/Kh), and פּ (P/F)**[cite: 4, 9].
+  - STRICTLY KEEP the top dot distinction for **שׁ (Sh) and שׂ (S)**[cite: 4, 9].
+
+## 8. **Strict Linter & Unused Variables Cleanup (Vercel Build Requirement).** You MUST actively remove any unused variables, unused imports, or dead code you encounter or generate while editing. Leaving unused elements triggers strict TypeScript and ESLint errors that will immediately cause the Vercel production build to fail. Always clean up your code and resolve all warnings before completing a task.
 
 *This document was created automatically as a roadmap. Please update this file if you add new folders, files, routes, or services so that subsequent Cline/AI sessions remain 100% synchronized with the project architecture.*

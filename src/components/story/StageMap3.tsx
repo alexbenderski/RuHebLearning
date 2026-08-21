@@ -465,9 +465,9 @@ const StageMap3: React.FC<StageMap3Props> = ({ userId }) => {
       {showWelcome && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox}>
-            <h2 className={styles.modalTitle}>🏙️ Добро пожаловать в Город 3!</h2>
+            <h2 className={styles.modalTitle}>🏙️ Добро пожаловать в Тель-Авив!</h2>
             <div className={styles.modalBody}>
-              <p>Добро пожаловать на 3-й уровень! Здесь ты продолжишь изучать иврит.</p>
+              <p>Добро пожаловать на 3-й уровень — Тель-Авив! Теперь, когда ты знаешь базовые слова, мы научимся описывать мир вокруг нас, ориентироваться во времени и ходить за покупками. Давай соединять слова!</p>
               <p>На каждом этапе ты будешь:</p>
               <ul>
                 <li>🧩 Собирать слова из букв (Собери слово)</li>

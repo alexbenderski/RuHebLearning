@@ -11,7 +11,7 @@ const MODULES = [
   { icon: '💬', title: 'Слова',   desc: 'Базовая лексика', ready: true, path: '/words'    },
   { icon: '🗂️', title: 'Мой список слов', desc: 'Личные слова и тренировка', ready: true, path: '/my-words' },
   { icon: '🖼️', title: 'Игра с картинками', desc: 'Перетащи слова на картинку', ready: true, path: '/picture-game' },
-  { icon: '🗣️', title: 'Фразы',   desc: 'Разговорная речь', ready: false },
+  { icon: '🗣️', title: 'Фразы',   desc: 'Разговорная речь', ready: true, path: '/phrases' },
   { icon: '📝', title: 'Грамматика', desc: 'Структура языка', ready: true, path: '/grammar' },
   { icon: '📖', title: 'Словарь', desc: 'Русско-ивритский словарь', ready: true, path: '/dictionary' },
   { icon: '🗺️', title: 'Карта', desc: 'Путешествие по городам', ready: true, path: '/main-map' },

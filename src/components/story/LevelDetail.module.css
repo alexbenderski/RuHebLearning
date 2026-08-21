@@ -75,7 +75,7 @@
 }
 
 .topicsBox {
-  background: #fff;
+  background: #0100026a;
   border: 1px solid #e8e8f0;
   border-radius: 12px;
   padding: 20px 24px;
@@ -84,7 +84,7 @@
 .topicsBox h3 {
   margin: 0 0 12px;
   font-size: 1.1rem;
-  color: #1a1a2e;
+  color: #f8f5f5;
 }
 
 .topicsBox ul {

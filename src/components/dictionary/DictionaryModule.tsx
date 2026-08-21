@@ -5,19 +5,22 @@ import type { VocabWord } from '../../types';
 import useCloudTTS from '../../hooks/useCloudTTS';
 import { getVocalizedForm } from '../../data/nikudWords';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
+import { saveWordToList } from '../../firebase/userService';
 import styles from './DictionaryModule.module.css';
 
 interface DictionaryModuleProps {
   userId?: string;
 }
 
-const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
+const DictionaryModule: React.FC<DictionaryModuleProps> = ({ userId }) => {
   const navigate = useNavigate();
   const { playAudio } = useCloudTTS();
   const { playClick } = useSoundEffects();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
   // Flatten all words from all categories
   const allWords: (VocabWord & { categoryName: string; categoryIcon: string })[] = useMemo(() => {
@@ -62,6 +65,20 @@ const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+
+  const handleSaveWord = async (word: VocabWord & { categoryName: string; categoryIcon: string }) => {
+    if (!userId) return;
+    if (savedIds.has(word.id)) return;
+
+    try {
+      await saveWordToList(userId, word);
+      setSavedIds((prev) => new Set(prev).add(word.id));
+      setSaveMsg(`«${word.translation}» → добавлено в Мой список`);
+      setTimeout(() => setSaveMsg(null), 2000);
+    } catch (err) {
+      console.error('[dict save]', err);
+    }
   };
 
   return (
@@ -119,6 +136,9 @@ const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
         ))}
       </div>
 
+      {/* Save Notification */}
+      {saveMsg && <div className={styles.saveNotification}>{saveMsg}</div>}
+
       {/* Results Count */}
       <div className={styles.resultsInfo}>
         Найдено слов: <strong>{filteredWords.length}</strong>
@@ -142,6 +162,7 @@ const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
                 <th className={styles.colTranslit}>🔤 Транскрипция</th>
                 <th className={styles.colCat}>📂 Категория</th>
                 <th className={styles.colAudio}>🔊</th>
+                {userId && <th className={styles.colSave}>📥</th>}
               </tr>
             </thead>
             <tbody>
@@ -183,6 +204,18 @@ const DictionaryModule: React.FC<DictionaryModuleProps> = (_props) => {
                       🔊
                     </button>
                   </td>
+                  {userId && (
+                    <td className={styles.colSave}>
+                      <button
+                        className={`${styles.saveBtn} ${savedIds.has(word.id) ? styles.saveBtnDone : ''}`}
+                        onClick={() => handleSaveWord(word)}
+                        title={savedIds.has(word.id) ? 'Уже в списке' : 'Добавить в Мой список'}
+                        disabled={savedIds.has(word.id)}
+                      >
+                        {savedIds.has(word.id) ? '✅' : '➕'}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -5,6 +5,7 @@ import AuthGate from './pages/AuthGate';
 import AlphabetModule from './components/alphabet/AlphabetModule';
 import WordsModule from './components/words/WordsModule';
 import MyWordsPage from './pages/MyWordsPage';
+import PhrasesPage from './pages/PhrasesPage';
 import GrammarModule from './components/grammar/GrammarModule';
 import DictionaryModule from './components/dictionary/DictionaryModule';
 import StageMap from './components/story/StageMap';
@@ -56,6 +57,7 @@ function App() {
           <Route path="/main-map" element={<MainMap userId={firebaseUser.uid} />} />
           <Route path="/picture-game" element={<PictureGameModule userId={firebaseUser.uid} />} />
           <Route path="/picture-game/:levelId" element={<PictureGameBoard />} />
+          <Route path="/phrases" element={<PhrasesPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
