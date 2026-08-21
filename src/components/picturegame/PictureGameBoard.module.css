@@ -141,7 +141,7 @@
 .zoomLevel {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #4a5568;
+  color: #a6bde6;
   min-width: 48px;
   text-align: center;
 }
@@ -150,9 +150,9 @@
   position: absolute;
   min-width: 120px;
   min-height: 60px;
-  border: 2px dashed #cbd5e0;
+  border: 2px dashed #ece109;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(244, 246, 246, 0.549);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,25 +161,25 @@
 }
 
 .dropZone:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  border-color: #fde724ef;
+  background: rgba(246, 248, 249, 0.87);
   transform: scale(1.05);
 }
 
 .dropZone.filled {
   border-style: solid;
   border-color: #667eea;
-  background: rgba(102, 126, 234, 0.15);
+  background: rgba(245, 246, 248, 0.986);
 }
 
 .dropZone.correct {
-  border-color: #48bb78;
-  background: rgba(72, 187, 120, 0.15);
+  border-color: #f6faf7;
+  background: rgba(37, 177, 37, 0.829);
 }
 
 .dropZone.incorrect {
-  border-color: #f56565;
-  background: rgba(245, 101, 101, 0.15);
+  border-color: #f9f7f7;
+  background: rgba(192, 61, 61, 0.801);
 }
 
 .emptyZone {
@@ -202,14 +202,14 @@
 .wordHebrew {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #2d3748;
+  color: #0a0a0a;
   direction: rtl;
   margin-bottom: 0.25rem;
 }
 
 .wordTranscription {
   font-size: 0.875rem;
-  color: #718096;
+  color: #0c0c01;
 }
 
 .removeBtn {
@@ -291,6 +291,12 @@
 
 .wordCard:active {
   cursor: grabbing;
+}
+
+.wordCard.selected {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
 }
 
 .wordCard.placed {
@@ -381,7 +387,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #f7fafc;
+  background: #f5f6f7;
   border-radius: 8px;
   margin-bottom: 0.75rem;
   transition: all 0.2s ease;

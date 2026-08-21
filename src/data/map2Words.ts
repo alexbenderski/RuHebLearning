@@ -220,7 +220,12 @@ export const MAP2_LEVELS: Map2LevelData[] = [
   },
 ];
 
-/** All 80 words from levels 1–4 (flat array). */
+/** All 80 words from levels 1–4 (flat array, stable order). */
 export function getAllMap2Words(): VocabWord[] {
-  return MAP2_LEVELS.flatMap((l) => l.words);
+  const allWords = MAP2_LEVELS.flatMap((l) => l.words);
+
+  // Return the first 40 words in a stable, deterministic order.
+  // (Previously this shuffled and returned a random subset on every call,
+  // which caused quiz options to re-shuffle after each answer.)
+  return allWords.slice(0, 40);
 }

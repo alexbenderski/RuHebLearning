@@ -268,7 +268,7 @@ const StageMap3: React.FC<StageMap3Props> = ({ userId }) => {
   if (iw > 0 && ih > 0) {
     const scaleX = (cw || 1) / iw;
     const scaleY = (ch || 1) / ih;
-    const s = Math.min(scaleX, scaleY) * 0.7;
+    const s = Math.min(scaleX, scaleY) * 1.05;
     worldW = iw * s;
     worldH = ih * s;
   }

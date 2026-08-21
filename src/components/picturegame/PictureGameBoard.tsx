@@ -25,7 +25,7 @@ const PictureGameBoard: React.FC = () => {
 
   const [placedWords, setPlacedWords] = useState<PlacedWord[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [draggedWord, setDraggedWord] = useState<PictureGameItem | null>(null);
+  const [selectedWord, setSelectedWord] = useState<PictureGameItem | null>(null);
 
   // Pan & Zoom state
   const [scale, setScale] = useState(0.5);
@@ -34,7 +34,6 @@ const PictureGameBoard: React.FC = () => {
   const panStart = useRef({ x: 0, y: 0 });
   const positionRef = useRef(position);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isDraggingWord = useRef(false);
 
   // Keep positionRef in sync
   useEffect(() => {
@@ -59,8 +58,6 @@ const PictureGameBoard: React.FC = () => {
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Don't pan if we're dragging a word card (HTML5 drag)
-    if (isDraggingWord.current) return;
     // Don't pan if clicking on a drop zone or placed word
     const target = e.target as HTMLElement;
     if (target.closest(`.${styles.dropZone}`) || target.closest(`.${styles.placedWordCard}`)) return;
@@ -110,55 +107,25 @@ const PictureGameBoard: React.FC = () => {
     }
   }, [scale, position, clampPosition]);
 
-  // Track HTML5 drag state to prevent panning during word drag
-  useEffect(() => {
-    const handleDragStart = () => { isDraggingWord.current = true; };
-    const handleDragEnd = () => { isDraggingWord.current = false; };
-    document.addEventListener('dragstart', handleDragStart);
-    document.addEventListener('dragend', handleDragEnd);
-    return () => {
-      document.removeEventListener('dragstart', handleDragStart);
-      document.removeEventListener('dragend', handleDragEnd);
-    };
-  }, []);
-
   // Reset view when level changes
   useEffect(() => {
     setScale(0.5);
     setPosition({ x: 0, y: 0 });
+    setSelectedWord(null);
+    setPlacedWords([]);
+    setShowResults(false);
   }, [levelId]);
 
-  if (!level) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.error}>
-          <h2>Уровень не найден</h2>
-          <button onClick={() => navigate('/picture-game')} className={styles.backBtn}>
-            Назад к уровням
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const handleDragStart = (item: PictureGameItem) => {
-    setDraggedWord(item);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (targetItem: PictureGameItem) => {
-    if (!draggedWord || showResults) return;
+  const handleDropZoneClick = (targetItem: PictureGameItem) => {
+    if (!selectedWord || showResults) return;
 
     // Check if this drop zone already has a word
     const existingPlacement = placedWords.find((p) => p.itemId === targetItem.id);
     if (existingPlacement) return;
 
     // Add the placement
-    setPlacedWords([...placedWords, { itemId: targetItem.id, wordId: draggedWord.id }]);
-    setDraggedWord(null);
+    setPlacedWords([...placedWords, { itemId: targetItem.id, wordId: selectedWord.id }]);
+    setSelectedWord(null);
   };
 
   const handleRemoveWord = (itemId: number) => {
@@ -167,10 +134,14 @@ const PictureGameBoard: React.FC = () => {
   };
 
   const handleWordClick = (item: PictureGameItem) => {
-    playAudio(item.wordVowels);
+    if (showResults) return;
+    if (isWordPlaced(item.id)) return;
+    // Toggle selection: if already selected, deselect; otherwise select
+    setSelectedWord(selectedWord?.id === item.id ? null : item);
   };
 
   const handleSubmit = () => {
+    if (!level) return;
     // Check if all words are placed
     if (placedWords.length !== level.items.length) {
       alert(`Разместите все слова! Осталось: ${level.items.length - placedWords.length}`);
@@ -191,6 +162,7 @@ const PictureGameBoard: React.FC = () => {
   const handleReset = () => {
     setPlacedWords([]);
     setShowResults(false);
+    setSelectedWord(null);
   };
 
   const isWordPlaced = (wordId: number) => {
@@ -198,6 +170,7 @@ const PictureGameBoard: React.FC = () => {
   };
 
   const getPlacedWord = (itemId: number): PictureGameItem | null => {
+    if (!level) return null;
     const placement = placedWords.find((p) => p.itemId === itemId);
     if (!placement) return null;
     return level.items.find((item) => item.id === placement.wordId) || null;
@@ -209,6 +182,19 @@ const PictureGameBoard: React.FC = () => {
   };
 
   const correctCount = placedWords.filter((p) => p.itemId === p.wordId).length;
+
+  if (!level) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <h2>Уровень не найден</h2>
+          <button onClick={() => navigate('/picture-game')} className={styles.backBtn}>
+            Назад к уровням
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -269,8 +255,7 @@ const PictureGameBoard: React.FC = () => {
                     showResults ? (isCorrect ? styles.correct : styles.incorrect) : ''
                   }`}
                   style={{ left: `${item.x}px`, top: `${item.y}px` }}
-                  onDragOver={handleDragOver}
-                  onDrop={() => handleDrop(item)}
+                  onClick={() => handleDropZoneClick(item)}
                 >
                   {placedWord ? (
                     <div className={styles.placedWordCard}>
@@ -279,7 +264,7 @@ const PictureGameBoard: React.FC = () => {
                       {!showResults && (
                         <button
                           className={styles.removeBtn}
-                          onClick={() => handleRemoveWord(item.id)}
+                          onClick={(e) => { e.stopPropagation(); handleRemoveWord(item.id); }}
                           title="Убрать"
                         >
                           ×
@@ -346,15 +331,15 @@ const PictureGameBoard: React.FC = () => {
         {/* Word Bank */}
         {!showResults && (
           <div className={styles.wordBank}>
-            <div className={styles.bankTitle}>Перетащи слова на картинку:</div>
+            <div className={styles.bankTitle}>
+              {selectedWord ? `Выбрано: ${selectedWord.wordVowels} — нажми на место на картинке` : "Нажми на слово, чтобы выбрать его:"}
+            </div>
             <div className={styles.wordGrid}>
               {level.items.map((item) => (
                 <div
                   key={item.id}
-                  draggable={!isWordPlaced(item.id)}
-                  onDragStart={() => handleDragStart(item)}
                   onClick={() => handleWordClick(item)}
-                  className={`${styles.wordCard} ${isWordPlaced(item.id) ? styles.placed : ''}`}
+                  className={`${styles.wordCard} ${isWordPlaced(item.id) ? styles.placed : ''} ${selectedWord?.id === item.id ? styles.selected : ''}`}
                 >
                   <div className={styles.wordHebrew}>{item.wordVowels}</div>
                   <div className={styles.wordTranscription}>{item.transcription}</div>

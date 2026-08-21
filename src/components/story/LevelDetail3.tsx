@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { VocabWord } from '../../types';
 import { getVocalizedForm } from '../../data/nikudWords';
@@ -97,6 +97,7 @@ const LevelDetail3: React.FC = () => {
   const [lastScorePct, setLastScorePct] = useState<number | null>(null);
 
   const levelWords = levelData?.words ?? [];
+  const allMap2Words = useMemo(() => getAllMap2Words(), []);
   const [resetKey, setResetKey] = useState(0);
 
   // Exam state
@@ -355,7 +356,7 @@ const LevelDetail3: React.FC = () => {
           question={currentQ}
           onAnswer={handleExamAnswer}
           onNext={advanceExam}
-          allWords={getAllMap2Words()}
+          allWords={allMap2Words}
         />
       </div>
     );

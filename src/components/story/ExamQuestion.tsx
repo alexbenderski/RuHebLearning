@@ -31,7 +31,7 @@ function buildOptions(correct: VocabWord, all: VocabWord[]): VocabWord[] {
 }
 
 const ExamQuestion: React.FC<ExamQuestionProps> = ({ question, onAnswer, onNext, allWords }) => {
-  const { /* playAudio */ } = useCloudTTS();
+  const { playAudio } = useCloudTTS();
   const [answered, setAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -61,20 +61,37 @@ const ExamQuestion: React.FC<ExamQuestionProps> = ({ question, onAnswer, onNext,
     return (
       <div style={{ width: '100%', maxWidth: 800, margin: '0 auto', background: '#1a1a2e', borderRadius: 18, padding: 16 }}>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <button
-            onClick={() => setShowTranscription(!showTranscription)}
-            style={{
-              background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 8,
-              padding: '6px 14px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-            }}
-          >
-            {showTranscription ? '🙈 Скрыть транскрипцию' : '🔊 Показать транскрипцию'}
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => playAudio(question.word.hebrew)}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                padding: '6px 14px',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+              }}
+              title="Прослушать"
+            >
+              🔊 Прослушать
+            </button>
+            <button
+              onClick={() => setShowTranscription(!showTranscription)}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                padding: '6px 14px',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+              }}
+            >
+              {showTranscription ? '🙈 Скрыть транскрипцию' : '📝 Показать транскрипцию'}
+            </button>
+          </div>
           {showTranscription && (
             <p style={{ color: '#ffd700', fontSize: '1.1rem', margin: '8px 0 0' }}>
               [{question.word.transliteration}] — {question.word.translation}
@@ -147,6 +164,11 @@ const ExamQuestion: React.FC<ExamQuestionProps> = ({ question, onAnswer, onNext,
     <div className={styles.theorySection}>
       <div className={styles.phraseBox}>
         <p className={styles.phrase}>
+          <button
+            onClick={() => playAudio(question.word.hebrew)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: 6, fontSize: '1.2rem', verticalAlign: 'middle' }}
+            title="Прослушать"
+          >🔊</button>
           Как переводится <strong>{getVocalizedForm(question.word.hebrew)}</strong>?
         </p>
       </div>
@@ -155,7 +177,7 @@ const ExamQuestion: React.FC<ExamQuestionProps> = ({ question, onAnswer, onNext,
           let cls = styles.option;
           if (answered) {
             if (opt.id === question.word.id) cls = `${styles.option} ${styles.optionCorrect}`;
-            else if (opt.id === selectedId) cls = `${styles.option} ${styles.optionWrong}`;
+            else cls = `${styles.option} ${styles.optionWrong}`;
           }
           return (
             <button

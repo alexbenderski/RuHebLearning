@@ -160,7 +160,7 @@ const WordsQuiz: React.FC<WordsQuizProps> = ({ userId, categoryId, difficulty, w
             else if (opt.id === selected) cls = `${styles.option} ${styles.wrong}`;
           }
           return (
-            <button key={opt.id} className={cls} onClick={() => handleAnswer(opt)}>
+<button key={opt.id} className={cls} disabled={selected !== null} onClick={() => handleAnswer(opt)}>
               {opt.translation}
             </button>
           );
